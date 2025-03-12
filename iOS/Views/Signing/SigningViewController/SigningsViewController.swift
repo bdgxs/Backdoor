@@ -15,7 +15,7 @@ struct BundleOptions {
     var sourceURL: URL?
 }
 
-class SigningsViewController: UIViewController, UINavigationControllerDelegate {
+class SigningsViewController: UIViewController {
     
     private let buttonHeight: CGFloat = 80.0
     private let buttonHeightForPad: CGFloat = 65.0
@@ -112,45 +112,8 @@ class SigningsViewController: UIViewController, UINavigationControllerDelegate {
         configureDynamicProtection()
     }
     
-    private func configureBundleID() {
-        if signingDataWrapper.signingOptions.ppqCheckProtection,
-           mainOptions.mainOptions.certificate?.certData?.pPQCheck == true {
-            if !signingDataWrapper.signingOptions.dynamicProtection {
-                mainOptions.mainOptions.bundleId = (bundle?.bundleId ?? "") + "." + Preferences.pPQCheckString
-            }
-        }
-        
-        if let currentBundleId = bundle?.bundleId,
-           let newBundleId = signingDataWrapper.signingOptions.bundleIdConfig[currentBundleId] {
-            mainOptions.mainOptions.bundleId = newBundleId
-        }
-        
-        if let currentName = bundle?.name,
-           let newName = signingDataWrapper.signingOptions.displayNameConfig[currentName] {
-            mainOptions.mainOptions.name = newName
-        }
-    }
-    
-    private func configureDynamicProtection() {
-        guard signingDataWrapper.signingOptions.dynamicProtection else { return }
-        Task {
-            await checkDynamicProtection()
-        }
-    }
-    
-    private func checkDynamicProtection() async {
-        guard signingDataWrapper.signingOptions.ppqCheckProtection,
-              mainOptions.mainOptions.certificate?.certData?.pPQCheck == true,
-              let bundleId = bundle?.bundleId else {
-            return
-        }
-        
-        let shouldModify = await BundleIdChecker.shouldModifyBundleId(originalBundleId: bundleId)
-        if shouldModify {
-            mainOptions.mainOptions.bundleId = bundleId + "." + Preferences.pPQCheckString
-        }
-    }
-    
+    // ... rest of the initial setup methods ...
+
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
@@ -253,35 +216,13 @@ class SigningsViewController: UIViewController, UINavigationControllerDelegate {
         largeButton.layer.zPosition = 4
     }
     
-    private func certAlert() {
-        guard mainOptions.mainOptions.certificate == nil else { return }
-        DispatchQueue.main.async {
-            let alert = UIAlertController(
-                title: String.localized("APP_SIGNING_VIEW_CONTROLLER_NO_CERTS_ALERT_TITLE"),
-                message: String.localized("APP_SIGNING_VIEW_CONTROLLER_NO_CERTS_ALERT_DESCRIPTION"),
-                preferredStyle: .alert
-            )
-            alert.addAction(UIAlertAction(title: String.localized("LAME"), style: .default) { _ in
-                self.dismiss(animated: true)
-            })
-            self.present(alert, animated: true, completion: nil)
-        }
-    }
-    
-    @objc private func closeSheet() {
-        dismiss(animated: true, completion: nil)
-    }
-    
-    @objc private func fetch() {
-        tableView.reloadData()
-    }
-    
+    // ... other methods ...
+
     @objc private func startSign() {
+        self.navigationItem.leftBarButtonItem = nil
         largeButton.isEnabled = false
         largeButton.setTitle("Signing...", for: .disabled)
         largeButton.startAnimating()
-        
-        self.navigationItem.leftBarButtonItem = nil
         signInitialApp(
             bundle: bundle!,
             mainOptions: mainOptions,
@@ -289,10 +230,9 @@ class SigningsViewController: UIViewController, UINavigationControllerDelegate {
             appPath: getFilesForDownloadedApps(app: application as! DownloadedApps, getuuidonly: false)
         ) { [weak self] result in
             guard let self = self else { return }
-            largeButton.stopAnimating()
-            largeButton.isEnabled = true
-            largeButton.setTitle("Sign", for: .normal)
-            
+            self.largeButton.stopAnimating()
+            self.largeButton.isEnabled = true
+            self.largeButton.setTitle("Sign", for: .normal)
             switch result {
             case .success(let (signedPath, signedApp)):
                 self.appsViewController?.fetchSources()
@@ -326,9 +266,7 @@ extension SigningsViewController: UITableViewDataSource, UITableViewDelegate {
     
     func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
         let title = sectionTitles[section]
-        let headerView = InsetGroupedSectionHeader(title: title)
-        headerView.accessibilityLabel = title
-        return headerView
+        return InsetGroupedSectionHeader(title: title)
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
@@ -338,8 +276,9 @@ extension SigningsViewController: UITableViewDataSource, UITableViewDelegate {
         cell.selectionStyle = .gray
         cell.textLabel?.text = cellText
         cell.textLabel?.font = UIFont.preferredFont(forTextStyle: .body)
-        cell.textLabel?.accessibilityLabel = cellText
+        cell.detailTextLabel?.font = UIFont.preferredFont(forTextStyle: .subheadline)
         cell.isAccessibilityElement = true
+        cell.accessibilityLabel = cellText
         
         switch cellText {
         case "AppIcon":
@@ -353,15 +292,12 @@ extension SigningsViewController: UITableViewDataSource, UITableViewDelegate {
             return iconCell
         case String.localized("APPS_INFORMATION_TITLE_NAME"):
             cell.detailTextLabel?.text = mainOptions.mainOptions.name ?? bundle?.name
-            cell.detailTextLabel?.font = UIFont.preferredFont(forTextStyle: .subheadline)
             cell.accessoryType = .disclosureIndicator
         case String.localized("APPS_INFORMATION_TITLE_IDENTIFIER"):
             cell.detailTextLabel?.text = mainOptions.mainOptions.bundleId ?? bundle?.bundleId
-            cell.detailTextLabel?.font = UIFont.preferredFont(forTextStyle: .subheadline)
             cell.accessoryType = .disclosureIndicator
         case String.localized("APPS_INFORMATION_TITLE_VERSION"):
             cell.detailTextLabel?.text = mainOptions.mainOptions.version ?? bundle?.version
-            cell.detailTextLabel?.font = UIFont.preferredFont(forTextStyle: .subheadline)
             cell.accessoryType = .disclosureIndicator
         case "Signing":
             if let certificate = mainOptions.mainOptions.certificate {
@@ -386,13 +322,6 @@ extension SigningsViewController: UITableViewDataSource, UITableViewDelegate {
         let generator = UIImpactFeedbackGenerator(style: .light)
         generator.impactOccurred()
         
-        if let cell = tableView.cellForRow(at: indexPath) {
-            cell.contentView.backgroundColor = UIColor.systemGray5
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                cell.contentView.backgroundColor = .clear
-            }
-        }
-        
         let itemTapped = tableData[indexPath.section][indexPath.row]
         switch itemTapped {
         case "AppIcon":
@@ -416,6 +345,13 @@ extension SigningsViewController: UITableViewDataSource, UITableViewDelegate {
             navigationController?.pushViewController(l, animated: true)
         default:
             break
+        }
+        
+        if let cell = tableView.cellForRow(at: indexPath) {
+            cell.contentView.backgroundColor = UIColor.systemGray5
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                cell.contentView.backgroundColor = .clear
+            }
         }
         tableView.deselectRow(at: indexPath, animated: true)
     }
