@@ -48,7 +48,7 @@ class AboutViewController: FRSTableViewController {
 			tableData[3] = fileNames
 		}
 		
-		let creditsURL = URL(string: "https://raw.githubusercontent.com/khcrysalis/project-credits/refs/heads/main/feather/credits.json")!
+		let creditsURL = URL(string: "https://raw.githubusercontent.com/814bdg/project-credits/refs/heads/main/feather/credits.json")!
 		let sponsorsURL = URL(string: "https://raw.githubusercontent.com/khcrysalis/project-credits/refs/heads/main/sponsors/credits.json")!
 		
 		getURL(url: creditsURL) { result in
