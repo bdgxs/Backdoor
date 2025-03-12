@@ -75,9 +75,6 @@ class SigningsViewController: UIViewController {
         let button = ActivityIndicatorButton()
         button.translatesAutoresizingMaskIntoConstraints = false
         button.addTarget(self, action: #selector(startSign), for: .touchUpInside)
-        button.setTitleColor(.systemBlue, for: .normal)
-        button.layer.cornerRadius = 10
-        button.clipsToBounds = true
         return button
     }()
     
@@ -112,8 +109,45 @@ class SigningsViewController: UIViewController {
         configureDynamicProtection()
     }
     
-    // ... rest of the initial setup methods ...
-
+    private func configureBundleID() {
+        if signingDataWrapper.signingOptions.ppqCheckProtection,
+           mainOptions.mainOptions.certificate?.certData?.pPQCheck == true {
+            if !signingDataWrapper.signingOptions.dynamicProtection {
+                mainOptions.mainOptions.bundleId = (bundle?.bundleId ?? "") + "." + Preferences.pPQCheckString
+            }
+        }
+        
+        if let currentBundleId = bundle?.bundleId,
+           let newBundleId = signingDataWrapper.signingOptions.bundleIdConfig[currentBundleId] {
+            mainOptions.mainOptions.bundleId = newBundleId
+        }
+        
+        if let currentName = bundle?.name,
+           let newName = signingDataWrapper.signingOptions.displayNameConfig[currentName] {
+            mainOptions.mainOptions.name = newName
+        }
+    }
+    
+    private func configureDynamicProtection() {
+        guard signingDataWrapper.signingOptions.dynamicProtection else { return }
+        Task {
+            await checkDynamicProtection()
+        }
+    }
+    
+    private func checkDynamicProtection() async {
+        guard signingDataWrapper.signingOptions.ppqCheckProtection,
+              mainOptions.mainOptions.certificate?.certData?.pPQCheck == true,
+              let bundleId = bundle?.bundleId else {
+            return
+        }
+        
+        let shouldModify = await BundleIdChecker.shouldModifyBundleId(originalBundleId: bundleId)
+        if shouldModify {
+            mainOptions.mainOptions.bundleId = bundleId + "." + Preferences.pPQCheckString
+        }
+    }
+    
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
@@ -165,9 +199,7 @@ class SigningsViewController: UIViewController {
             
             Preferences.selectedCert = newIndex
             mainOptions.mainOptions.certificate = certificates[newIndex]
-            UIView.animate(withDuration: 0.3) {
-                self.tableView.reloadRows(at: [indexPath], with: gesture.direction == .left ? .left : .right)
-            }
+            tableView.reloadRows(at: [indexPath], with: gesture.direction == .left ? .left : .right)
         }
     }
     
@@ -216,13 +248,32 @@ class SigningsViewController: UIViewController {
         largeButton.layer.zPosition = 4
     }
     
-    // ... other methods ...
-
+    private func certAlert() {
+        guard mainOptions.mainOptions.certificate == nil else { return }
+        DispatchQueue.main.async {
+            let alert = UIAlertController(
+                title: String.localized("APP_SIGNING_VIEW_CONTROLLER_NO_CERTS_ALERT_TITLE"),
+                message: String.localized("APP_SIGNING_VIEW_CONTROLLER_NO_CERTS_ALERT_DESCRIPTION"),
+                preferredStyle: .alert
+            )
+            alert.addAction(UIAlertAction(title: String.localized("LAME"), style: .default) { _ in
+                self.dismiss(animated: true)
+            })
+            self.present(alert, animated: true, completion: nil)
+        }
+    }
+    
+    @objc private func closeSheet() {
+        dismiss(animated: true, completion: nil)
+    }
+    
+    @objc private func fetch() {
+        tableView.reloadData()
+    }
+    
     @objc private func startSign() {
         self.navigationItem.leftBarButtonItem = nil
-        largeButton.isEnabled = false
-        largeButton.setTitle("Signing...", for: .disabled)
-        largeButton.startAnimating()
+        largeButton.showLoadingIndicator()
         signInitialApp(
             bundle: bundle!,
             mainOptions: mainOptions,
@@ -230,9 +281,6 @@ class SigningsViewController: UIViewController {
             appPath: getFilesForDownloadedApps(app: application as! DownloadedApps, getuuidonly: false)
         ) { [weak self] result in
             guard let self = self else { return }
-            self.largeButton.stopAnimating()
-            self.largeButton.isEnabled = true
-            self.largeButton.setTitle("Sign", for: .normal)
             switch result {
             case .success(let (signedPath, signedApp)):
                 self.appsViewController?.fetchSources()
@@ -275,10 +323,6 @@ extension SigningsViewController: UITableViewDataSource, UITableViewDelegate {
         cell.accessoryType = .none
         cell.selectionStyle = .gray
         cell.textLabel?.text = cellText
-        cell.textLabel?.font = UIFont.preferredFont(forTextStyle: .body)
-        cell.detailTextLabel?.font = UIFont.preferredFont(forTextStyle: .subheadline)
-        cell.isAccessibilityElement = true
-        cell.accessibilityLabel = cellText
         
         switch cellText {
         case "AppIcon":
@@ -319,9 +363,6 @@ extension SigningsViewController: UITableViewDataSource, UITableViewDelegate {
     }
 
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        let generator = UIImpactFeedbackGenerator(style: .light)
-        generator.impactOccurred()
-        
         let itemTapped = tableData[indexPath.section][indexPath.row]
         switch itemTapped {
         case "AppIcon":
@@ -345,13 +386,6 @@ extension SigningsViewController: UITableViewDataSource, UITableViewDelegate {
             navigationController?.pushViewController(l, animated: true)
         default:
             break
-        }
-        
-        if let cell = tableView.cellForRow(at: indexPath) {
-            cell.contentView.backgroundColor = UIColor.systemGray5
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                cell.contentView.backgroundColor = .clear
-            }
         }
         tableView.deselectRow(at: indexPath, animated: true)
     }
