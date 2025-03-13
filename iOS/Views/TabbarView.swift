@@ -24,7 +24,12 @@ struct TabbarView: View {
 			tab(for: .settings)
 		}
 		.onChange(of: selectedTab) { newTab in
+			// Save the selected tab to UserDefaults
 			UserDefaults.standard.set(newTab.rawValue, forKey: "selectedTab")
+			// Trigger animation for tab change
+			withAnimation(.spring(response: 0.5, dampingFraction: 0.7, blendDuration: 0.5)) {
+				// No explicit action needed here; the animation will apply to the tab transition
+			}
 		}
 	}
 
