@@ -1,7 +1,6 @@
 name: Create New Release
 
 on:
-
   workflow_dispatch:
 
 jobs:
@@ -45,4 +44,4 @@ jobs:
           fail_on_unmatched_files: true
           draft: true
         env:
-          GITHUB_TOKEN: ${{ env.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.WORKFLOW_SECRET }}
