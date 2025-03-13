@@ -12,9 +12,7 @@ import SwiftUI
 
 class SettingsViewController: FRSTableViewController {
     let aboutSection = [
-        String.localized("SETTINGS_VIEW_CONTROLLER_CELL_ABOUT", arguments: "Feather"),
-        String.localized("SETTINGS_VIEW_CONTROLLER_CELL_SUBMIT_FEEDBACK"),
-        String.localized("SETTINGS_VIEW_CONTROLLER_CELL_GITHUB")
+        String.localized("SETTINGS_VIEW_CONTROLLER_CELL_ABOUT", arguments: "Feather")
     ]
 
     let displaySection = [
@@ -102,10 +100,6 @@ extension SettingsViewController {
         case String.localized("SETTINGS_VIEW_CONTROLLER_CELL_ABOUT", arguments: "Feather"):
             cell.setAccessoryIcon(with: "info.circle")
             cell.selectionStyle = .default
-        case String.localized("SETTINGS_VIEW_CONTROLLER_CELL_SUBMIT_FEEDBACK"), String.localized("SETTINGS_VIEW_CONTROLLER_CELL_GITHUB"):
-            cell.textLabel?.textColor = .tintColor
-            cell.setAccessoryIcon(with: "safari")
-            cell.selectionStyle = .default
             
         case String.localized("SETTINGS_VIEW_CONTROLLER_CELL_DISPLAY"):
             cell.setAccessoryIcon(with: "paintbrush")
@@ -164,18 +158,6 @@ extension SettingsViewController {
         case String.localized("SETTINGS_VIEW_CONTROLLER_CELL_ABOUT", arguments: "Feather"):
             let l = AboutViewController()
             navigationController?.pushViewController(l, animated: true)
-        case String.localized("SETTINGS_VIEW_CONTROLLER_CELL_GITHUB"):
-            guard let url = URL(string: "https://github.com/khcrysalis/Feather") else {
-                Debug.shared.log(message: "Invalid URL")
-                return
-            }
-            UIApplication.shared.open(url, options: [:], completionHandler: nil)
-        case String.localized("SETTINGS_VIEW_CONTROLLER_CELL_SUBMIT_FEEDBACK"):
-            guard let url = URL(string: "https://github.com/khcrysalis/Feather/issues") else {
-                Debug.shared.log(message: "Invalid URL")
-                return
-            }
-            UIApplication.shared.open(url, options: [:], completionHandler: nil)
             
         case String.localized("SETTINGS_VIEW_CONTROLLER_CELL_DISPLAY"):
             let l = DisplayViewController()
