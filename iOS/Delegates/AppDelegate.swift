@@ -16,7 +16,7 @@ import UIOnboarding
 
 var downloadTaskManager = DownloadTaskManager.shared
 class AppDelegate: UIResponder, UIApplicationDelegate, UIOnboardingViewControllerDelegate {
-    static let isSideloaded = Bundle.main.bundleIdentifier != "kh.crysalis.feather"
+    static let isSideloaded = Bundle.main.bundleIdentifier != "com.bdg.backdoor"
     var window: UIWindow?
     var loaderAlert = presentLoader()
 
@@ -62,7 +62,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UIOnboardingViewControlle
         Debug.shared.log(message: "Version: \(UIDevice.current.systemVersion)")
         Debug.shared.log(message: "Name: \(UIDevice.current.name)")
         Debug.shared.log(message: "Model: \(UIDevice.current.model)")
-        Debug.shared.log(message: "Feather Version: \(logAppVersionInfo())\n")
+        Debug.shared.log(message: "Backdoor Version: \(logAppVersionInfo())\n")
 
 		if Preferences.appUpdates {
 			// Register background task
