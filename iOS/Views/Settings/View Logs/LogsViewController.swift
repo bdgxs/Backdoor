@@ -110,7 +110,7 @@ class LogsViewController: UIViewController {
         
         fileHandle.seek(toFileOffset: currentFileSize)
         let newData = fileHandle.readDataToEndOfFile()
-        if let newContent = String(data: newData, encoding: .utf8), !newContent isEmpty {
+        if let newContent = String(data: newData, encoding: .utf8), !newContent.isEmpty {
             logTextView.text.append(newContent)
             scrollToBottom()
         }
