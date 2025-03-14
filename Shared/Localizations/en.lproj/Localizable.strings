@@ -63,7 +63,7 @@
 "SUCCESS_REQUIRES_RESTART" = "You must close the app for changes to take effect.";
 
 // MARK: - Onboarding
-// Welcome to Feather!!!!!!!!
+// Welcome to Backdoor!!!!!!!!
 "ONBOARDING_WELCOMETITLE_1" = "Welcome to";
 // First feature inside of onboarding
 "ONBOARDING_CELL_1_TITLE" = "Sideload On Device";
@@ -72,10 +72,10 @@
 "ONBOARDING_CELL_2_TITLE" = "Customize Apps";
 "ONBOARDING_CELL_2_DESCRIPTION" = "Manage and customize your apps for your needs.";
 // Third feature inside of onboarding
-"ONBOARDING_CELL_3_TITLE" = "And Much More!";
-"ONBOARDING_CELL_3_DESCRIPTION" = "AltStore repositories, import IPA's, easy certificate switching, and much more.";
-// "Developed by Samara. Made for users who are passionate for sideloading and freedom. Many features included inside. Learn more..."
-"ONBOARDING_FOOTER" = "Developed by Samara. Made for users who are passionate for sideloading and freedom. Many features included inside.";
+"ONBOARDING_CELL_3_TITLE" = "and many more thing’s.";
+"ONBOARDING_CELL_3_DESCRIPTION" = "Altstore, Esign, Scarlet any repo’s you got work. import IPA's easily, easy certificate management, and many more thing’s.";
+// "Developed by BDG. Made for users who want to sideload & have freedom without the need of a computer. Packed with many features included inside...."
+"ONBOARDING_FOOTER" = "Developed by BDG. Made for users who want to sideload & have freedom without the need of a computer. Packed with many features included inside.";
 "ONBOARDING_FOOTER_LINK" = "Learn more...";
 // Continue button to exit onboarding
 "ONBOARDING_CONTINUE_BUTTON" = "Continue";
@@ -275,3 +275,4 @@
 "LIBRARY_VIEW_CONTROLLER_SIGN_ACTION_OPEN_LN_FILES" = "Open in Files";
 "LIBRARY_VIEW_CONTROLLER_SIGN_ACTION_INSTALL_CONFIRM" = "Confirm Installation";
 "LIBRARY_VIEW_CONTROLLER_SIGN_ACTION_INSTALL_CONFIRM_DESCRIPTION" = "Trying to install via the downloaded apps tab may not work as they are most likely not signed! It's recommended you sign that application first before installing.";
+```​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​
