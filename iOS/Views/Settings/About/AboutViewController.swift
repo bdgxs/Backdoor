@@ -97,7 +97,7 @@ class AboutViewController: FRSTableViewController {
 
 	
 	@objc func shareButtonTapped() {
-		let shareText = "Feather - https://github.com/khcrysalis/feather"
+		let shareText = "Feather - https://beacons.ai/bdgs"
 		let activityViewController = UIActivityViewController(activityItems: [shareText], applicationActivities: nil)
 		
 		if let popoverController = activityViewController.popoverPresentationController {
