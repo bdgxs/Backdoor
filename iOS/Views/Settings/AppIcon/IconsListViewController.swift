@@ -17,13 +17,13 @@ class IconsListViewController: UITableViewController {
 	
 	var sections: [String: [AltIcon]] = [
 		"Main": [
-			AltIcon(displayName: "Feather", author: "Samara", key: nil, image: altImage("AppIcon60x60")),
-			AltIcon(displayName: "macOS Feather", author: "Samara", key: "Mac", image: altImage("Mac")),
-			AltIcon(displayName: "Evil Feather", author: "Samara", key: "Evil", image: altImage("Evil")),
-			AltIcon(displayName: "Classic Feather", author: "Samara", key: "Early", image: altImage("Early"))
+			AltIcon(displayName: "Backdoor", author: "BDG", key: nil, image: altImage("AppIcon60x60")),
+			AltIcon(displayName: "macOS Backdoor", author: "BDG", key: "Mac", image: altImage("Mac")),
+			AltIcon(displayName: "Evil Backdoor", author: "BDG", key: "Evil", image: altImage("Evil")),
+			AltIcon(displayName: "Classic Backdoor", author: "BDG", key: "Early", image: altImage("Early"))
 		],
 		"Wingio": [
-			AltIcon(displayName: "Feather", author: "Wingio", key: "Wing", image: altImage("Wing")),
+			AltIcon(displayName: "Backdoor", author: "BDG", key: "Wing", image: altImage("Wing")),
 		]
 	]
 	
