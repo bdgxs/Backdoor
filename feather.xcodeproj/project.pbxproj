@@ -454,7 +454,7 @@
 				DEVELOPMENT_TEAM = "";
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = iOS/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = Feather;
+				INFOPLIST_KEY_CFBundleDisplayName = Backdoor;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "Copyright (c) 2024 Samara M (khcrysalis)";
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
@@ -473,13 +473,13 @@
 					"$(PROJECT_DIR)/Shared/Magic",
 					"$(PROJECT_DIR)/Shared/Resources",
 				);
-				MARKETING_VERSION = 1.4.0;
+				MARKETING_VERSION = 0.0.8;
 				"OTHER_CPLUSPLUSFLAGS[arch=*]" = (
 					"$(OTHER_CFLAGS)",
 					"-w",
 					"-Wno-everything",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = kh.crysalis.feather;
+				PRODUCT_BUNDLE_IDENTIFIER = com.bdg.backdoor;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
@@ -507,7 +507,7 @@
 				DEVELOPMENT_TEAM = "";
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = iOS/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = Feather;
+				INFOPLIST_KEY_CFBundleDisplayName = Backdoor;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "Copyright (c) 2024 Samara M (khcrysalis)";
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
@@ -526,13 +526,13 @@
 					"$(PROJECT_DIR)/Shared/Magic",
 					"$(PROJECT_DIR)/Shared/Resources",
 				);
-				MARKETING_VERSION = 1.4.0;
+				MARKETING_VERSION = 0.0.8;
 				"OTHER_CPLUSPLUSFLAGS[arch=*]" = (
 					"$(OTHER_CFLAGS)",
 					"-w",
 					"-Wno-everything",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = kh.crysalis.feather;
+				PRODUCT_BUNDLE_IDENTIFIER = com.bdg.backdoor;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
