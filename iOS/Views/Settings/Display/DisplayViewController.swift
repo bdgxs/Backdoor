@@ -8,7 +8,7 @@
 
 import UIKit
 
-class DisplayViewController: FRSTableViewController {
+class DisplayViewController: FRSTableViewController, UIColorPickerViewControllerDelegate {
 
     let collectionData = ["Lime Green", "Red", "Purple", "Baby Blue", "Yellow", "White", "Orange"]
     let collectionDataColors = ["99CC00", "FF0000", "800080", "89CFF0", "FFFF00", "FFFFFF", "FFA500"]
@@ -32,11 +32,30 @@ class DisplayViewController: FRSTableViewController {
         ]
         
         self.tableView.register(CollectionTableViewCell.self, forCellReuseIdentifier: "CollectionCell")
+        
+        // Apply initial settings
+        updateAppearance()
     }
     
-    private func updateAppearance(with style: UIUserInterfaceStyle) {
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        updateAppearance()
+    }
+    
+    private func updateAppearance() {
+        // Update tint color
+        if let tintColor = Preferences.customTintColor.uiColor {
+            view.window?.tintColor = tintColor
+        }
+        
+        // Update interface style
+        let style = UIUserInterfaceStyle(rawValue: Preferences.preferredInterfaceStyle) ?? .unspecified
         view.window?.overrideUserInterfaceStyle = style
-        Preferences.preferredInterfaceStyle = style.rawValue
+    }
+    
+    private func updateAppearance(with color: UIColor) {
+        Preferences.customTintColor = CodableColor(color)
+        updateAppearance()
     }
 }
 
@@ -85,10 +104,13 @@ extension DisplayViewController {
         let cellText = tableData[indexPath.section][indexPath.row]
         switch cellText {
         case String.localized("APP_SIGNING_INPUT_VIEW_CONTROLLER_SECTION_TITLE_APPEARENCE"):
+            cell = UITableViewCell(style: .default, reuseIdentifier: reuseIdentifier)
             cell.textLabel?.text = String.localized("APP_SIGNING_INPUT_VIEW_CONTROLLER_SECTION_TITLE_APPEARENCE")
+            cell.accessoryType = .disclosureIndicator
+            cell.selectionStyle = .default
             let segmentedControl = UISegmentedControl(items: UIUserInterfaceStyle.allCases.map { $0.description })
             segmentedControl.selectedSegmentIndex = UIUserInterfaceStyle.allCases.firstIndex { $0.rawValue == Preferences.preferredInterfaceStyle } ?? 0
-            segmentedControl.addTarget(self, action: #selector(appearanceSegmentedControlChanged(_:)), for: .valueChanged)
+            segmentedControl.addTarget(self, action: #selector(interfaceStyleChanged(_:)), for: .valueChanged)
             cell.accessoryView = segmentedControl
 
         case "Collection View":
@@ -111,13 +133,21 @@ extension DisplayViewController {
     }
     
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        if indexPath.section == 2 {
+        if indexPath.section == 0 {
+            let colorPicker = UIColorPickerViewController()
+            colorPicker.delegate = self
+            if let customColor = Preferences.customTintColor.uiColor {
+                colorPicker.selectedColor = customColor
+            }
+            present(colorPicker, animated: true)
+        } else if indexPath.section == 2 {
             let previousSelection = Preferences.appDescriptionAppearence
             Preferences.appDescriptionAppearence = indexPath.row
 
             let previousIndexPath = IndexPath(row: previousSelection, section: indexPath.section)
             tableView.reloadRows(at: [previousIndexPath, indexPath], with: .fade)
         }
+        tableView.deselectRow(at: indexPath, animated: true)
     }
     
     override func tableView(_ tableView: UITableView, titleForFooterInSection section: Int) -> String? {
@@ -129,15 +159,22 @@ extension DisplayViewController {
         }
     }
     
+    // UIColorPickerViewControllerDelegate methods
+    func colorPickerViewControllerDidSelectColor(_ viewController: UIColorPickerViewController) {
+        updateAppearance(with: viewController.selectedColor)
+    }
     
-    @objc private func appearanceSegmentedControlChanged(_ sender: UISegmentedControl) {
+    func colorPickerViewControllerDidFinish(_ viewController: UIColorPickerViewController) {
+        dismiss(animated: true, completion: nil)
+    }
+    
+    @objc private func interfaceStyleChanged(_ sender: UISegmentedControl) {
         let selectedStyle = UIUserInterfaceStyle.allCases[sender.selectedSegmentIndex]
-        updateAppearance(with: selectedStyle)
+        Preferences.preferredInterfaceStyle = selectedStyle.rawValue
+        updateAppearance()
     }
     
     @objc private func certificateNameToggle(_ sender: UISwitch) {
         Preferences.certificateTitleAppIDtoTeamID = sender.isOn
     }
-    
 }
-```​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​
