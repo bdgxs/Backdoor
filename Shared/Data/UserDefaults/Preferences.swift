@@ -37,7 +37,7 @@ enum Preferences {
 	@Storage(key: "Feather.userIntefacerStyle", defaultValue: UIUserInterfaceStyle.unspecified.rawValue)
 	static var preferredInterfaceStyle: Int
 	
-	@CodableStorage(key: "Feather.AppTintColor", defaultValue: CodableColor(UIColor(hex: "848ef9")))
+	@CodableStorage(key: "Feather.AppTintColor", defaultValue: CodableColor(UIColor(hex: "FFA500")))
 	static var appTintColor: CodableColor
 	
 	@Storage(key: "Feather.OnboardingActive", defaultValue: true)
