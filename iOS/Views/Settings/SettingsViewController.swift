@@ -12,7 +12,7 @@ import SwiftUI
 
 class SettingsViewController: FRSTableViewController {
     let aboutSection = [
-        String.localized("SETTINGS_VIEW_CONTROLLER_CELL_ABOUT", arguments: "Feather")
+        String.localized("SETTINGS_VIEW_CONTROLLER_CELL_ABOUT", arguments: "Backdoor")
     ]
 
     let displaySection = [
@@ -97,7 +97,7 @@ extension SettingsViewController {
         cell.textLabel?.text = cellText
         
         switch cellText {
-        case String.localized("SETTINGS_VIEW_CONTROLLER_CELL_ABOUT", arguments: "Feather"):
+        case String.localized("SETTINGS_VIEW_CONTROLLER_CELL_ABOUT", arguments: "Backdoor"):
             cell.setAccessoryIcon(with: "info.circle")
             cell.selectionStyle = .default
             
@@ -155,7 +155,7 @@ extension SettingsViewController {
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         let itemTapped = tableData[indexPath.section][indexPath.row]
         switch itemTapped {
-        case String.localized("SETTINGS_VIEW_CONTROLLER_CELL_ABOUT", arguments: "Feather"):
+        case String.localized("SETTINGS_VIEW_CONTROLLER_CELL_ABOUT", arguments: "Backdoor"):
             let l = AboutViewController()
             navigationController?.pushViewController(l, animated: true)
             
