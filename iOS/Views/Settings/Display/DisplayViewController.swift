@@ -11,7 +11,7 @@ import UIKit
 class DisplayViewController: FRSTableViewController {
 
 	let collectionData = ["Default", "Berry", "Mint", "Dr Pepper", "Cool Blue", "Fuchsia", "Purplish"]
-	let collectionDataColors = ["848ef9", "ff7a83", "a6e3a1", "711f25", "4161F1", "FF00FF", "D7B4F3"]
+	let collectionDataColors = ["FFA500", "ff7a83", "a6e3a1", "711f25", "4161F1", "FF00FF", "D7B4F3"]
 	
 	override func viewDidLoad() {
 		super.viewDidLoad()
