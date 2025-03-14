@@ -81,7 +81,7 @@ extension SettingsViewController {
         }
         
         switch section {
-        case sectionTitles.count - 1: return "Feather \(AppDelegate().logAppVersionInfo()) • iOS \(UIDevice.current.systemVersion)"
+        case sectionTitles.count - 1: return "Backdoor \(AppDelegate().logAppVersionInfo()) • iOS \(UIDevice.current.systemVersion)"
         default:
             return nil
         }
