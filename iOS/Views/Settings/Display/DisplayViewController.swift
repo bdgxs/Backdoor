@@ -10,14 +10,8 @@ import UIKit
 
 class DisplayViewController: FRSTableViewController {
 
-    let collectionData = ["Default", "Berry", "Mint", "Dr Pepper", "Cool Blue", "Fuchsia", "Purplish"]
-    let collectionDataColors = ["848ef9", "ff7a83", "a6e3a1", "711f25", "4161F1", "FF00FF", "D7B4F3"]
-    
-    enum CustomUserInterfaceStyle: Int, CaseIterable {
-        case light
-        case dark
-        case red
-    }
+    let collectionData = ["Lime Green", "Red", "Purple", "Baby Blue", "Yellow", "White", "Orange"]
+    let collectionDataColors = ["99CC00", "FF0000", "800080", "89CFF0", "FFFF00", "FFFFFF", "FFA500"]
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -40,50 +34,9 @@ class DisplayViewController: FRSTableViewController {
         self.tableView.register(CollectionTableViewCell.self, forCellReuseIdentifier: "CollectionCell")
     }
     
-    private func updateAppearance(with style: CustomUserInterfaceStyle) {
-        view.window?.overrideUserInterfaceStyle = style.uiStyle
+    private func updateAppearance(with style: UIUserInterfaceStyle) {
+        view.window?.overrideUserInterfaceStyle = style
         Preferences.preferredInterfaceStyle = style.rawValue
-        
-        switch style {
-        case .light, .dark:
-            resetTheme()
-        case .red:
-            applyRedTheme()
-        }
-    }
-    
-    private func applyRedTheme() {
-        self.view.backgroundColor = .red
-        self.tableView.backgroundColor = .red
-    }
-    
-    private func resetTheme() {
-        self.view.backgroundColor = nil
-        self.tableView.backgroundColor = nil
-    }
-}
-
-extension CustomUserInterfaceStyle {
-    var uiStyle: UIUserInterfaceStyle {
-        switch self {
-        case .light:
-            return .light
-        case .dark:
-            return .dark
-        case .red:
-            return .unspecified
-        }
-    }
-    
-    var description: String {
-        switch self {
-        case .light:
-            return "Light"
-        case .dark:
-            return "Dark"
-        case .red:
-            return "Red"
-        }
     }
 }
 
@@ -133,8 +86,8 @@ extension DisplayViewController {
         switch cellText {
         case String.localized("APP_SIGNING_INPUT_VIEW_CONTROLLER_SECTION_TITLE_APPEARENCE"):
             cell.textLabel?.text = String.localized("APP_SIGNING_INPUT_VIEW_CONTROLLER_SECTION_TITLE_APPEARENCE")
-            let segmentedControl = UISegmentedControl(items: CustomUserInterfaceStyle.allCases.map { $0.description })
-            segmentedControl.selectedSegmentIndex = CustomUserInterfaceStyle(rawValue: Preferences.preferredInterfaceStyle) ?? .light
+            let segmentedControl = UISegmentedControl(items: UIUserInterfaceStyle.allCases.map { $0.description })
+            segmentedControl.selectedSegmentIndex = UIUserInterfaceStyle.allCases.firstIndex { $0.rawValue == Preferences.preferredInterfaceStyle } ?? 0
             segmentedControl.addTarget(self, action: #selector(appearanceSegmentedControlChanged(_:)), for: .valueChanged)
             cell.accessoryView = segmentedControl
 
@@ -177,7 +130,7 @@ extension DisplayViewController {
     }
     
     @objc private func appearanceSegmentedControlChanged(_ sender: UISegmentedControl) {
-        let selectedStyle = CustomUserInterfaceStyle(rawValue: sender.selectedSegmentIndex) ?? .light
+        let selectedStyle = UIUserInterfaceStyle.allCases[sender.selectedSegmentIndex]
         updateAppearance(with: selectedStyle)
     }
     
