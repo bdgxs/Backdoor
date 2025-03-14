@@ -2,7 +2,7 @@
 //  Logger.swift
 //  feather
 //
-//  Created by Samara on 7/29/24.
+//  Created by samara on 7/29/24.
 //  Copyright (c) 2024 Samara M (khcrysalis)
 //
 
@@ -11,72 +11,86 @@ import Foundation
 import OSLog
 
 public enum LogType {
+    /// Default
     case notice
+    /// Call this function to capture information that may be helpful, but isn’t essential, for troubleshooting.
     case info
+    /// Debug-level messages to use in a development environment while actively debugging.
     case debug
+    /// Equivalent of the debug method.
     case trace
+    /// Warning-level messages for reporting unexpected non-fatal failures.
     case warning
+    /// Error-level messages for reporting critical errors and failures.
     case error
+    /// Fault-level messages for capturing system-level or multi-process errors only.
+    case fault
+    /// Functional equivalent of the fault method.
     case critical
+	
     case success
 }
 
 final class Debug {
     static let shared = Debug()
     private let subsystem = Bundle.main.bundleIdentifier!
-
+	
     private var logFilePath: URL {
         return getDocumentsDirectory().appendingPathComponent("logs.txt")
     }
-
+	
     private func appendLogToFile(_ message: String) {
         do {
             if FileManager.default.fileExists(atPath: logFilePath.path) {
                 let fileHandle = try FileHandle(forUpdating: logFilePath)
-                defer { fileHandle.closeFile() }
                 fileHandle.seekToEndOfFile()
                 if let data = message.data(using: .utf8) {
                     fileHandle.write(data)
                 }
-            } else {
-                try message.write(to: logFilePath, atomically: true, encoding: .utf8)
+                fileHandle.closeFile()
             }
         } catch {
-            log(message: "Error writing to logs.txt: \(error)", type: .error)
+            Debug.shared.log(message: "Error writing to logs.txt: \(error)")
         }
     }
-
-    func log(message: String, type: LogType = .notice, function: String = #function, file: String = #file, line: Int = #line) {
-        let logger = Logger(subsystem: subsystem, category: "\(file)->\(function)")
+	
+    func log(message: String, type: LogType? = nil, function: String = #function, file: String = #file, line: Int = #line) {
+        lazy var logger = Logger(subsystem: subsystem, category: file + "->" + function)
 
         // Prepare the emoji based on the log type
-        let (emoji, logFunc): (String, (String) -> Void) = {
-            switch type {
-            case .success:
-                return ("✅", logger.info)
-            case .info:
-                return ("ℹ️", logger.info)
-            case .debug:
-                return ("🐛", logger.debug)
-            case .trace:
-                showErrorUIAlert(with: String.localized("ALERT_TRACE"), subtitle: message)
-                return ("🔍", logger.trace)
-            case .warning:
-                showErrorAlert(with: String.localized("ALERT_ERROR"), subtitle: message)
-                return ("⚠️", logger.warning)
-            case .error:
-                showErrorAlert(with: String.localized("ALERT_ERROR"), subtitle: message)
-                return ("❌", logger.error)
-            case .critical:
-                showErrorUIAlert(with: String.localized("ALERT_CRITICAL"), subtitle: message)
-                return ("🔥", logger.critical)
-            default:
-                return ("📝", logger.log)
-            }
-        }()
-
-        logFunc(message)
-
+        var emoji: String
+        switch type {
+        case .success:
+            emoji = "✅"
+            logger.info("\(message)")
+            showSuccessAlert(with: String.localized("ALERT_SUCCESS"), subtitle: message)
+        case .info:
+            emoji = "ℹ️"
+            logger.info("\(message)")
+        case .debug:
+            emoji = "🐛"
+            logger.debug("\(message)")
+        case .trace:
+            emoji = "🔍"
+            logger.trace("\(message)")
+            showErrorUIAlert(with: String.localized("ALERT_TRACE"), subtitle: message)
+        case .warning:
+            emoji = "⚠️"
+            logger.warning("\(message)")
+            showErrorAlert(with: String.localized("ALERT_ERROR"), subtitle: message)
+        case .error:
+            emoji = "❌"
+            logger.error("\(message)")
+            showErrorAlert(with: String.localized("ALERT_ERROR"), subtitle: message)
+        case .critical:
+            emoji = "🔥"
+            logger.critical("\(message)")
+            showErrorUIAlert(with: String.localized("ALERT_CRITICAL"), subtitle: message)
+        default:
+            emoji = "📝"
+            logger.log("\(message)")
+        }
+		
         let dateFormatter = DateFormatter()
         dateFormatter.dateFormat = "HH:mm:ss"
         let timeString = dateFormatter.string(from: Date())
@@ -85,58 +99,78 @@ final class Debug {
         appendLogToFile(logMessage)
     }
 
-    private func showAlert(with title: String, subtitle: String, icon: AlertIcon) {
+    func showSuccessAlert(with title: String, subtitle: String) {
         DispatchQueue.main.async {
-            let alertView = AlertAppleMusic17View(title: title, subtitle: subtitle, icon: icon)
-            if let keyWindow = UIApplication.shared.connectedScenes.compactMap({ $0 as? UIWindowScene }).first?.windows.first(where: \.isKeyWindow),
-               let viewController = keyWindow.rootViewController {
+            let alertView = AlertAppleMusic17View(title: title, subtitle: subtitle, icon: .done)
+            let keyWindow = UIApplication.shared.connectedScenes.compactMap { ($0 as? UIWindowScene)?.keyWindow }.last
+            if let viewController = keyWindow?.rootViewController {
                 alertView.present(on: viewController.view)
             }
             #if os(iOS)
-            UINotificationFeedbackGenerator().notificationOccurred(icon == .done ? .success : .error)
+            let generator = UINotificationFeedbackGenerator()
+            generator.notificationOccurred(.success)
             #endif
         }
     }
-
-    func showSuccessAlert(with title: String, subtitle: String) {
-        showAlert(with: title, subtitle: subtitle, icon: .done)
-    }
-
+	
     func showErrorAlert(with title: String, subtitle: String) {
-        showAlert(with: title, subtitle: subtitle, icon: .error)
+        DispatchQueue.main.async {
+            let alertView = AlertAppleMusic17View(title: title, subtitle: subtitle, icon: .error)
+            let keyWindow = UIApplication.shared.connectedScenes.compactMap { ($0 as? UIWindowScene)?.keyWindow }.last
+            if let viewController = keyWindow?.rootViewController {
+                alertView.present(on: viewController.view)
+            }
+            #if os(iOS)
+            let generator = UINotificationFeedbackGenerator()
+            generator.notificationOccurred(.error)
+            #endif
+        }
     }
-
+	
     func showErrorUIAlert(with title: String, subtitle: String) {
         DispatchQueue.main.async {
-            if let keyWindow = UIApplication.shared.connectedScenes.compactMap({ $0 as? UIWindowScene }).first?.windows.first(where: \.isKeyWindow),
-               let rootViewController = keyWindow.rootViewController {
+            let keyWindow = UIApplication.shared.connectedScenes.compactMap { ($0 as? UIWindowScene)?.keyWindow }.last
+            if let rootViewController = keyWindow?.rootViewController {
                 let alert = UIAlertController.error(title: title, message: subtitle, actions: [])
                 rootViewController.present(alert, animated: true)
             }
+			
             #if os(iOS)
-            UINotificationFeedbackGenerator().notificationOccurred(.error)
+            let generator = UINotificationFeedbackGenerator()
+            generator.notificationOccurred(.error)
             #endif
         }
-    }
-
-    private func getDocumentsDirectory() -> URL {
-        return FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
     }
 }
 
 extension UIAlertController {
     static func error(title: String, message: String, actions: [UIAlertAction]) -> UIAlertController {
         let alertController = UIAlertController(title: title, message: message, preferredStyle: .alert)
-        
-        alertController.addAction(UIAlertAction(title: String.localized("OK"), style: .cancel))
-        actions.forEach { alertController.addAction($0) }
+		
+        alertController.addAction(UIAlertAction(title: String.localized("OK"), style: .cancel) { _ in
+            alertController.dismiss(animated: true)
+        })
 
+        for action in actions {
+            alertController.addAction(action)
+        }
+        #if os(iOS)
+        let generator = UINotificationFeedbackGenerator()
+        generator.notificationOccurred(.error)
+        #endif
         return alertController
     }
-    
+	
     static func coolAlert(title: String, message: String, actions: [UIAlertAction]) -> UIAlertController {
         let alertController = UIAlertController(title: title, message: message, preferredStyle: .alert)
-        actions.forEach { alertController.addAction($0) }
+
+        for action in actions {
+            alertController.addAction(action)
+        }
+        #if os(iOS)
+        let generator = UINotificationFeedbackGenerator()
+        generator.notificationOccurred(.error)
+        #endif
         return alertController
     }
 }
