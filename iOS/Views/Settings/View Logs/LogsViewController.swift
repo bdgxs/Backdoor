@@ -110,7 +110,7 @@ class LogsViewController: UIViewController {
         
         fileHandle.seek(toFileOffset: currentFileSize)
         let newData = fileHandle.readDataToEndOfFile()
-        if let newContent = String(data: newData, encoding: .utf8), !newContent.isEmpty {
+        if let newContent = String(data: newData, encoding: .utf8), !newContent isEmpty {
             logTextView.text.append(newContent)
             scrollToBottom()
         }
@@ -254,9 +254,9 @@ extension LogsViewController: UITableViewDataSource, UITableViewDelegate {
 }
 
 // Placeholder for missing utilities (ensure these are defined elsewhere)
-func getDocumentsDirectory() -> URL {
-    FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
-}
+// func getDocumentsDirectory() -> URL {
+//     FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+// }
 
 extension UITableViewCell {
     func setAccessoryIcon(with systemName: String) {
