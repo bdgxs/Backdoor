@@ -27,38 +27,40 @@ public enum LogType {
     case fault
     /// Functional equivalent of the fault method.
     case critical
-	
+    
     case success
 }
 
 final class Debug {
     static let shared = Debug()
     private let subsystem = Bundle.main.bundleIdentifier!
-	
+    
     private var logFilePath: URL {
         return getDocumentsDirectory().appendingPathComponent("logs.txt")
     }
-	
+    
     private func appendLogToFile(_ message: String) {
         do {
             if FileManager.default.fileExists(atPath: logFilePath.path) {
                 let fileHandle = try FileHandle(forUpdating: logFilePath)
+                defer { fileHandle.closeFile() }
                 fileHandle.seekToEndOfFile()
                 if let data = message.data(using: .utf8) {
                     fileHandle.write(data)
                 }
-                fileHandle.closeFile()
+            } else {
+                try message.write(to: logFilePath, atomically: true, encoding: .utf8)
             }
         } catch {
-            Debug.shared.log(message: "Error writing to logs.txt: \(error)")
+            self.log(message: "Error writing to logs.txt: \(error)", type: .error)
         }
     }
-	
-    func log(message: String, type: LogType? = nil, function: String = #function, file: String = #file, line: Int = #line) {
-        lazy var logger = Logger(subsystem: subsystem, category: file + "->" + function)
+    
+    func log(message: String, type: LogType = .notice, function: String = #function, file: String = #file, line: Int = #line) {
+        let logger = Logger(subsystem: subsystem, category: "\(file)->\(function)")
 
         // Prepare the emoji based on the log type
-        var emoji: String
+        let emoji: String
         switch type {
         case .success:
             emoji = "✅"
@@ -90,11 +92,11 @@ final class Debug {
             emoji = "📝"
             logger.log("\(message)")
         }
-		
+        
         let dateFormatter = DateFormatter()
         dateFormatter.dateFormat = "HH:mm:ss"
         let timeString = dateFormatter.string(from: Date())
-
+        
         let logMessage = "[\(timeString)] \(emoji) \(message)\n"
         appendLogToFile(logMessage)
     }
@@ -102,74 +104,71 @@ final class Debug {
     func showSuccessAlert(with title: String, subtitle: String) {
         DispatchQueue.main.async {
             let alertView = AlertAppleMusic17View(title: title, subtitle: subtitle, icon: .done)
-            let keyWindow = UIApplication.shared.connectedScenes.compactMap { ($0 as? UIWindowScene)?.keyWindow }.last
-            if let viewController = keyWindow?.rootViewController {
-                alertView.present(on: viewController.view)
+            if let keyWindow = UIApplication.shared.connectedScenes.compactMap({ $0 as? UIWindowScene }).first?.windows.first(where: \.isKeyWindow) {
+                if let viewController = keyWindow.rootViewController {
+                    alertView.present(on: viewController.view)
+                }
             }
             #if os(iOS)
-            let generator = UINotificationFeedbackGenerator()
-            generator.notificationOccurred(.success)
+            UINotificationFeedbackGenerator().notificationOccurred(.success)
             #endif
         }
     }
-	
+    
     func showErrorAlert(with title: String, subtitle: String) {
         DispatchQueue.main.async {
             let alertView = AlertAppleMusic17View(title: title, subtitle: subtitle, icon: .error)
-            let keyWindow = UIApplication.shared.connectedScenes.compactMap { ($0 as? UIWindowScene)?.keyWindow }.last
-            if let viewController = keyWindow?.rootViewController {
-                alertView.present(on: viewController.view)
+            if let keyWindow = UIApplication.shared.connectedScenes.compactMap({ $0 as? UIWindowScene }).first?.windows.first(where: \.isKeyWindow) {
+                if let viewController = keyWindow.rootViewController {
+                    alertView.present(on: viewController.view)
+                }
             }
             #if os(iOS)
-            let generator = UINotificationFeedbackGenerator()
-            generator.notificationOccurred(.error)
+            UINotificationFeedbackGenerator().notificationOccurred(.error)
             #endif
         }
     }
-	
+    
     func showErrorUIAlert(with title: String, subtitle: String) {
         DispatchQueue.main.async {
-            let keyWindow = UIApplication.shared.connectedScenes.compactMap { ($0 as? UIWindowScene)?.keyWindow }.last
-            if let rootViewController = keyWindow?.rootViewController {
+            if let keyWindow = UIApplication.shared.connectedScenes.compactMap({ $0 as? UIWindowScene }).first?.windows.first(where: \.isKeyWindow),
+               let rootViewController = keyWindow.rootViewController {
                 let alert = UIAlertController.error(title: title, message: subtitle, actions: [])
                 rootViewController.present(alert, animated: true)
             }
-			
+            
             #if os(iOS)
-            let generator = UINotificationFeedbackGenerator()
-            generator.notificationOccurred(.error)
+            UINotificationFeedbackGenerator().notificationOccurred(.error)
             #endif
         }
+    }
+    
+    private func getDocumentsDirectory() -> URL {
+        return FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
     }
 }
 
 extension UIAlertController {
     static func error(title: String, message: String, actions: [UIAlertAction]) -> UIAlertController {
         let alertController = UIAlertController(title: title, message: message, preferredStyle: .alert)
-		
+        
         alertController.addAction(UIAlertAction(title: String.localized("OK"), style: .cancel) { _ in
             alertController.dismiss(animated: true)
         })
 
-        for action in actions {
-            alertController.addAction(action)
-        }
+        actions.forEach { alertController.addAction($0) }
         #if os(iOS)
-        let generator = UINotificationFeedbackGenerator()
-        generator.notificationOccurred(.error)
+        UINotificationFeedbackGenerator().notificationOccurred(.error)
         #endif
         return alertController
     }
-	
+    
     static func coolAlert(title: String, message: String, actions: [UIAlertAction]) -> UIAlertController {
         let alertController = UIAlertController(title: title, message: message, preferredStyle: .alert)
 
-        for action in actions {
-            alertController.addAction(action)
-        }
+        actions.forEach { alertController.addAction($0) }
         #if os(iOS)
-        let generator = UINotificationFeedbackGenerator()
-        generator.notificationOccurred(.error)
+        UINotificationFeedbackGenerator().notificationOccurred(.error)
         #endif
         return alertController
     }
