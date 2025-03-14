@@ -13,7 +13,7 @@ class DisplayViewController: FRSTableViewController {
     let collectionData = ["Default", "Berry", "Mint", "Dr Pepper", "Cool Blue", "Fuchsia", "Purplish"]
     let collectionDataColors = ["848ef9", "ff7a83", "a6e3a1", "711f25", "4161F1", "FF00FF", "D7B4F3"]
     
-    enum CustomUserInterfaceStyle: Int {
+    enum CustomUserInterfaceStyle: Int, CaseIterable {
         case light
         case dark
         case red
