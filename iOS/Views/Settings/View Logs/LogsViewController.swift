@@ -8,49 +8,59 @@
 import UIKit
 
 class LogsViewController: UIViewController {
-    var tableView: UITableView!
+    private var tableView: UITableView!
     private var logTextView: UITextView!
     private var logFileObserver: DispatchSourceFileSystemObject?
     private var currentFileSize: UInt64 = 0
     private var errCount = 0
+    
+    enum Section: Int, CaseIterable {
+        case errorCount, actions
+    }
+    
+    enum ActionRow: Int {
+        case share, copy
+    }
     
     override func viewDidLoad() {
         super.viewDidLoad()
         setupNavigation()
         setupViews()
         startObservingLogFile()
+        loadInitialLogContents() // Moved inside viewDidLoad for better organization
     }
     
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
         parseLogFile()
-        tableView.reloadSections(IndexSet(integer: 0), with: .automatic)
+        tableView.reloadSections(IndexSet(integer: Section.errorCount.rawValue), with: .fade)
     }
     
-    fileprivate func setupNavigation() {
-        self.navigationItem.largeTitleDisplayMode = .never
+    private func setupNavigation() {
+        navigationItem.largeTitleDisplayMode = .never
+        title = String.localized("LOGS_VIEW_TITLE")
     }
     
-    fileprivate func setupViews() {
+    private func setupViews() {
         view.backgroundColor = .systemBackground
+        
         logTextView = UITextView()
         logTextView.isEditable = false
         logTextView.translatesAutoresizingMaskIntoConstraints = false
         logTextView.font = UIFont.monospacedSystemFont(ofSize: 10, weight: .regular)
         logTextView.textContainerInset = UIEdgeInsets(top: 0, left: 16, bottom: 0, right: 16)
+        logTextView.accessibilityLabel = String.localized("LOGS_TEXT_VIEW_ACCESSIBILITY_LABEL")
         view.addSubview(logTextView)
         
-        self.tableView = UITableView(frame: .zero, style: .insetGrouped)
-        self.tableView.translatesAutoresizingMaskIntoConstraints = false
-        self.tableView.dataSource = self
-        self.tableView.delegate = self
-        self.tableView.backgroundColor = .systemBackground
-        
-        self.tableView.layer.cornerRadius = 12
-        self.tableView.layer.cornerCurve = .continuous
-        self.tableView.layer.masksToBounds = true
-        
-        self.view.addSubview(tableView)
+        tableView = UITableView(frame: .zero, style: .insetGrouped)
+        tableView.translatesAutoresizingMaskIntoConstraints = false
+        tableView.dataSource = self
+        tableView.delegate = self
+        tableView.backgroundColor = .systemBackground
+        tableView.layer.cornerRadius = 12
+        tableView.layer.cornerCurve = .continuous
+        tableView.layer.masksToBounds = true
+        view.addSubview(tableView)
         
         NSLayoutConstraint.activate([
             logTextView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
@@ -63,33 +73,27 @@ class LogsViewController: UIViewController {
             tableView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             tableView.bottomAnchor.constraint(equalTo: view.bottomAnchor)
         ])
-        
-        tableView.estimatedRowHeight = 44.0
-        tableView.rowHeight = UITableView.automaticDimension
-        
-        loadInitialLogContents()
     }
     
     private func loadInitialLogContents() {
         let logFilePath = getDocumentsDirectory().appendingPathComponent("logs.txt")
-        
-        guard let fileHandle = try? FileHandle(forReadingFrom: logFilePath) else {
-            logTextView.text = String.localized("LOGS_VIEW_FAIL_DESCRIPTION")
-            return
+        do {
+            let data = try Data(contentsOf: logFilePath)
+            logTextView.text = String(data: data, encoding: .utf8) ?? String.localized("LOGS_FAILED_TO_LOAD")
+            currentFileSize = UInt64(data.count)
+        } catch {
+            logTextView.text = String.localized("LOGS_FAILED_TO_OPEN")
+            Debug.shared.log(message: "Failed to load initial log contents: \(error.localizedDescription)")
         }
-        defer { fileHandle.closeFile() }
-        
-        let data = fileHandle.readDataToEndOfFile()
-        logTextView.text = String(data: data, encoding: .utf8) ?? String.localized("LOGS_VIEW_FAIL_DESCRIPTION")
-        currentFileSize = UInt64(data.count)
     }
     
     private func startObservingLogFile() {
         let logFilePath = getDocumentsDirectory().appendingPathComponent("logs.txt").path
-        
         let fileDescriptor = open(logFilePath, O_EVTONLY)
-        if fileDescriptor == -1 {
-            Debug.shared.log(message: "Failed to open file for observation", type: .error)
+        
+        guard fileDescriptor != -1 else {
+            logTextView.text.append("\n" + String.localized("LOGS_OBSERVATION_FAILED"))
+            Debug.shared.log(message: "Failed to open file for observation")
             return
         }
         
@@ -106,32 +110,23 @@ class LogsViewController: UIViewController {
     
     private func loadNewLogContents() {
         let logFilePath = getDocumentsDirectory().appendingPathComponent("logs.txt")
-        
         guard let fileHandle = try? FileHandle(forReadingFrom: logFilePath) else {
-            logTextView.text.append("\n" + String.localized("LOGS_VIEW_FAIL_DESCRIPTION"))
+            logTextView.text.append("\n" + String.localized("LOGS_READ_FAILED"))
             return
         }
-        defer { fileHandle.closeFile() }
         
         fileHandle.seek(toFileOffset: currentFileSize)
-        
         let newData = fileHandle.readDataToEndOfFile()
-        if let newContent = String(data: newData, encoding: .utf8) {
+        if let newContent = String(data: newData, encoding: .utf8), !newContent.isEmpty {
             logTextView.text.append(newContent)
-            let range = NSMakeRange(logTextView.text.count - 1, 0)
-            logTextView.scrollRangeToVisible(range)
             scrollToBottom()
         }
-        
         currentFileSize += UInt64(newData.count)
-    }
-    
-    deinit {
-        logFileObserver?.cancel()
+        fileHandle.closeFile()
     }
     
     private func scrollToBottom() {
-        let bottomRange = NSMakeRange(logTextView.text.count - 1, 1)
+        let bottomRange = NSRange(location: max(0, logTextView.text.count - 1), length: 1)
         logTextView.scrollRangeToVisible(bottomRange)
     }
     
@@ -139,93 +134,159 @@ class LogsViewController: UIViewController {
         let logFilePath = getDocumentsDirectory().appendingPathComponent("logs.txt")
         do {
             let logContents = try String(contentsOf: logFilePath)
-            errCount = logContents.components(separatedBy: .newlines)
-                .filter { $0.contains("🔍") || $0.contains("⚠️") || $0.contains("❌") || $0.contains("🔥") }
-                .count
-
+            let logEntries = logContents.components(separatedBy: .newlines)
+            
+            errCount = logEntries.reduce(0) { count, entry in
+                count + (entry.contains("ð") || entry.contains("â ï¸") || entry.contains("â") || entry.contains("ð¥") ? 1 : 0)
+            }
         } catch {
-            Debug.shared.log(message: "Error reading log file: \(error)", type: .error)
-            logTextView.text = "Error reading log file: \(error.localizedDescription)"
+            Debug.shared.log(message: "Error parsing log file: \(error.localizedDescription)")
+            logTextView.text.append("\n" + String.localized("LOGS_PARSE_ERROR", arguments: [error.localizedDescription]))
         }
+    }
+    
+    deinit {
+        logFileObserver?.cancel()
     }
 }
 
+// MARK: - UITableView DataSource and Delegate
 extension LogsViewController: UITableViewDataSource, UITableViewDelegate {
-    func numberOfSections(in tableView: UITableView) -> Int { return 2 }
-    func tableView(_ tableView: UITableView, heightForFooterInSection section: Int) -> CGFloat { return 0 }
+    func numberOfSections(in tableView: UITableView) -> Int {
+        return Section.allCases.count
+    }
+    
+    func tableView(_ tableView: UITableView, heightForFooterInSection section: Int) -> CGFloat {
+        return 0
+    }
     
     func tableView(_ tableView: UITableView, viewForFooterInSection section: Int) -> UIView? {
-        let headerView = InsetGroupedSectionHeader(title: "")
-        return headerView
+        return InsetGroupedSectionHeader(title: "")
     }
-
+    
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        switch section {
-        case 0: return 1
-        case 1: return 2
-        default:
-            return 0
+        switch Section(rawValue: section) {
+        case .errorCount: return 1
+        case .actions: return 2
+        case .none: return 0
         }
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let reuseIdentifier = "Cell"
-        let cell = UITableViewCell(style: .value1, reuseIdentifier: reuseIdentifier)
-        cell.accessoryType = .none
+        let cell = UITableViewCell(style: .value1, reuseIdentifier: "Cell")
         cell.selectionStyle = .none
-
-        switch (indexPath.section, indexPath.row) {
-        case (0, 0):
+        
+        switch Section(rawValue: indexPath.section) {
+        case .errorCount:
             cell.textLabel?.text = String.localized("LOGS_VIEW_SECTION_TITLE_ERROR", arguments: ["\(errCount)"])
             cell.textLabel?.textColor = .white
             cell.textLabel?.font = .boldSystemFont(ofSize: 14)
             cell.backgroundColor = .systemRed
-        case (1, 0):
+            cell.accessibilityLabel = String.localized("LOGS_ERROR_COUNT_ACCESSIBILITY", arguments: ["\(errCount)"])
+            
+        case .actions:
+            configureActionCell(cell, for: indexPath.row)
+            
+        case .none:
+            break
+        }
+        
+        cell.textLabel?.adjustsFontForContentSizeCategory = true
+        return cell
+    }
+    
+    private func configureActionCell(_ cell: UITableViewCell, for row: Int) {
+        guard let actionRow = ActionRow(rawValue: row) else { return }
+
+        switch actionRow {
+        case .share:
             cell.textLabel?.text = String.localized("LOGS_VIEW_SECTION_TITLE_SHARE")
             cell.textLabel?.textColor = .tintColor
             cell.selectionStyle = .default
             cell.setAccessoryIcon(with: "square.and.arrow.up")
-        case (1, 1):
+            cell.accessibilityLabel = String.localized("LOGS_SHARE_ACCESSIBILITY")
+            cell.accessibilityHint = String.localized("LOGS_SHARE_ACCESSIBILITY_HINT")
+            
+        case .copy:
             cell.textLabel?.text = String.localized("LOGS_VIEW_SECTION_TITLE_COPY")
             cell.textLabel?.textColor = .tintColor
             cell.selectionStyle = .default
             cell.setAccessoryIcon(with: "arrow.up.right")
-        default:
-            print("Unhandled cell configuration")
+            cell.accessibilityLabel = String.localized("LOGS_COPY_ACCESSIBILITY")
+            cell.accessibilityHint = String.localized("LOGS_COPY_ACCESSIBILITY_HINT")
         }
-        
-        return cell
     }
-
+    
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        switch (indexPath.section, indexPath.row) {
-        case (1, 0):
-            let logFilePath = getDocumentsDirectory().appendingPathComponent("logs.txt")
-            let activityVC = UIActivityViewController(activityItems: [logFilePath], applicationActivities: nil)
-            
-            if let sheet = activityVC.sheetPresentationController {
-                sheet.detents = [.medium()]
-                sheet.prefersGrabberVisible = true
-            }
-            
-            present(activityVC, animated: true)
-        case (1, 1):
-            let logFilePath = getDocumentsDirectory().appendingPathComponent("logs.txt")
-            
-            do {
-                let logContents = try String(contentsOf: logFilePath, encoding: .utf8)
-                UIPasteboard.general.string = logContents
-                let alert = UIAlertController(title: String.localized("ALERT_COPIED"), message: String.localized("LOGS_VIEW_SUCCESS_DESCRIPTION"), preferredStyle: .alert)
-                alert.addAction(UIAlertAction(title: String.localized("OK"), style: .default))
-                present(alert, animated: true)
-            } catch {
-                let alert = UIAlertController(title: String.localized("ALERT_ERROR"), message: String.localized("LOGS_VIEW_FAIL_DESCRIPTION"), preferredStyle: .alert)
-                alert.addAction(UIAlertAction(title: String.localized("OK"), style: .default))
-                present(alert, animated: true)
-            }
+        tableView.deselectRow(at: indexPath, animated: true)
+        
+        switch (Section(rawValue: indexPath.section), ActionRow(rawValue: indexPath.row)) {
+        case (.actions, .share):
+            shareLogs()
+        case (.actions, .copy):
+            copyLogs()
         default:
             break
         }
-        tableView.deselectRow(at: indexPath, animated: true)
+    }
+    
+    private func shareLogs() {
+        let logFilePath = getDocumentsDirectory().appendingPathComponent("logs.txt")
+        let activityVC = UIActivityViewController(activityItems: [logFilePath], applicationActivities: nil)
+        
+        if let sheet = activityVC.sheetPresentationController {
+            sheet.detents = [.medium()]
+            sheet.prefersGrabberVisible = true
+        }
+        
+        present(activityVC, animated: true)
+    }
+    
+    private func copyLogs() {
+        let logFilePath = getDocumentsDirectory().appendingPathComponent("logs.txt")
+        do {
+            let logContents = try String(contentsOf: logFilePath, encoding: .utf8)
+            UIPasteboard.general.string = logContents
+            showAlert(title: String.localized("ALERT_COPIED"), message: String.localized("LOGS_VIEW_SUCCESS_DESCRIPTION"))
+        } catch {
+            showAlert(title: String.localized("ALERT_ERROR"), message: String.localized("LOGS_VIEW_ERROR_DESCRIPTION", arguments: [error.localizedDescription]))
+        }
+    }
+    
+    private func showAlert(title: String, message: String) {
+        let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: String.localized("OK"), style: .default))
+        present(alert, animated: true)
+    }
+}
+
+// Placeholder for missing utilities (ensure these are defined elsewhere)
+func getDocumentsDirectory() -> URL {
+    FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+}
+
+extension UITableViewCell {
+    func setAccessoryIcon(with systemName: String) {
+        accessoryView = UIImageView(image: UIImage(systemName: systemName))
+    }
+}
+
+class InsetGroupedSectionHeader: UIView {
+    private var titleLabel: UILabel?
+    
+    init(title: String) {
+        super.init(frame: .zero)
+        titleLabel = UILabel()
+        titleLabel?.text = title
+        titleLabel?.translatesAutoresizingMaskIntoConstraints = false
+        addSubview(titleLabel!)
+        NSLayoutConstraint.activate([
+            titleLabel!.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 16),
+            titleLabel!.centerYAnchor.constraint(equalTo: centerYAnchor)
+        ])
+    }
+    
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
     }
 }
