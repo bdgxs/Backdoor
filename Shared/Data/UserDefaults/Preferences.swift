@@ -78,6 +78,43 @@ enum Preferences {
     
     @Storage(key: "SortOptionAscending", defaultValue: true)
     static var currentSortOptionAscending: Bool
+    
+    // New method to load all preferences
+    static func load() {
+        // Since you're using custom @Storage and @CodableStorage properties, 
+        // these are automatically managed, but we can still ensure they're loaded:
+        
+        // Forcing a read for each property will ensure it's loaded from storage if it hasn't been yet.
+        _ = onlinePath
+        _ = userSelectedServer
+        _ = defaultRepos
+        _ = appUpdates
+        _ = gotSSLCerts
+        _ = bDefaultRepos
+        _ = preferredInterfaceStyle
+        _ = appTintColor
+        _ = isOnboardingActive
+        _ = selectedCert
+        _ = pPQCheckString
+        _ = certificateTitleAppIDtoTeamID
+        _ = appDescriptionAppearence
+        _ = preferredLanguageCode
+        _ = beta
+        _ = currentSortOption
+        _ = currentSortOptionAscending
+        
+        // If you want to manually check and set values (not needed if @Storage works correctly):
+        // let userDefaults = UserDefaults.standard
+        // if let storedTintColor = userDefaults.data(forKey: "Feather.AppTintColor") {
+        //     do {
+        //         let color = try JSONDecoder().decode(CodableColor.self, from: storedTintColor)
+        //         appTintColor = color
+        //     } catch {
+        //         print("Failed to decode tint color: \(error)")
+        //     }
+        // }
+        // And so on for each property...
+    }
 }
 
 // MARK: - Callbacks
