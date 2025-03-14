@@ -1,10 +1,3 @@
-//
-//  LogsViewController.swift
-//  feather
-//
-//  Created by samara on 22.10.2024.
-//
-
 import UIKit
 
 class LogsViewController: UIViewController {
@@ -137,7 +130,7 @@ class LogsViewController: UIViewController {
             let logEntries = logContents.components(separatedBy: .newlines)
             
             errCount = logEntries.reduce(0) { count, entry in
-                count + (entry.contains("ð") || entry.contains("â ï¸") || entry.contains("â") || entry.contains("ð¥") ? 1 : 0)
+                count + (entry.contains("🔍") || entry.contains("⚠️") || entry.contains("❌") || entry.contains("🔥") ? 1 : 0)
             }
         } catch {
             Debug.shared.log(message: "Error parsing log file: \(error.localizedDescription)")
@@ -268,25 +261,5 @@ func getDocumentsDirectory() -> URL {
 extension UITableViewCell {
     func setAccessoryIcon(with systemName: String) {
         accessoryView = UIImageView(image: UIImage(systemName: systemName))
-    }
-}
-
-class InsetGroupedSectionHeader: UIView {
-    private var titleLabel: UILabel?
-    
-    init(title: String) {
-        super.init(frame: .zero)
-        titleLabel = UILabel()
-        titleLabel?.text = title
-        titleLabel?.translatesAutoresizingMaskIntoConstraints = false
-        addSubview(titleLabel!)
-        NSLayoutConstraint.activate([
-            titleLabel!.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 16),
-            titleLabel!.centerYAnchor.constraint(equalTo: centerYAnchor)
-        ])
-    }
-    
-    required init?(coder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
     }
 }
