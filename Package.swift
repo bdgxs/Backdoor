@@ -36,7 +36,7 @@ let package = Package(
         .package(url: "https://github.com/apple/swift-crypto", from: "2.0.0"),
         .package(url: "https://github.com/apple/swift-system", from: "1.0.0"),
         .package(url: "https://github.com/ZipArchive/ZipArchive", from: "2.0.0"),
-        .package(url: "https://github.com/marmelroy/Zip", from: "2.0.0"),
+        .package(url: "https://github.com/marmelroy/Zip", from: "2.1.2"),
         .package(url: "https://github.com/SammySmallman/BitByteData", from: "2.0.0"),
         .package(url: "https://github.com/alexsteinerde/SwiftLMDB", from: "0.9.7"),
         .package(url: "https://github.com/tsolomko/SWCompression", from: "4.6.0"),
