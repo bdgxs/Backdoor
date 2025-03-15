@@ -1,10 +1,9 @@
 import UIKit
 import ZIPFoundation
 
-class HomeViewController: UIViewController {
-
+class HomeViewController: UIViewController, UITableViewDelegate, UITableViewDataSource, UIDocumentPickerViewControllerDelegate {
+    
     // MARK: - Properties
-
     private var ipaPath: String = ""
     private var fileList: [String] = []
     private let fileManager = FileManager.default
@@ -33,7 +32,6 @@ class HomeViewController: UIViewController {
     }()
 
     // MARK: - Lifecycle
-
     override func viewDidLoad() {
         super.viewDidLoad()
         setupUI()
@@ -42,7 +40,6 @@ class HomeViewController: UIViewController {
     }
 
     // MARK: - UI Setup
-
     private func setupUI() {
         view.backgroundColor = .white
 
@@ -70,9 +67,8 @@ class HomeViewController: UIViewController {
     }
 
     // MARK: - Actions
-
     @objc private func selectIPAButtonTapped() {
-        let documentPicker = UIDocumentPickerViewController(forOpeningContentTypes: [.ipa], asCopy: true)
+        let documentPicker = UIDocumentPickerViewController(forOpeningContentTypes: [.data], asCopy: true)
         documentPicker.delegate = self
         documentPicker.modalPresentationStyle = .formSheet
         present(documentPicker, animated: true, completion: nil)
@@ -83,7 +79,6 @@ class HomeViewController: UIViewController {
     }
 
     // MARK: - ZIP Handling
-
     private func listFiles() {
         guard !ipaPath.isEmpty else {
             print("Please select an IPA file first.")
@@ -92,9 +87,7 @@ class HomeViewController: UIViewController {
 
         do {
             let zipFilePath = URL(fileURLWithPath: ipaPath)
-
             let destinationURL = try fileManager.url(for: .documentDirectory, in: .userDomainMask, appropriateFor: nil, create: true).appendingPathComponent("extracted")
-
 
             // Check if destination directory exists, create if necessary
             if !fileManager.fileExists(atPath: destinationURL.path) {
@@ -105,7 +98,7 @@ class HomeViewController: UIViewController {
 
             for entry in archive {
                 var destination = destinationURL.appendingPathComponent(entry.path)
-                if entry.isDirectory {
+                if entry.type == .directory {
                     try fileManager.createDirectory(at: destination, withIntermediateDirectories: true, attributes: nil)
                 } else {
                     try archive.extract(entry, to: destination)
@@ -113,22 +106,17 @@ class HomeViewController: UIViewController {
                 print("Extracted \(entry.path)")
             }
 
-
-
             // List files after extraction
-             let contents = try fileManager.contentsOfDirectory(atPath: destinationURL.path)
-             fileList = contents
-             fileListTableView.reloadData() // Reload the table view to display the files
+            let contents = try fileManager.contentsOfDirectory(atPath: destinationURL.path)
+            fileList = contents
+            fileListTableView.reloadData() // Reload the table view to display the files
 
         } catch {
             print("Extraction failed with error: \(error)")
         }
     }
-}
 
-// MARK: - UIDocumentPickerViewControllerDelegate
-
-extension HomeViewController: UIDocumentPickerViewControllerDelegate {
+    // MARK: - UIDocumentPickerViewControllerDelegate
     func documentPicker(_ controller: UIDocumentPickerViewController, didPickDocumentsAt urls: [URL]) {
         guard let selectedFileURL = urls.first else {
             return
@@ -136,11 +124,8 @@ extension HomeViewController: UIDocumentPickerViewControllerDelegate {
         ipaPath = selectedFileURL.path
         print("Selected IPA: \(ipaPath)")
     }
-}
 
-// MARK: - UITableViewDelegate, UITableViewDataSource
-
-extension HomeViewController: UITableViewDelegate, UITableViewDataSource {
+    // MARK: - UITableViewDelegate, UITableViewDataSource
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         return fileList.count
     }
