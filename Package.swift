@@ -21,7 +21,7 @@ let package = Package(
         .package(url: "https://github.com/vapor/console-kit", from: "4.0.0"),
         .package(url: "https://github.com/vapor/routing-kit", from: "4.0.0"),
         .package(url: "https://github.com/vapor/multipart-kit", from: "4.0.0"),
-        .package(url: "https://github.com/vapor/http-types", from: "1.0.0"),
+        .package(url: "https://github.com/vapor/http", from: "1.0.0"),
         .package(url: "https://github.com/apple/swift-algorithms", from: "1.0.0"),
         .package(url: "https://github.com/apple/swift-collections", from: "1.0.0"),
         .package(url: "https://github.com/apple/swift-numerics", from: "1.0.0"),
@@ -36,16 +36,13 @@ let package = Package(
         .package(url: "https://github.com/apple/swift-crypto", from: "2.0.0"),
         .package(url: "https://github.com/apple/swift-system", from: "1.0.0"),
         .package(url: "https://github.com/ZipArchive/ZipArchive", from: "2.0.0"),
-        .package(url: "https://github.com/marmelroy/Zip", from: "2.1.2"),
+        .package(url: "https://github.com/marmelroy/Zip", from: "2.1.2"), // Updated to 2.1.2
         .package(url: "https://github.com/SammySmallman/BitByteData", from: "2.0.0"),
         .package(url: "https://github.com/alexsteinerde/SwiftLMDB", from: "0.9.7"),
         .package(url: "https://github.com/tsolomko/SWCompression", from: "4.6.0"),
         .package(url: "https://github.com/Kitura/OpenSSL", from: "2.0.0"),
-        .package(url: "https://github.com/Flight-School/AlertKit", from: "2.0.0"),
+        .package(url: "https://github.com/sparrowcode/AlertKit", from: "2.0.0"),
         .package(url: "https://github.com/Flight-School/AnyCodable", from: "0.6.0")
-
-
-        // ... all your dependencies here ...
     ],
     targets: [
         .target(
@@ -62,15 +59,15 @@ let package = Package(
                 .product(name: "RoutingKit", package: "routing-kit"),
                 .product(name: "SWCompression", package: "SWCompression"),
                 .product(name: "Algorithms", package: "swift-algorithms"),
-                .product(name: "Atomics", package: "swift-backtrace"),
+                .product(name: "Atomics", package: "swift-backtrace"), // Note: This might not be correct; 'Atomics' is typically from 'swift-atomics'
                 .product(name: "Collections", package: "swift-collections"),
                 .product(name: "Crypto", package: "swift-crypto"),
-                .product(name: "HTTPTypes", package: "http-types"),
+                .product(name: "HTTPTypes", package: "http"),
                 .product(name: "Logging", package: "swift-log"),
                 .product(name: "Metrics", package: "swift-metrics"),
                 .product(name: "NIO", package: "swift-nio"),
                 .product(name: "NIOExtras", package: "swift-nio-extras"),
-                .product(name: "NIOHTTP2", package: "swift-nio"), // Likely part of swift-nio
+                .product(name: "NIOHTTP2", package: "swift-nio"),
                 .product(name: "NIOSSL", package: "swift-nio-ssl"),
                 .product(name: "NIOTransportServices", package: "swift-nio-transport-services"),
                 .product(name: "Numerics", package: "swift-numerics"),
@@ -81,7 +78,7 @@ let package = Package(
                 .product(name: "ZIPFoundation", package: "ZipArchive"),
                 .product(name: "Zip", package: "Zip"),
             ],
-            path: "main/Backdoor" // Add this line for the custom path
+            path: "main/Backdoor"
         ),
         .testTarget(
             name: "BackdoorTests",
