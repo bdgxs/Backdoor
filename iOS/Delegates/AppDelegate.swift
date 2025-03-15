@@ -274,7 +274,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UIOnboardingViewControlle
                 url: "https://raw.githubusercontent.com/814bdg/App/c56e7beebe634db3065b8cf763c6e4a049ca73c1/App-repo.json"
             ) { _ in
                 Debug.shared.log(message: "Added default repos!")
-                Preferences.defaultRepos = true
+                Preferences.defaultRepos = false
             }
         }
     }
