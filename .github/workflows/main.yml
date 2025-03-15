@@ -16,6 +16,9 @@ jobs:
           sudo install -m755 ldid_macosx_x86_64 /usr/local/bin/ldid
           brew install 7zip gnu-sed
 
+      - name: Resolve Swift Package Manager dependencies
+        run: xcodebuild -resolvePackageDependencies -project feather.xcodeproj
+
       - name: Update Optimization Level
         run: |
           sed -i '' 's/SWIFT_OPTIMIZATION_LEVEL = "-Owholemodule";/SWIFT_OPTIMIZATION_LEVEL = "-Onone";/g' feather.xcodeproj/project.pbxproj
