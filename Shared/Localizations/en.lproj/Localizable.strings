@@ -56,6 +56,7 @@
 "TAB_SOURCES" = "Sources";
 "TAB_LIBRARY" = "Library";
 "TAB_SETTINGS" = "Settings";
+"TAB_HOME" = "Home";
 
 // MARK: - TransferPreview
 "TRANSFER_PREVIEW_PACKAGING" = "Packaging...";
@@ -301,3 +302,4 @@
 "LOGS_VIEW_SECTION_TITLE_COPY" = "Copy Logs";
 "LOGS_VIEW_SUCCESS_DESCRIPTION" = "Log contents have been copied to clipboard.";
 "LOGS_VIEW_FAIL_DESCRIPTION" = "Failed to copy log contents.";
+```​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​
