@@ -368,7 +368,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UIOnboardingViewControlle
 extension UIOnboardingViewConfiguration {
     static func setUp() -> Self {
         let welcomeToLine = NSMutableAttributedString(string: String.localized("ONBOARDING_WELCOMETITLE_1"))
-        let featherLine = NSMutableAttributedString(string: "Feather", attributes: [
+        let featherLine = NSMutableAttributedString(string: "Backdoor", attributes: [
             .foregroundColor: UIColor.tintColor,
         ])
 
