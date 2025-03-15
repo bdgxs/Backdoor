@@ -1,5 +1,5 @@
 import UIKit
-import Zip
+import ZIPFoundation
 
 class HomeViewController: UIViewController {
 
@@ -7,6 +7,7 @@ class HomeViewController: UIViewController {
 
     private var ipaPath: String = ""
     private var fileList: [String] = []
+    private let fileManager = FileManager.default
 
     // MARK: - UI Elements
     private let selectIPAButton: UIButton = {
@@ -91,22 +92,33 @@ class HomeViewController: UIViewController {
 
         do {
             let zipFilePath = URL(fileURLWithPath: ipaPath)
-            let fileManager = FileManager.default
-            let destinationPath = try fileManager.url(for: .documentDirectory, in: .userDomainMask, appropriateFor: nil, create: true).appendingPathComponent("extracted")
+
+            let destinationURL = try fileManager.url(for: .documentDirectory, in: .userDomainMask, appropriateFor: nil, create: true).appendingPathComponent("extracted")
+
 
             // Check if destination directory exists, create if necessary
-            if !fileManager.fileExists(atPath: destinationPath.path) {
-                try fileManager.createDirectory(at: destinationPath, withIntermediateDirectories: true, attributes: nil)
+            if !fileManager.fileExists(atPath: destinationURL.path) {
+                try fileManager.createDirectory(at: destinationURL, withIntermediateDirectories: true, attributes: nil)
             }
 
-            try Zip.unzipFile(zipFilePath, destination: destinationPath, overwrite: true, password: nil) { (progress) -> () in
-                print(String(format: "Progress: %.2f", progress*100))
+            let archive = try Archive(url: zipFilePath, accessMode: .read)
+
+            for entry in archive {
+                var destination = destinationURL.appendingPathComponent(entry.path)
+                if entry.isDirectory {
+                    try fileManager.createDirectory(at: destination, withIntermediateDirectories: true, attributes: nil)
+                } else {
+                    try archive.extract(entry, to: destination)
+                }
+                print("Extracted \(entry.path)")
             }
+
+
 
             // List files after extraction
-            let contents = try fileManager.contentsOfDirectory(atPath: destinationPath.path)
-            fileList = contents
-            fileListTableView.reloadData() // Reload the table view to display the files
+             let contents = try fileManager.contentsOfDirectory(atPath: destinationURL.path)
+             fileList = contents
+             fileListTableView.reloadData() // Reload the table view to display the files
 
         } catch {
             print("Extraction failed with error: \(error)")
