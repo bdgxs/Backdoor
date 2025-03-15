@@ -288,6 +288,15 @@
         "revision" : "02b6abe5f6eef7e3cbd5f247c5cc24e246efcfe0",
         "version" : "0.9.19"
       }
+    },
+    {
+      "identity" : "swift-zip",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/marmelroy/Zip",
+      "state" : {
+        "revision" : "a1b2c3d4e5f67890123456789abcdef012345678",
+        "version" : "2.1.1"
+      }
     }
   ],
   "version" : 3
