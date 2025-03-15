@@ -17,14 +17,14 @@ jobs:
           brew install 7zip gnu-sed
 
       - name: Resolve Swift Package Manager dependencies
-        run: xcodebuild -resolvePackageDependencies -project feather.xcodeproj
+        run: swift package resolve
 
       - name: Update Optimization Level
         run: |
           sed -i '' 's/SWIFT_OPTIMIZATION_LEVEL = "-Owholemodule";/SWIFT_OPTIMIZATION_LEVEL = "-Onone";/g' feather.xcodeproj/project.pbxproj
           sed -i '' 's/SWIFT_OPTIMIZATION_LEVEL = "-O";/SWIFT_OPTIMIZATION_LEVEL = "-Onone";/g' feather.xcodeproj/project.pbxproj
 
-      - name: Compile f
+      - name: Compile
         run: | 
           mkdir upload
           make package SCHEME="'feather (Release)'"
