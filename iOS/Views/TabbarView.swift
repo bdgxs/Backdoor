@@ -1,11 +1,3 @@
-//
-//  TabbarController.swift
-//  feather
-//
-//  Created by samara on 5/17/24.
-//  Copyright (c) 2024 Samara M (khcrysalis)
-//
-
 import SwiftUI
 
 struct TabbarView: View {
@@ -93,7 +85,7 @@ struct NavigationViewController<Content: UIViewController>: UIViewControllerRepr
     func updateUIViewController(_ uiViewController: UINavigationController, context: Context) {}
 }
 
-// Assuming HomeViewController exists or will be created
+// Assuming HomeViewController exists and has the necessary implementation
 class HomeViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
