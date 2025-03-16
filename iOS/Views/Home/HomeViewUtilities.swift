@@ -5,11 +5,11 @@ extension HomeViewController {
         let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
         let action = UIAlertAction(title: buttonTitle, style: .default, handler: handler)
         alert.addAction(action)
-        
+
         if handler != nil {
             alert.addAction(UIAlertAction(title: "Cancel", style: .cancel, handler: nil))
         }
-        
+
         present(alert, animated: true, completion: nil)
     }
 
