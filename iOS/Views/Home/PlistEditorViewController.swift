@@ -1,7 +1,7 @@
 import UIKit
 
-class PlistEditorViewController: UIViewController {
-    private let fileURL: URL
+class TextEditorViewController: UIViewController {
+    private var fileURL: URL
     private var textView: UITextView!
     private var toolbar: UIToolbar!
     private var hasUnsavedChanges = false
@@ -59,7 +59,7 @@ class PlistEditorViewController: UIViewController {
             textView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
             textView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             textView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            textView.bottomAnchor.constraint.equalTo(toolbar.topAnchor),
+            textView.bottomAnchor.constraint(equalTo: toolbar.topAnchor),
 
             toolbar.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             toolbar.trailingAnchor.constraint(equalTo: view.trailingAnchor),
@@ -70,26 +70,23 @@ class PlistEditorViewController: UIViewController {
     private func loadFileContent() {
         DispatchQueue.global(qos: .userInitiated).async {
             do {
-                let data = try Data(contentsOf: self.fileURL)
-                if let plist = try PropertyListSerialization.propertyList(from: data, options: [], format: nil) as? [String: Any] {
-                    DispatchQueue.main.async {
-                        self.textView.text = self.convertPlistToString(plist: plist)
-                    }
+                let fileContent = try String(contentsOf: self.fileURL)
+                DispatchQueue.main.async {
+                    self.textView.text = fileContent
                 }
             } catch {
                 DispatchQueue.main.async {
-                    self.presentAlert(title: "Error", message: "Failed to load plist content: \(error.localizedDescription)")
+                    self.presentAlert(title: "Error", message: "Failed to load file content: \(error.localizedDescription)")
                 }
             }
         }
     }
 
     @objc private func saveChanges() {
-        guard let plistString = textView.text else { return }
-        let plistData = plistString.data(using: .utf8)!
+        guard let newText = textView.text else { return }
         DispatchQueue.global(qos: .userInitiated).async {
             do {
-                try plistData.write(to: self.fileURL)
+                try newText.write(to: self.fileURL, atomically: true, encoding: .utf8)
                 self.hasUnsavedChanges = false
                 DispatchQueue.main.async {
                     self.presentAlert(title: "Success", message: "File saved successfully.")
@@ -164,12 +161,6 @@ class PlistEditorViewController: UIViewController {
         }
     }
 
-    private func convertPlistToString(plist: [String: Any]) -> String {
-        // Convert the plist dictionary to a readable string format
-        // This is a placeholder implementation; you can customize this method to format the plist as needed
-        return plist.description
-    }
-
     private func presentAlert(title: String, message: String) {
         let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
         alert.addAction(UIAlertAction(title: "OK", style: .default, handler: nil))
@@ -177,7 +168,7 @@ class PlistEditorViewController: UIViewController {
     }
 }
 
-extension PlistEditorViewController: UITextViewDelegate {
+extension TextEditorViewController: UITextViewDelegate {
     func textViewDidChange(_ textView: UITextView) {
         hasUnsavedChanges = true
     }
