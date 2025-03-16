@@ -91,7 +91,7 @@ class HomeViewController: UIViewController, UIDocumentPickerDelegate, UISearchRe
             } catch {
                 DispatchQueue.main.async {
                     self?.activityIndicator.stopAnimating()
-                    self?.handleError(error, withTitle: "Loading Files")
+                    self?.utilities.handleError(in: self!, error: error, withTitle: "Loading Files")
                 }
             }
         }
@@ -127,11 +127,11 @@ class HomeViewController: UIViewController, UIDocumentPickerDelegate, UISearchRe
                 case "Select": self.selectFiles()
                 case "Import": self.fileHandlers.importFile(viewController: self)
                 case "New Folder": 
-                    self.showInputAlert(title: "New Folder", message: "Enter folder name", actionTitle: "Create") { folderName in
+                    self.utilities.showInputAlert(in: self, title: "New Folder", message: "Enter folder name", actionTitle: "Create") { folderName in
                         self.fileHandlers.createNewFolder(viewController: self, folderName: folderName)
                     }
                 case "New File": 
-                    self.showInputAlert(title: "New File", message: "Enter file name", actionTitle: "Create") { fileName in
+                    self.utilities.showInputAlert(in: self, title: "New File", message: "Enter file name", actionTitle: "Create") { fileName in
                         self.fileHandlers.createNewFile(viewController: self, fileName: fileName)
                     }
                 default: break
@@ -171,7 +171,7 @@ class HomeViewController: UIViewController, UIDocumentPickerDelegate, UISearchRe
         do {
             try fileManager.createDirectory(at: directory, withIntermediateDirectories: true, attributes: nil)
         } catch {
-            handleError(error, withTitle: "Creating Files Directory")
+            utilities.handleError(in: self, error: error, withTitle: "Creating Files Directory")
         }
     }
     
@@ -216,38 +216,5 @@ class HomeViewController: UIViewController, UIDocumentPickerDelegate, UISearchRe
     
     func tableView(_ tableView: UITableView, dropSessionDidUpdate session: UIDropSession, withDestinationIndexPath destinationIndexPath: IndexPath?) -> UITableViewDropProposal {
         return UITableViewDropProposal(operation: .copy, intent: .insertAtDestinationIndexPath)
-    }
-}
-
-// Extension methods for HomeViewController
-extension HomeViewController {
-    func presentAlert(title: String, message: String, buttonTitle: String = "OK", handler: ((UIAlertAction) -> Void)? = nil) {
-        let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
-        let action = UIAlertAction(title: buttonTitle, style: .default, handler: handler)
-        alert.addAction(action)
-
-        if handler != nil {
-            alert.addAction(UIAlertAction(title: "Cancel", style: .cancel, handler: nil))
-        }
-
-        present(alert, animated: true, completion: nil)
-    }
-
-    func showInputAlert(title: String, message: String, actionTitle: String, initialText: String = "", completion: @escaping (String) -> Void) {
-        let alertController = UIAlertController(title: title, message: message, preferredStyle: .alert)
-        alertController.addTextField { textField in
-            textField.text = initialText
-        }
-        let confirmAction = UIAlertAction(title: actionTitle, style: .default) { [weak alertController] _ in
-            guard let textField = alertController?.textFields?.first, let text = textField.text else { return }
-            completion(text)
-        }
-        alertController.addAction(confirmAction)
-        alertController.addAction(UIAlertAction(title: "Cancel", style: .cancel, handler: nil))
-        present(alertController, animated: true, completion: nil)
-    }
-
-    func handleError(_ error: Error, withTitle title: String = "Error") {
-        presentAlert(title: title, message: "An error occurred: \(error.localizedDescription)")
     }
 }
