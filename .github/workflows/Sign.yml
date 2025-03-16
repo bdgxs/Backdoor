@@ -1,0 +1,56 @@
+name: Sign IPA
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  sign-ipa:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v2
+      with:
+        node-version: '14'
+
+    - name: Install dependencies
+      run: npm install axios form-data
+
+    - name: Run sign script
+      env:
+        P12_PASSWORD: ${{ secrets.P12_PASSWORD }}
+      run: |
+        node <<'EOF'
+        const axios = require('axios');
+        const FormData = require('form-data');
+        const fs = require('fs');
+
+        const form = new FormData();
+        form.append('ipa', fs.createReadStream('certificates/app.ipa'));
+        form.append('p12', fs.createReadStream('certificates/certificate.p12'));
+        form.append('mobileprovision', fs.createReadStream('certificates/profile.mobileprovision'));
+        form.append('p12_password', process.env.P12_PASSWORD);
+        form.append('save_cert', 'on'); // Set to 'on' to save certificates
+
+        axios.post('https://api.ipasign.pro/sign', form, {
+            headers: form.getHeaders()
+        })
+        .then(response => {
+            console.log('Install Link:', response.data.installLink);
+        })
+        .catch(error => {
+            console.error('Error:', error.response ? error.response.data : error.message);
+        });
+        EOF
+
+    - name: Upload signed IPA
+      uses: actions/upload-artifact@v2
+      with:
+        name: signed-ipa
+        path: certificates/signed/app.ipa
