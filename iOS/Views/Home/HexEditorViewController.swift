@@ -1,6 +1,6 @@
 import UIKit
 
-class HexEditorViewController: UIViewController {
+class HexEditorViewController: UIViewController, UITextViewDelegate {
     private let fileURL: URL
     private var textView: UITextView!
     private var toolbar: UIToolbar!
@@ -112,12 +112,12 @@ class HexEditorViewController: UIViewController {
     }
 
     @objc private func promptFindReplace() {
-        let alert = UIAlertController(title: "Find and Replace", message: "Enter hex value to find and replace:", preferredStyle: .alert)
+        let alert = UIAlertController(title: "Find and Replace", message: "Enter text to find and replace:", preferredStyle: .alert)
         alert.addTextField { textField in
-            textField.placeholder = "Find (e.g., 4a 6f 68)"
+            textField.placeholder = "Find"
         }
         alert.addTextField { textField in
-            textField.placeholder = "Replace (e.g., 4b 6c 69)"
+            textField.placeholder = "Replace"
         }
         alert.addAction(UIAlertAction(title: "Replace", style: .default, handler: { [weak self] _ in
             guard let findText = alert.textFields?[0].text, let replaceText = alert.textFields?[1].text else { return }
@@ -132,13 +132,7 @@ class HexEditorViewController: UIViewController {
         hasUnsavedChanges = true
     }
 
-    private func presentAlert(title: String, message: String) {
-        let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
-        alert.addAction(UIAlertAction(title: "OK", style: .default, handler: nil))
-        present(alert, animated: true, completion: nil)
-    }
-
-    private void promptSaveChanges() {
+    private func promptSaveChanges() {
         let alert = UIAlertController(title: "Unsaved Changes", message: "You have unsaved changes. Do you want to save them before leaving?", preferredStyle: .alert)
         alert.addAction(UIAlertAction(title: "Save", style: .default, handler: { [weak self] _ in
             self?.saveChanges()
@@ -165,10 +159,14 @@ class HexEditorViewController: UIViewController {
             saveChanges()
         }
     }
-}
 
-extension HexEditorViewController: UITextViewDelegate {
     func textViewDidChange(_ textView: UITextView) {
         hasUnsavedChanges = true
+    }
+
+    private func presentAlert(title: String, message: String) {
+        let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: "OK", style: .default, handler: nil))
+        present(alert, animated: true, completion: nil)
     }
 }
