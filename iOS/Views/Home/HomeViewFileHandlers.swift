@@ -24,7 +24,7 @@ class HomeViewFileHandlers {
             try fileManager.createDirectory(at: folderURL, withIntermediateDirectories: true, attributes: nil)
             viewController.loadFiles()
         } catch {
-            viewController.utilities.handleError(error, withTitle: "Creating Folder")
+            viewController.utilities.handleError(in: viewController, error: error, withTitle: "Creating Folder")
         }
     }
 
@@ -47,7 +47,7 @@ class HomeViewFileHandlers {
             } catch {
                 DispatchQueue.main.async {
                     viewController.activityIndicator.stopAnimating()
-                    viewController.utilities.handleError(error, withTitle: "Renaming File")
+                    viewController.utilities.handleError(in: viewController, error: error, withTitle: "Renaming File")
                 }
             }
         }
@@ -65,7 +65,7 @@ class HomeViewFileHandlers {
             } catch {
                 DispatchQueue.main.async {
                     viewController.activityIndicator.stopAnimating()
-                    viewController.utilities.handleError(error, withTitle: "Deleting File")
+                    viewController.utilities.handleError(in: viewController, error: error, withTitle: "Deleting File")
                 }
             }
         }
@@ -84,7 +84,7 @@ class HomeViewFileHandlers {
             } catch {
                 DispatchQueue.main.async {
                     viewController.activityIndicator.stopAnimating()
-                    viewController.utilities.handleError(error, withTitle: "Unzipping File")
+                    viewController.utilities.handleError(in: viewController, error: error, withTitle: "Unzipping File")
                 }
             }
         }
