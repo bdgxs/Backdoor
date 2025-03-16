@@ -33,7 +33,7 @@ jobs:
 
       - name: Compile
         run: | 
-          make package SCHEME="'backdoor (Release)'" OPTIMIZATION_LEVEL=-Onone
+          make package SCHEME="'feather (Release)'" OPTIMIZATION_LEVEL=-Onone
           mv packages/* upload/
 
       - name: Get Version Number
