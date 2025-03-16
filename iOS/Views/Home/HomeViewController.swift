@@ -1,7 +1,7 @@
 import UIKit
 import ZIPFoundation
 
-class HomeViewController: UIViewController, UITableViewDelegate, UITableViewDataSource, UIDocumentPickerViewControllerDelegate {
+class HomeViewController: UIViewController, UITableViewDelegate, UITableViewDataSource, UIDocumentPickerDelegate {
     
     // MARK: - Properties
     private var ipaPath: String = ""
