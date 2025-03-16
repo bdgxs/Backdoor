@@ -54,9 +54,6 @@ class TextEditorViewController: UIViewController {
         toolbar.items = [saveButton, copyButton, findReplaceButton, undoButton, redoButton, UIBarButtonItem.flexibleSpace()]
         view.addSubview(toolbar)
 
-        // Setup navigation bar
-        navigationItem.rightBarButtonItem = UIBarButtonItem(title: "Save", style: .done, target: self, action: #selector(saveChanges))
-
         // Setup constraints
         NSLayoutConstraint.activate([
             textView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
