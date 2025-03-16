@@ -55,12 +55,6 @@ jobs:
           mv upload/feather.ipa upload/feather_v${VERSION}.ipa
           cp upload/feather_v${VERSION}.ipa upload/feather_v${VERSION}.tipa
 
-      - name: Upload Build Artifacts
-        uses: actions/upload-artifact@v3
-        with:
-          name: build-artifacts
-          path: upload/
-
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
