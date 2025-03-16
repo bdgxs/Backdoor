@@ -1,6 +1,9 @@
 import UIKit
 import ZIPFoundation
 
+// Add the import statement for HomeViewUtilities
+import HomeViewUtilities
+
 class HomeViewController: UIViewController, UIDocumentPickerDelegate, UISearchResultsUpdating, UITableViewDragDelegate, UITableViewDropDelegate, UITableViewDelegate, UITableViewDataSource {
     
     // MARK: - Properties
@@ -10,7 +13,7 @@ class HomeViewController: UIViewController, UIDocumentPickerDelegate, UISearchRe
     private let searchController = UISearchController(searchResultsController: nil)
     private var sortOrder: SortOrder = .name
     let fileHandlers = HomeViewFileHandlers()
-    let utilities = HomeViewUtilities()
+    let utilities = HomeViewUtilities() // Add this line
     
     var documentsDirectory: URL {
         let directory = fileManager.urls(for: .documentDirectory, in: .userDomainMask).first!.appendingPathComponent("files")
