@@ -1,6 +1,6 @@
 import UIKit
 
-class PlistEditorViewController: UIViewController, UITextViewDelegate {
+class PlistEditorViewController: UIViewController {
     private let fileURL: URL
     private var textView: UITextView!
     private var toolbar: UIToolbar!
@@ -59,7 +59,7 @@ class PlistEditorViewController: UIViewController, UITextViewDelegate {
             textView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
             textView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             textView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            textView.bottomAnchor.constraint(equalTo: toolbar.topAnchor),
+            textView.bottomAnchor.constraint.equalTo(toolbar.topAnchor),
 
             toolbar.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             toolbar.trailingAnchor.constraint(equalTo: view.trailingAnchor),
@@ -169,7 +169,7 @@ class PlistEditorViewController: UIViewController, UITextViewDelegate {
         // This is a placeholder implementation; you can customize this method to format the plist as needed
         return plist.description
     }
-    
+
     private func presentAlert(title: String, message: String) {
         let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
         alert.addAction(UIAlertAction(title: "OK", style: .default, handler: nil))
