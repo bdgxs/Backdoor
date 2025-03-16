@@ -5,6 +5,7 @@ class TextEditorViewController: UIViewController {
     private var textView: UITextView!
     private var toolbar: UIToolbar!
     private var hasUnsavedChanges = false
+    private var autoSaveTimer: Timer?
 
     init(fileURL: URL) {
         self.fileURL = fileURL
@@ -19,6 +20,17 @@ class TextEditorViewController: UIViewController {
         super.viewDidLoad()
         setupUI()
         loadFileContent()
+        startAutoSaveTimer()
+    }
+
+    override func viewWillDisappear(_ animated: Bool) {
+        super.viewWillDisappear(animated)
+        if hasUnsavedChanges {
+            promptSaveChanges()
+        } else {
+            navigationController?.popViewController(animated: true)
+        }
+        stopAutoSaveTimer()
     }
 
     private func setupUI() {
@@ -27,7 +39,7 @@ class TextEditorViewController: UIViewController {
         // Setup text view
         textView = UITextView()
         textView.translatesAutoresizingMaskIntoConstraints = false
-        textView.font = UIFont.systemFont(ofSize: 14)
+        textView.font = UIFont.monospacedSystemFont(ofSize: 14, weight: .regular)
         textView.delegate = self
         view.addSubview(textView)
 
@@ -36,7 +48,10 @@ class TextEditorViewController: UIViewController {
         toolbar.translatesAutoresizingMaskIntoConstraints = false
         let saveButton = UIBarButtonItem(barButtonSystemItem: .save, target: self, action: #selector(saveChanges))
         let copyButton = UIBarButtonItem(barButtonSystemItem: .action, target: self, action: #selector(copyContent))
-        toolbar.items = [saveButton, copyButton, UIBarButtonItem.flexibleSpace()]
+        let findReplaceButton = UIBarButtonItem(title: "Find/Replace", style: .plain, target: self, action: #selector(promptFindReplace))
+        let undoButton = UIBarButtonItem(barButtonSystemItem: .undo, target: self, action: #selector(undoAction))
+        let redoButton = UIBarButtonItem(barButtonSystemItem: .redo, target: self, action: #selector(redoAction))
+        toolbar.items = [saveButton, copyButton, findReplaceButton, undoButton, redoButton, UIBarButtonItem.flexibleSpace()]
         view.addSubview(toolbar)
 
         // Setup navigation bar
@@ -80,6 +95,35 @@ class TextEditorViewController: UIViewController {
         presentAlert(title: "Copied", message: "Content copied to clipboard.")
     }
 
+    @objc private func undoAction() {
+        textView.undoManager?.undo()
+    }
+
+    @objc private func redoAction() {
+        textView.undoManager?.redo()
+    }
+
+    @objc private func promptFindReplace() {
+        let alert = UIAlertController(title: "Find and Replace", message: "Enter text to find and replace:", preferredStyle: .alert)
+        alert.addTextField { textField in
+            textField.placeholder = "Find"
+        }
+        alert.addTextField { textField in
+            textField.placeholder = "Replace"
+        }
+        alert.addAction(UIAlertAction(title: "Replace", style: .default, handler: { [weak self] _ in
+            guard let findText = alert.textFields?[0].text, let replaceText = alert.textFields?[1].text else { return }
+            self?.findAndReplace(findText: findText, replaceText: replaceText)
+        }))
+        alert.addAction(UIAlertAction(title: "Cancel", style: .cancel, handler: nil))
+        present(alert, animated: true, completion: nil)
+    }
+
+    private func findAndReplace(findText: String, replaceText: String) {
+        textView.text = textView.text.replacingOccurrences(of: findText, with: replaceText)
+        hasUnsavedChanges = true
+    }
+
     private func presentAlert(title: String, message: String) {
         let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
         alert.addAction(UIAlertAction(title: "OK", style: .default, handler: nil))
@@ -99,12 +143,18 @@ class TextEditorViewController: UIViewController {
         present(alert, animated: true, completion: nil)
     }
 
-    override func viewWillDisappear(_ animated: Bool) {
-        super.viewWillDisappear(animated)
+    private func startAutoSaveTimer() {
+        autoSaveTimer = Timer.scheduledTimer(timeInterval: 60, target: self, selector: #selector(autoSaveChanges), userInfo: nil, repeats: true)
+    }
+
+    private func stopAutoSaveTimer() {
+        autoSaveTimer?.invalidate()
+        autoSaveTimer = nil
+    }
+
+    @objc private func autoSaveChanges() {
         if hasUnsavedChanges {
-            promptSaveChanges()
-        } else {
-            navigationController?.popViewController(animated: true)
+            saveChanges()
         }
     }
 }
