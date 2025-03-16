@@ -1,8 +1,11 @@
 import UIKit
 import ZIPFoundation
 
-class HomeViewController: UIViewController, UITableViewDelegate, UITableViewDataSource, UIDocumentPickerDelegate, UISearchResultsUpdating, UITableViewDragDelegate, UITableViewDropDelegate {
+// Assuming the separated components are in the same module
+// If they are in different modules, remember to import them accordingly
 
+class HomeViewController: UIViewController, UIDocumentPickerDelegate, UISearchResultsUpdating, UITableViewDragDelegate, UITableViewDropDelegate {
+    
     // MARK: - Properties
     private var fileList: [String] = []
     private var filteredFileList: [String] = []
@@ -18,44 +21,6 @@ class HomeViewController: UIViewController, UITableViewDelegate, UITableViewData
     enum SortOrder {
         case name, date, size
     }
-
-    // MARK: - UI Elements
-    private let navigationBar: UINavigationBar = {
-        let navBar = UINavigationBar()
-        navBar.translatesAutoresizingMaskIntoConstraints = false
-        navBar.barTintColor = .systemBlue
-        navBar.titleTextAttributes = [.foregroundColor: UIColor.white]
-        return navBar
-    }()
-    
-    private let fileListTableView: UITableView = {
-        let tableView = UITableView()
-        tableView.translatesAutoresizingMaskIntoConstraints = false
-        tableView.separatorStyle = .singleLine
-        tableView.rowHeight = UITableView.automaticDimension
-        tableView.estimatedRowHeight = 44
-        return tableView
-    }()
-    
-    private let activityIndicator: UIActivityIndicatorView = {
-        let indicator = UIActivityIndicatorView(style: .large)
-        indicator.translatesAutoresizingMaskIntoConstraints = false
-        indicator.hidesWhenStopped = true
-        indicator.color = .systemBlue
-        return indicator
-    }()
-    
-    private let uploadButton: UIButton = {
-        let button = UIButton(type: .system)
-        button.setTitle("Upload File", for: .normal)
-        button.translatesAutoresizingMaskIntoConstraints = false
-        button.setTitleColor(.white, for: .normal)
-        button.backgroundColor = .systemBlue
-        button.layer.cornerRadius = 10
-        button.clipsToBounds = true
-        button.addTarget(self, action: #selector(uploadFile), for: .touchUpInside)
-        return button
-    }()
 
     // MARK: - Lifecycle
     override func viewDidLoad() {
@@ -75,55 +40,55 @@ class HomeViewController: UIViewController, UITableViewDelegate, UITableViewData
         let menuButton = UIBarButtonItem(image: UIImage(systemName: "ellipsis.circle"), style: .plain, target: self, action: #selector(showMenu))
         let sortButton = UIBarButtonItem(title: "Sort", style: .plain, target: self, action: #selector(changeSortOrder))
         navItem.rightBarButtonItems = [menuButton, sortButton]
-        navigationBar.setItems([navItem], animated: false)
-        
+        HomeViewUI.navigationBar.setItems([navItem], animated: false)
+
         // Add UI elements to the view
-        view.addSubview(navigationBar)
-        view.addSubview(fileListTableView)
-        view.addSubview(activityIndicator)
-        view.addSubview(uploadButton)
+        view.addSubview(HomeViewUI.navigationBar)
+        view.addSubview(HomeViewUI.fileListTableView)
+        view.addSubview(HomeViewUI.activityIndicator)
+        view.addSubview(HomeViewUI.uploadButton)
         
         // Set up constraints
         NSLayoutConstraint.activate([
-            navigationBar.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
-            navigationBar.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-            navigationBar.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            HomeViewUI.navigationBar.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
+            HomeViewUI.navigationBar.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            HomeViewUI.navigationBar.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             
-            fileListTableView.topAnchor.constraint(equalTo: navigationBar.bottomAnchor),
-            fileListTableView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-            fileListTableView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            fileListTableView.bottomAnchor.constraint(equalTo: uploadButton.topAnchor, constant: -20),
+            HomeViewUI.fileListTableView.topAnchor.constraint(equalTo: HomeViewUI.navigationBar.bottomAnchor),
+            HomeViewUI.fileListTableView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            HomeViewUI.fileListTableView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            HomeViewUI.fileListTableView.bottomAnchor.constraint(equalTo: HomeViewUI.uploadButton.topAnchor, constant: -20),
             
-            activityIndicator.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            activityIndicator.centerYAnchor.constraint(equalTo: view.centerYAnchor),
+            HomeViewUI.activityIndicator.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            HomeViewUI.activityIndicator.centerYAnchor.constraint(equalTo: view.centerYAnchor),
             
-            uploadButton.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -20),
-            uploadButton.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
-            uploadButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
-            uploadButton.heightAnchor.constraint(equalToConstant: 50)
+            HomeViewUI.uploadButton.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -20),
+            HomeViewUI.uploadButton.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
+            HomeViewUI.uploadButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
+            HomeViewUI.uploadButton.heightAnchor.constraint(equalToConstant: 50)
         ])
         
         // Register the table view cell
-        fileListTableView.register(FileTableViewCell.self, forCellReuseIdentifier: "FileCell")
+        HomeViewUI.fileListTableView.register(FileTableViewCell.self, forCellReuseIdentifier: "FileCell")
         
         // Add long press gesture recognizer to table view
         let longPressRecognizer = UILongPressGestureRecognizer(target: self, action: #selector(handleLongPress))
-        fileListTableView.addGestureRecognizer(longPressRecognizer)
+        HomeViewUI.fileListTableView.addGestureRecognizer(longPressRecognizer)
     }
 
     private func setupActivityIndicator() {
-        view.addSubview(activityIndicator)
+        view.addSubview(HomeViewUI.activityIndicator)
         NSLayoutConstraint.activate([
-            activityIndicator.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            activityIndicator.centerYAnchor.constraint(equalTo: view.centerYAnchor)
+            HomeViewUI.activityIndicator.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            HomeViewUI.activityIndicator.centerYAnchor.constraint(equalTo: view.centerYAnchor)
         ])
     }
 
     private func configureTableView() {
-        fileListTableView.delegate = self
-        fileListTableView.dataSource = self
-        fileListTableView.dragDelegate = self
-        fileListTableView.dropDelegate = self
+        HomeViewUI.fileListTableView.delegate = self
+        HomeViewUI.fileListTableView.dataSource = self
+        HomeViewUI.fileListTableView.dragDelegate = self
+        HomeViewUI.fileListTableView.dropDelegate = self
         searchController.searchResultsUpdater = self
         navigationItem.searchController = searchController
         navigationItem.hidesSearchBarWhenScrolling = false
@@ -132,7 +97,7 @@ class HomeViewController: UIViewController, UITableViewDelegate, UITableViewData
 
     // MARK: - Load Files
     private func loadFiles() {
-        activityIndicator.startAnimating()
+        HomeViewUI.activityIndicator.startAnimating()
         DispatchQueue.global().async { [weak self] in
             do {
                 self?.fileList = try self?.fileManager.contentsOfDirectory(atPath: self?.documentsDirectory.path ?? "") ?? []
@@ -209,8 +174,8 @@ class HomeViewController: UIViewController, UITableViewDelegate, UITableViewData
 
     @objc private func handleLongPress(gesture: UILongPressGestureRecognizer) {
         if gesture.state == .began {
-            let point = gesture.location(in: fileListTableView)
-            if let indexPath = fileListTableView.indexPathForRow(at: point) {
+            let point = gesture.location(in: HomeViewUI.fileListTableView)
+            if let indexPath = HomeViewUI.fileListTableView.indexPathForRow(at: point) {
                 let fileName = filteredFileList[indexPath.row]
                 let fileURL = documentsDirectory.appendingPathComponent(fileName)
                 showFileOptions(for: fileURL)
@@ -258,7 +223,7 @@ class HomeViewController: UIViewController, UITableViewDelegate, UITableViewData
         documentPicker.modalPresentationStyle = .formSheet
         present(documentPicker, animated: true, completion: nil)
     }
-    
+
     private func importFile() {
         let documentPicker = UIDocumentPickerViewController(forOpeningContentTypes: [.data], asCopy: true)
         documentPicker.delegate = self
@@ -283,65 +248,6 @@ class HomeViewController: UIViewController, UITableViewDelegate, UITableViewData
             let fileURL = self.documentsDirectory.appendingPathComponent(fileName)
             self.fileManager.createFile(atPath: fileURL.path, contents: nil, attributes: nil)
             self.loadFiles()
-        }
-    }
-    
-    private func copyFile(at fileURL: URL) {
-        activityIndicator.startAnimating()
-        DispatchQueue.global().async {
-            let destinationURL = fileURL.deletingLastPathComponent().appendingPathComponent("Copy_\(fileURL.lastPathComponent)")
-            do {
-                try self.fileManager.copyItem(at: fileURL, to: destinationURL)
-                DispatchQueue.main.async {
-                    self.activityIndicator.stopAnimating()
-                    self.loadFiles()
-                }
-            } catch {
-                DispatchQueue.main.async {
-                    self.activityIndicator.stopAnimating()
-                    self.handleError(error, withTitle: "Copying File")
-                }
-            }
-        }
-    }
-    
-    private func moveFile(at fileURL: URL) {
-        showInputAlert(title: "Move File", message: "Enter new file path", actionTitle: "Move") { newPath in
-            let destinationURL = self.documentsDirectory.appendingPathComponent(newPath)
-            self.activityIndicator.startAnimating()
-            DispatchQueue.global().async {
-                do {
-                    try self.fileManager.moveItem(at: fileURL, to: destinationURL)
-                    DispatchQueue.main.async {
-                        self.activityIndicator.stopAnimating()
-                        self.loadFiles()
-                    }
-                } catch {
-                    DispatchQueue.main.async {
-                        self.activityIndicator.stopAnimating()
-                        self.handleError(error, withTitle: "Moving File")
-                    }
-                }
-            }
-        }
-    }
-    
-    private func compressFile(at fileURL: URL) {
-        let destinationURL = fileURL.deletingLastPathComponent().appendingPathComponent("\(fileURL.lastPathComponent).zip")
-        activityIndicator.startAnimating()
-        DispatchQueue.global().async {
-            do {
-                try self.fileManager.zipItem(at: fileURL, to: destinationURL)
-                DispatchQueue.main.async {
-                    self.activityIndicator.stopAnimating()
-                    self.loadFiles()
-                }
-            } catch {
-                DispatchQueue.main.async {
-                    self.activityIndicator.stopAnimating()
-                    self.handleError(error, withTitle: "Compressing File")
-                }
-            }
         }
     }
     
@@ -402,18 +308,25 @@ class HomeViewController: UIViewController, UITableViewDelegate, UITableViewData
             }
         }
     }
-
-    private func hexEditFile(at fileURL: URL) {
-        guard let navigationController = self.navigationController else {
-            handleError(NSError(domain: "NavigationError", code: 0, userInfo: [NSLocalizedDescriptionKey: "Navigation controller is missing"]))
-            return
-        }
-        FileOperations.hexEditFile(at: fileURL, in: navigationController)
-    }
-
+    
     private func shareFile(at fileURL: URL) {
         let activityController = UIActivityViewController(activityItems: [fileURL], applicationActivities: nil)
         present(activityController, animated: true, completion: nil)
+    }
+
+    private func openTextEditor(_ fileURL: URL) {
+        let textEditorVC = TextEditorViewController(fileURL: fileURL)
+        navigationController?.pushViewController(textEditorVC, animated: true)
+    }
+
+    private func openPlistEditor(_ fileURL: URL) {
+        let plistEditorVC = PlistEditorViewController(fileURL: fileURL)
+        navigationController?.pushViewController(plistEditorVC, animated: true)
+    }
+
+    private func openHexEditor(_ fileURL: URL) {
+        let hexEditorVC = HexEditorViewController(fileURL: fileURL)
+        navigationController?.pushViewController(hexEditorVC, animated: true)
     }
 
     // MARK: - UIDocumentPickerViewControllerDelegate
@@ -430,31 +343,11 @@ class HomeViewController: UIViewController, UITableViewDelegate, UITableViewData
         }
     }
 
-    // MARK: - UITableViewDelegate, UITableViewDataSource
-    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return searchController.isActive ? filteredFileList.count : fileList.count
-    }
-
-    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell = tableView.dequeueReusableCell(withIdentifier: "FileCell", for: indexPath) as! FileTableViewCell
-        let fileName = searchController.isActive ? filteredFileList[indexPath.row] : fileList[indexPath.row]
-        let fileURL = documentsDirectory.appendingPathComponent(fileName)
-        let file = File(url: fileURL)
-        cell.configure(with: file)
-        return cell
-    }
-
-    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        let fileName = searchController.isActive ? filteredFileList[indexPath.row] : fileList[indexPath.row]
-        let fileURL = documentsDirectory.appendingPathComponent(fileName)
-        showFileOptions(for: fileURL)
-    }
-
     // MARK: - UISearchResultsUpdating
     func updateSearchResults(for searchController: UISearchController) {
         guard let searchText = searchController.searchBar.text else { return }
         filteredFileList = fileList.filter { $0.localizedCaseInsensitiveContains(searchText) }
-        fileListTableView.reloadData()
+        HomeViewUI.fileListTableView.reloadData()
     }
 
     // MARK: - UITableViewDragDelegate
@@ -520,25 +413,4 @@ class HomeViewController: UIViewController, UITableViewDelegate, UITableViewData
     private func handleError(_ error: Error, withTitle title: String = "Error") {
         presentAlert(title: title, message: "An error occurred: \(error.localizedDescription)")
     }
-
-    // MARK: - File Handling Methods
-    private func openTextEditor(_ fileURL: URL) {
-        let textEditorVC = TextEditorViewController(fileURL: fileURL)
-        navigationController?.pushViewController(textEditorVC, animated: true)
-    }
-
-    private func openPlistEditor(_ fileURL: URL) {
-        let plistEditorVC = PlistEditorViewController(fileURL: fileURL)
-        navigationController?.pushViewController(plistEditorVC, animated: true)
-    }
-
-    private func openHexEditor(_ fileURL: URL) {
-        let hexEditorVC = HexEditorViewController(fileURL: fileURL)
-        navigationController?.pushViewController(hexEditorVC, animated: true)
-    }
-}
-
-// Extension for additional utility methods if needed
-extension HomeViewController {
-    // Any additional utility methods can be added here
 }
