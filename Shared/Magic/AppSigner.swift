@@ -20,7 +20,7 @@ func signInitialApp(bundle: BundleOptions, mainOptions: SigningMainDataWrapper, 
             try fileManager.createDirectory(at: tmpDir, withIntermediateDirectories: true)
             try fileManager.copyItem(at: appPath, to: tmpDirApp)
             
-            if let info = NSDictionary(contentsOf: tmpDirApp.appendingPathComponent("Info.plist"))!.mutableCopy() as? NSMutableDictionary {
+            if let info = NSDictionary(contentsOf: tmpDirApp.appendingPathComponent("Info.plist"))?.mutableCopy() as? NSMutableDictionary {
                 try updateInfoPlist(infoDict: info, main: mainOptions, options: signingOptions, icon: mainOptions.mainOptions.iconURL, app: tmpDirApp)
                 
                 if let iconsDict = info["CFBundleIcons"] as? [String: Any],
@@ -29,6 +29,8 @@ func signInitialApp(bundle: BundleOptions, mainOptions: SigningMainDataWrapper, 
                    let iconFileName = iconFiles.first {
                     iconURL = iconFileName
                 }
+            } else {
+                throw NSError(domain: "AppSigner", code: -1, userInfo: [NSLocalizedDescriptionKey: "Failed to read Info.plist"])
             }
             
             let handler = TweakHandler(urls: signingOptions.signingOptions.toInject, app: tmpDirApp)
