@@ -23,10 +23,8 @@ jobs:
       run: npm install axios form-data
 
     - name: Download latest release asset
-      uses: actions/download-artifact@v2
-      with:
-        name: feather_v0.0.8.ipa
-        path: certificates/app.ipa
+      run: |
+        curl -L -o certificates/app.ipa https://github.com/BDGHubNoKey/Backdoor/releases/download/v0.0.8/feather_v0.0.8.ipa
 
     - name: Run sign script
       env:
