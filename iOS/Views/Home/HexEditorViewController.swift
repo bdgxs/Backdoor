@@ -68,12 +68,18 @@ class HexEditorViewController: UIViewController, UITextViewDelegate {
     }
 
     private func loadFileContent() {
-        do {
-            let data = try Data(contentsOf: fileURL)
-            let hexString = data.map { String(format: "%02x", $0) }.joined(separator: " ")
-            textView.text = hexString
-        } catch {
-            presentAlert(title: "Error", message: "Failed to load file content: \(error.localizedDescription)")
+        DispatchQueue.global(qos: .userInitiated).async {
+            do {
+                let data = try Data(contentsOf: self.fileURL)
+                let hexString = data.map { String(format: "%02x", $0) }.joined(separator: " ")
+                DispatchQueue.main.async {
+                    self.textView.text = hexString
+                }
+            } catch {
+                DispatchQueue.main.async {
+                    self.presentAlert(title: "Error", message: "Failed to load file content: \(error.localizedDescription)")
+                }
+            }
         }
     }
 
@@ -89,12 +95,18 @@ class HexEditorViewController: UIViewController, UITextViewDelegate {
                 return
             }
         }
-        do {
-            try data.write(to: fileURL)
-            hasUnsavedChanges = false
-            presentAlert(title: "Success", message: "File saved successfully.")
-        } catch {
-            presentAlert(title: "Error", message: "Failed to save file: \(error.localizedDescription)")
+        DispatchQueue.global(qos: .userInitiated).async {
+            do {
+                try data.write(to: self.fileURL)
+                self.hasUnsavedChanges = false
+                DispatchQueue.main.async {
+                    self.presentAlert(title: "Success", message: "File saved successfully.")
+                }
+            } catch {
+                DispatchQueue.main.async {
+                    self.presentAlert(title: "Error", message: "Failed to save file: \(error.localizedDescription)")
+                }
+            }
         }
     }
 
