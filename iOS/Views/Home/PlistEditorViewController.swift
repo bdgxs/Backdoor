@@ -1,6 +1,6 @@
 import UIKit
 
-class TextEditorViewController: UIViewController {
+class PlistEditorViewController: UIViewController, UITextViewDelegate {
     private var fileURL: URL
     private var textView: UITextView!
     private var toolbar: UIToolbar!
@@ -166,9 +166,7 @@ class TextEditorViewController: UIViewController {
         alert.addAction(UIAlertAction(title: "OK", style: .default, handler: nil))
         present(alert, animated: true, completion: nil)
     }
-}
 
-extension TextEditorViewController: UITextViewDelegate {
     func textViewDidChange(_ textView: UITextView) {
         hasUnsavedChanges = true
     }
