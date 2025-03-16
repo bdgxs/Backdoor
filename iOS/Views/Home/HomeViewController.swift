@@ -10,6 +10,7 @@ class HomeViewController: UIViewController, UIDocumentPickerDelegate, UISearchRe
     private let searchController = UISearchController(searchResultsController: nil)
     private var sortOrder: SortOrder = .name
     let fileHandlers = HomeViewFileHandlers()
+    let utilities = HomeViewUtilities() // Add this line
     
     var documentsDirectory: URL {
         let directory = fileManager.urls(for: .documentDirectory, in: .userDomainMask).first!.appendingPathComponent("files")
