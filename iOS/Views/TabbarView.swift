@@ -84,12 +84,3 @@ struct NavigationViewController<Content: UIViewController>: UIViewControllerRepr
     
     func updateUIViewController(_ uiViewController: UINavigationController, context: Context) {}
 }
-
-// Assuming HomeViewController exists and has the necessary implementation
-class HomeViewController: UIViewController {
-    override func viewDidLoad() {
-        super.viewDidLoad()
-        view.backgroundColor = .systemBackground
-        // Additional setup for your home tab's view controller
-    }
-}
