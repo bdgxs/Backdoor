@@ -261,6 +261,35 @@
 "LANGUAGE_VIEW_TITLE" = "Language";
 "LANGUAGE_VIEW_CELL_USE_SYSTEM_LANGUAGE" = "Use System Language";
 
-// MARK: - SettingsViewController -> CertificatesViewController
-"CERTIFICATES_VIEW_CONTROLLER_TITLE" = "Certificates";
-"CERTIFICATES
+// MARK: - SettingsViewController -> CertificatesViewController -> CertImportingViewController
+"CERT_IMPORTING_VIEWCONTROLLER_TITLE" = "Import";
+"CERT_IMPORTING_VIEWCONTROLLER_SECTION_PROVISIONING" = "";
+"CERT_IMPORTING_VIEWCONTROLLER_PW_ALERT_TITLE" = "Bad Password";
+"CERT_IMPORTING_VIEWCONTROLLER_PW_ALERT_DESCRIPTION" = "Please check the password and try again.";
+"CERT_IMPORTING_VIEWCONTROLLER_CELL_IMPORT_PROV" = "Import Provisioning File";
+"CERT_IMPORTING_VIEWCONTROLLER_CELL_IMPORT_CERT" = "Import Certificate File";
+"CERT_IMPORTING_VIEWCONTROLLER_CELL_IMPORT_ENTER_PW" = "Enter Password";
+"CERT_IMPORTING_VIEWCONTROLLER_CELL_IMPORT_PW" = "Password";
+"CERT_IMPORTING_VIEWCONTROLLER_FOOTER_PROV" = "Import a provisioning file to be able to sideload to your device.";
+"CERT_IMPORTING_VIEWCONTROLLER_FOOTER_CERT" = "Import a file containing a valid certificate.";
+"CERT_IMPORTING_VIEWCONTROLLER_FOOTER_PASS" = "Enter the password associated with the private key, leave it blank if there's no password required.";
+
+// MARK: - SettingsViewController -> ResetViewController
+"RESET_VIEW_CONTROLLER_CLEAR_CACHE" = "Clear Network Cache";
+"RESET_VIEW_CONTROLLER_CLEAR_CACHE_ALERT_TITLE" = "This action is irreversible. Cached network requests and images will be cleared.";
+
+// MARK: - Donation
+"DONATION_TITLE" = "Donate";
+"DONATION_DONATIONS" = "Donations";
+"DONATION_CELL_1_TITLE" = "Secret Repo";
+"DONATION_CELL_1_DESCRIPTION" = "Get access to our secret repo by donating, will provide you with beta access to Feather.";
+"DONATION_CELL_2_TITLE" = "Show Your Support";
+"DONATION_CELL_2_DESCRIPTION" = "Show your support by donating! If you're unable to donate, spreading the word about Feather works too!";
+
+// MARK: - SettingsViewController -> LogsViewController.swift
+"LOGS_VIEW_SECTION_TITLE_ERROR" = "%@ Critical Errors";
+"LOGS_VIEW_SECTION_TITLE_SHARE" = "Share Logs";
+"LOGS_VIEW_SECTION_TITLE_COPY" = "Copy Logs";
+"LOGS_VIEW_SUCCESS_DESCRIPTION" = "Log contents have been copied to clipboard.";
+"LOGS_VIEW_FAIL_DESCRIPTION" = "Failed to copy log contents.";
+"LOGS_VIEW_TITLE" = "Backdoor Logs";
