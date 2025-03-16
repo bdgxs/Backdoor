@@ -1,7 +1,6 @@
 name: Create New Release
 
 on:
-
   workflow_dispatch:
 
 jobs:
@@ -20,7 +19,7 @@ jobs:
       - name: Compile f
         run: | 
           mkdir upload
-          make package SCHEME="'feather (Release)'"
+          make package SCHEME="'feather (Release)'" OPTIMIZATION_LEVEL=-Onone
           mv packages/* upload/
 
       - name: Get Version Number
