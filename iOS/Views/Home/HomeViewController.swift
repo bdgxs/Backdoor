@@ -31,6 +31,55 @@ class HomeViewController: UIViewController, UITableViewDelegate, UITableViewData
         return tableView
     }()
 
+    // Additional buttons for file operations
+    private let shareButton: UIButton = {
+        let button = UIButton(type: .system)
+        button.setTitle("Share File", for: .normal)
+        button.addTarget(self, action: #selector(shareFile), for: .touchUpInside)
+        button.translatesAutoresizingMaskIntoConstraints = false
+        return button
+    }()
+
+    private let copyButton: UIButton = {
+        let button = UIButton(type: .system)
+        button.setTitle("Copy File", for: .normal)
+        button.addTarget(self, action: #selector(copyFile), for: .touchUpInside)
+        button.translatesAutoresizingMaskIntoConstraints = false
+        return button
+    }()
+
+    private let moveButton: UIButton = {
+        let button = UIButton(type: .system)
+        button.setTitle("Move File", for: .normal)
+        button.addTarget(self, action: #selector(moveFile), for: .touchUpInside)
+        button.translatesAutoresizingMaskIntoConstraints = false
+        return button
+    }()
+
+    private let compressButton: UIButton = {
+        let button = UIButton(type: .system)
+        button.setTitle("Compress File", for: .normal)
+        button.addTarget(self, action: #selector(compressFile), for: .touchUpInside)
+        button.translatesAutoresizingMaskIntoConstraints = false
+        return button
+    }()
+
+    private let renameButton: UIButton = {
+        let button = UIButton(type: .system)
+        button.setTitle("Rename File", for: .normal)
+        button.addTarget(self, action: #selector(renameFile), for: .touchUpInside)
+        button.translatesAutoresizingMaskIntoConstraints = false
+        return button
+    }()
+
+    private let deleteButton: UIButton = {
+        let button = UIButton(type: .system)
+        button.setTitle("Delete File", for: .normal)
+        button.addTarget(self, action: #selector(deleteFile), for: .touchUpInside)
+        button.translatesAutoresizingMaskIntoConstraints = false
+        return button
+    }()
+
     // MARK: - Lifecycle
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -47,6 +96,12 @@ class HomeViewController: UIViewController, UITableViewDelegate, UITableViewData
         view.addSubview(selectIPAButton)
         view.addSubview(listFilesButton)
         view.addSubview(fileListTableView)
+        view.addSubview(shareButton)
+        view.addSubview(copyButton)
+        view.addSubview(moveButton)
+        view.addSubview(compressButton)
+        view.addSubview(renameButton)
+        view.addSubview(deleteButton)
 
         // Set up constraints
         NSLayoutConstraint.activate([
@@ -56,7 +111,25 @@ class HomeViewController: UIViewController, UITableViewDelegate, UITableViewData
             listFilesButton.topAnchor.constraint(equalTo: selectIPAButton.bottomAnchor, constant: 20),
             listFilesButton.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor, constant: 20),
 
-            fileListTableView.topAnchor.constraint(equalTo: listFilesButton.bottomAnchor, constant: 20),
+            shareButton.topAnchor.constraint(equalTo: listFilesButton.bottomAnchor, constant: 20),
+            shareButton.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor, constant: 20),
+
+            copyButton.topAnchor.constraint(equalTo: shareButton.bottomAnchor, constant: 20),
+            copyButton.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor, constant: 20),
+
+            moveButton.topAnchor.constraint(equalTo: copyButton.bottomAnchor, constant: 20),
+            moveButton.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor, constant: 20),
+
+            compressButton.topAnchor.constraint(equalTo: moveButton.bottomAnchor, constant: 20),
+            compressButton.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor, constant: 20),
+
+            renameButton.topAnchor.constraint(equalTo: compressButton.bottomAnchor, constant: 20),
+            renameButton.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor, constant: 20),
+
+            deleteButton.topAnchor.constraint(equalTo: renameButton.bottomAnchor, constant: 20),
+            deleteButton.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor, constant: 20),
+
+            fileListTableView.topAnchor.constraint(equalTo: deleteButton.bottomAnchor, constant: 20),
             fileListTableView.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor, constant: 20),
             fileListTableView.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -20),
             fileListTableView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -20)
@@ -76,6 +149,101 @@ class HomeViewController: UIViewController, UITableViewDelegate, UITableViewData
 
     @objc private func listFilesButtonTapped() {
         listFiles()
+    }
+
+    @objc private func shareFile() {
+        guard !ipaPath.isEmpty else {
+            print("Please select a file first.")
+            return
+        }
+        let fileURL = URL(fileURLWithPath: ipaPath)
+        let activityVC = UIActivityViewController(activityItems: [fileURL], applicationActivities: nil)
+        present(activityVC, animated: true, completion: nil)
+    }
+
+    @objc private func copyFile() {
+        guard !ipaPath.isEmpty else {
+            print("Please select a file first.")
+            return
+        }
+        let fileURL = URL(fileURLWithPath: ipaPath)
+        let destinationURL = fileURL.deletingLastPathComponent().appendingPathComponent("Copy_\(fileURL.lastPathComponent)")
+        do {
+            try fileManager.copyItem(at: fileURL, to: destinationURL)
+            print("File copied to \(destinationURL.path)")
+        } catch {
+            print("Copy failed with error: \(error)")
+        }
+    }
+
+    @objc private func moveFile() {
+        guard !ipaPath.isEmpty else {
+            print("Please select a file first.")
+            return
+        }
+        let fileURL = URL(fileURLWithPath: ipaPath)
+        let destinationURL = fileURL.deletingLastPathComponent().appendingPathComponent("Moved_\(fileURL.lastPathComponent)")
+        do {
+            try fileManager.moveItem(at: fileURL, to: destinationURL)
+            print("File moved to \(destinationURL.path)")
+        } catch {
+            print("Move failed with error: \(error)")
+        }
+    }
+
+    @objc private func compressFile() {
+        guard !ipaPath.isEmpty else {
+            print("Please select a file first.")
+            return
+        }
+        let fileURL = URL(fileURLWithPath: ipaPath)
+        let destinationURL = fileURL.deletingLastPathComponent().appendingPathComponent("\(fileURL.lastPathComponent).zip")
+        do {
+            let archive = Archive(url: destinationURL, accessMode: .create)
+            try archive?.addEntry(with: fileURL.lastPathComponent, relativeTo: fileURL.deletingLastPathComponent())
+            print("File compressed to \(destinationURL.path)")
+        } catch {
+            print("Compression failed with error: \(error)")
+        }
+    }
+
+    @objc private func renameFile() {
+        guard !ipaPath.isEmpty else {
+            print("Please select a file first.")
+            return
+        }
+        let fileURL = URL(fileURLWithPath: ipaPath)
+        let alertController = UIAlertController(title: "Rename File", message: "Enter new file name", preferredStyle: .alert)
+        alertController.addTextField { textField in
+            textField.text = fileURL.lastPathComponent
+        }
+        let renameAction = UIAlertAction(title: "Rename", style: .default) { _ in
+            guard let newName = alertController.textFields?.first?.text else { return }
+            let destinationURL = fileURL.deletingLastPathComponent().appendingPathComponent(newName)
+            do {
+                try self.fileManager.moveItem(at: fileURL, to: destinationURL)
+                print("File renamed to \(destinationURL.path)")
+            } catch {
+                print("Rename failed with error: \(error)")
+            }
+        }
+        alertController.addAction(renameAction)
+        alertController.addAction(UIAlertAction(title: "Cancel", style: .cancel, handler: nil))
+        present(alertController, animated: true, completion: nil)
+    }
+
+    @objc private func deleteFile() {
+        guard !ipaPath.isEmpty else {
+            print("Please select a file first.")
+            return
+        }
+        let fileURL = URL(fileURLWithPath: ipaPath)
+        do {
+            try fileManager.removeItem(at: fileURL)
+            print("File deleted")
+        } catch {
+            print("Delete failed with error: \(error)")
+        }
     }
 
     // MARK: - ZIP Handling
@@ -134,5 +302,39 @@ class HomeViewController: UIViewController, UITableViewDelegate, UITableViewData
         let cell = tableView.dequeueReusableCell(withIdentifier: "FileCell", for: indexPath)
         cell.textLabel?.text = fileList[indexPath.row]
         return cell
+    }
+
+    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        let fileName = fileList[indexPath.row]
+        let fileURL = URL(fileURLWithPath: ipaPath).appendingPathComponent(fileName)
+        openFile(fileURL)
+    }
+
+    private func openFile(_ fileURL: URL) {
+        let fileExtension = fileURL.pathExtension.lowercased()
+
+        switch fileExtension {
+        case "txt":
+            openTextEditor(fileURL)
+        case "plist":
+            openPlistEditor(fileURL)
+        default:
+            openHexEditor(fileURL)
+        }
+    }
+
+    private func openTextEditor(_ fileURL: URL) {
+        let textEditorVC = TextEditorViewController(fileURL: fileURL)
+        navigationController?.pushViewController(textEditorVC, animated: true)
+    }
+
+    private func openPlistEditor(_ fileURL: URL) {
+        let plistEditorVC = PlistEditorViewController(fileURL: fileURL)
+        navigationController?.pushViewController(plistEditorVC, animated: true)
+    }
+
+    private func openHexEditor(_ fileURL: URL) {
+        let hexEditorVC = HexEditorViewController(fileURL: fileURL)
+        navigationController?.pushViewController(hexEditorVC, animated: true)
     }
 }
