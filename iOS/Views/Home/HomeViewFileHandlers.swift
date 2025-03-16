@@ -3,6 +3,7 @@ import ZIPFoundation
 
 class HomeViewFileHandlers {
     private let fileManager = FileManager.default
+    private let utilities = HomeViewUtilities()
 
     func uploadFile(viewController: UIViewController) {
         let documentPicker = UIDocumentPickerViewController(forOpeningContentTypes: [.data], asCopy: true)
@@ -24,7 +25,7 @@ class HomeViewFileHandlers {
             try fileManager.createDirectory(at: folderURL, withIntermediateDirectories: true, attributes: nil)
             viewController.loadFiles()
         } catch {
-            viewController.utilities.handleError(viewController, error: error, withTitle: "Creating Folder")
+            utilities.handleError(in: viewController, error: error, withTitle: "Creating Folder")
         }
     }
 
@@ -47,7 +48,7 @@ class HomeViewFileHandlers {
             } catch {
                 DispatchQueue.main.async {
                     viewController.activityIndicator.stopAnimating()
-                    viewController.utilities.handleError(viewController, error: error, withTitle: "Renaming File")
+                    self.utilities.handleError(in: viewController, error: error, withTitle: "Renaming File")
                 }
             }
         }
@@ -65,7 +66,7 @@ class HomeViewFileHandlers {
             } catch {
                 DispatchQueue.main.async {
                     viewController.activityIndicator.stopAnimating()
-                    viewController.utilities.handleError(viewController, error: error, withTitle: "Deleting File")
+                    self.utilities.handleError(in: viewController, error: error, withTitle: "Deleting File")
                 }
             }
         }
@@ -84,7 +85,7 @@ class HomeViewFileHandlers {
             } catch {
                 DispatchQueue.main.async {
                     viewController.activityIndicator.stopAnimating()
-                    viewController.utilities.handleError(viewController, error: error, withTitle: "Unzipping File")
+                    self.utilities.handleError(in: viewController, error: error, withTitle: "Unzipping File")
                 }
             }
         }
