@@ -3,21 +3,21 @@ import ZIPFoundation
 
 extension HomeViewController {
 
-    @objc private func uploadFile() {
+    @objc func uploadFile() {
         let documentPicker = UIDocumentPickerViewController(forOpeningContentTypes: [.data], asCopy: true)
         documentPicker.delegate = self
         documentPicker.modalPresentationStyle = .formSheet
         present(documentPicker, animated: true, completion: nil)
     }
 
-    private func importFile() {
+    func importFile() {
         let documentPicker = UIDocumentPickerViewController(forOpeningContentTypes: [.data], asCopy: true)
         documentPicker.delegate = self
         documentPicker.modalPresentationStyle = .formSheet
         present(documentPicker, animated: true, completion: nil)
     }
-    
-    private func createNewFolder() {
+
+    func createNewFolder() {
         showInputAlert(title: "New Folder", message: "Enter folder name", actionTitle: "Create") { folderName in
             let folderURL = self.documentsDirectory.appendingPathComponent(folderName)
             do {
@@ -28,8 +28,8 @@ extension HomeViewController {
             }
         }
     }
-    
-    private func createNewFile() {
+
+    func createNewFile() {
         showInputAlert(title: "New File", message: "Enter file name", actionTitle: "Create") { fileName in
             let fileURL = self.documentsDirectory.appendingPathComponent(fileName)
             self.fileManager.createFile(atPath: fileURL.path, contents: nil, attributes: nil)
@@ -37,7 +37,7 @@ extension HomeViewController {
         }
     }
 
-    private func renameFile(at fileURL: URL) {
+    func renameFile(at fileURL: URL) {
         showInputAlert(title: "Rename File", message: "Enter new file name", actionTitle: "Rename", initialText: fileURL.lastPathComponent) { newName in
             let destinationURL = fileURL.deletingLastPathComponent().appendingPathComponent(newName)
             self.activityIndicator.startAnimating()
@@ -57,8 +57,8 @@ extension HomeViewController {
             }
         }
     }
-    
-    private func deleteFile(at fileURL: URL) {
+
+    func deleteFile(at fileURL: URL) {
         activityIndicator.startAnimating()
         DispatchQueue.global().async {
             do {
@@ -76,7 +76,7 @@ extension HomeViewController {
         }
     }
 
-    private func unzipFile(at fileURL: URL) {
+    func unzipFile(at fileURL: URL) {
         let destinationURL = fileURL.deletingLastPathComponent().appendingPathComponent("extracted")
         activityIndicator.startAnimating()
         DispatchQueue.global().async {
@@ -94,8 +94,8 @@ extension HomeViewController {
             }
         }
     }
-    
-    private func shareFile(at fileURL: URL) {
+
+    func shareFile(at fileURL: URL) {
         let activityController = UIActivityViewController(activityItems: [fileURL], applicationActivities: nil)
         present(activityController, animated: true, completion: nil)
     }
