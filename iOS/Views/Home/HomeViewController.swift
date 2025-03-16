@@ -403,11 +403,3 @@ class HomeViewController: UIViewController, UITableViewDelegate, UITableViewData
         let activityController = UIActivityViewController(activityItems: [fileURL], applicationActivities: nil)
         present(activityController, animated: true, completion: nil)
     }
-
-    // MARK: - UIDocumentPickerViewControllerDelegate
-    func documentPicker(_ controller: UIDocumentPickerViewController, didPickDocumentsAt urls: [URL]) {
-        guard let selectedFileURL = urls.first else {
-            return
-        }
-        // Handle file import
-        let destinationURL = documentsDirectory.appendingPathComponent(selectedFileURL.lastPath
