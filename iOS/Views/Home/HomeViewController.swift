@@ -420,3 +420,116 @@ class HomeViewController: UIViewController, UITableViewDelegate, UITableViewData
 
     // MARK: - UITableViewDelegate, UITableViewDataSource
     func tableView(_ tableView: UITableView, numberOfRowsIn
+        func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+        return searchController.isActive ? filteredFileList.count : fileList.count
+    }
+
+    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+        let cell = tableView.dequeueReusableCell(withIdentifier: "FileCell", for: indexPath) as! FileTableViewCell
+        let fileName = searchController.isActive ? filteredFileList[indexPath.row] : fileList[indexPath.row]
+        let fileURL = documentsDirectory.appendingPathComponent(fileName)
+        let file = File(url: fileURL)
+        cell.configure(with: file)
+        return cell
+    }
+
+    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        let fileName = searchController.isActive ? filteredFileList[indexPath.row] : fileList[indexPath.row]
+        let fileURL = documentsDirectory.appendingPathComponent(fileName)
+        presentFileOptions(for: fileURL)
+    }
+
+    // MARK: - UISearchResultsUpdating
+    func updateSearchResults(for searchController: UISearchController) {
+        guard let searchText = searchController.searchBar.text else { return }
+        filteredFileList = fileList.filter { $0.contains(searchText) }
+        fileListTableView.reloadData()
+    }
+    
+    // MARK: - File Operations
+    private func presentFileOptions(for fileURL: URL) {
+        let fileExtension = fileURL.pathExtension.lowercased()
+        let menu = UIAlertController(title: "Open File", message: "Choose how to open the file", preferredStyle: .actionSheet)
+        
+        switch fileExtension {
+        case "txt":
+            menu.addAction(UIAlertAction(title: "Open as Text", style: .default, handler: { _ in self.openTextEditor(fileURL) }))
+        case "plist":
+            menu.addAction(UIAlertAction(title: "Open as Plist", style: .default, handler: { _ in self.openPlistEditor(fileURL) }))
+        case "ipa":
+            menu.addAction(UIAlertAction(title: "Unzip", style: .default, handler: { _ in self.unzipFile(at: fileURL) }))
+            menu.addAction(UIAlertAction(title: "Hex Edit", style: .default, handler: { _ in self.hexEditFile(at: fileURL) }))
+        default:
+            menu.addAction(UIAlertAction(title: "Open as Hex", style: .default, handler: { _ in self.openHexEditor(fileURL) }))
+        }
+        
+        menu.addAction(UIAlertAction(title: "Cancel", style: .cancel, handler: nil))
+        present(menu, animated: true, completion: nil)
+    }
+
+    private func openTextEditor(_ fileURL: URL) {
+        let textEditorVC = TextEditorViewController(fileURL: fileURL)
+        navigationController?.pushViewController(textEditorVC, animated: true)
+    }
+
+    private func openPlistEditor(_ fileURL: URL) {
+        let plistEditorVC = PlistEditorViewController(fileURL: fileURL)
+        navigationController?.pushViewController(plistEditorVC, animated: true)
+    }
+
+    private func openHexEditor(_ fileURL: URL) {
+        let hexEditorVC = HexEditorViewController(fileURL: fileURL)
+        navigationController?.pushViewController(hexEditorVC, animated: true)
+    }
+
+    private func presentAlert(title: String, message: String) {
+        let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: "OK", style: .default, handler: nil))
+        present(alert, animated: true, completion: nil)
+    }
+    
+    // MARK: - UITableViewDragDelegate
+    func tableView(_ tableView: UITableView, itemsForBeginning session: UIDragSession, at indexPath: IndexPath) -> [UIDragItem] {
+        let item = self.fileList[indexPath.row] // Replace with your data source
+        let itemProvider = NSItemProvider(object: item as NSString)
+        let dragItem = UIDragItem(itemProvider: itemProvider)
+        return [dragItem]
+    }
+    
+    // MARK: - UITableViewDropDelegate
+    func tableView(_ tableView: UITableView, performDropWith coordinator: UITableViewDropCoordinator) {
+        coordinator.session.loadObjects(ofClass: NSString.self) { items in
+            // Handle the dropped items
+            let indexPaths = coordinator.destinationIndexPath.map { [$0] } ?? []
+            tableView.insertRows(at: indexPaths, with: .automatic)
+        }
+    }
+
+    func tableView(_ tableView: UITableView, canHandle session: UIDropSession) -> Bool {
+        return session.canLoadObjects(ofClass: NSString.self)
+    }
+
+    func tableView(_ tableView: UITableView, dropSessionDidUpdate session: UIDropSession, withDestinationIndexPath destinationIndexPath: IndexPath?) -> UITableViewDropProposal {
+        return UITableViewDropProposal(operation: .move, intent: .insertAtDestinationIndexPath)
+    }
+
+    // MARK: - Create Files Directory
+    private func createFilesDirectoryIfNeeded(at directory: URL) {
+        do {
+            try fileManager.createDirectory(at: directory, withIntermediateDirectories: true, attributes: nil)
+        } catch {
+            presentAlert(title: "Error", message: "Failed to create 'files' directory: \(error.localizedDescription)")
+        }
+    }
+
+    // MARK: - UIButton Configuration for iOS 15 and later
+    func configureButton(_ button: UIButton) {
+        if #available(iOS 15.0, *) {
+            var configuration = UIButton.Configuration.filled()
+            configuration.contentInsets = NSDirectionalEdgeInsets(top: 15, leading: 20, bottom: 15, trailing: 20)
+            button.configuration = configuration
+        } else {
+            button.contentEdgeInsets = UIEdgeInsets(top: 15, left: 20, bottom: 15, right: 20)
+        }
+    }
+}
