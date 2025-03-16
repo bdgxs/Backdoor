@@ -1,97 +1,33 @@
 import UIKit
-import ZIPFoundation
 
-class HomeViewFileHandlers {
-    private let fileManager = FileManager.default
+extension HomeViewController {
+    func presentAlert(title: String, message: String, buttonTitle: String = "OK", handler: ((UIAlertAction) -> Void)? = nil) {
+        let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
+        let action = UIAlertAction(title: buttonTitle, style: .default, handler: handler)
+        alert.addAction(action)
 
-    func uploadFile(viewController: UIViewController) {
-        let documentPicker = UIDocumentPickerViewController(forOpeningContentTypes: [.data], asCopy: true)
-        documentPicker.delegate = viewController as? UIDocumentPickerDelegate
-        documentPicker.modalPresentationStyle = .formSheet
-        viewController.present(documentPicker, animated: true, completion: nil)
-    }
-
-    func importFile(viewController: UIViewController) {
-        let documentPicker = UIDocumentPickerViewController(forOpeningContentTypes: [.data], asCopy: true)
-        documentPicker.delegate = viewController as? UIDocumentPickerDelegate
-        documentPicker.modalPresentationStyle = .formSheet
-        viewController.present(documentPicker, animated: true, completion: nil)
-    }
-
-    func createNewFolder(viewController: HomeViewController, folderName: String) {
-        let folderURL = viewController.documentsDirectory.appendingPathComponent(folderName)
-        do {
-            try fileManager.createDirectory(at: folderURL, withIntermediateDirectories: true, attributes: nil)
-            viewController.loadFiles()
-        } catch {
-            viewController.utilities.handleError(error, withTitle: "Creating Folder")
+        if handler != nil {
+            alert.addAction(UIAlertAction(title: "Cancel", style: .cancel, handler: nil))
         }
+
+        present(alert, animated: true, completion: nil)
     }
 
-    func createNewFile(viewController: HomeViewController, fileName: String) {
-        let fileURL = viewController.documentsDirectory.appendingPathComponent(fileName)
-        fileManager.createFile(atPath: fileURL.path, contents: nil, attributes: nil)
-        viewController.loadFiles()
-    }
-
-    func renameFile(viewController: HomeViewController, fileURL: URL, newName: String) {
-        let destinationURL = fileURL.deletingLastPathComponent().appendingPathComponent(newName)
-        viewController.activityIndicator.startAnimating()
-        DispatchQueue.global().async {
-            do {
-                try self.fileManager.moveItem(at: fileURL, to: destinationURL)
-                DispatchQueue.main.async {
-                    viewController.activityIndicator.stopAnimating()
-                    viewController.loadFiles()
-                }
-            } catch {
-                DispatchQueue.main.async {
-                    viewController.activityIndicator.stopAnimating()
-                    viewController.utilities.handleError(error, withTitle: "Renaming File")
-                }
-            }
+    func showInputAlert(title: String, message: String, actionTitle: String, initialText: String = "", completion: @escaping (String) -> Void) {
+        let alertController = UIAlertController(title: title, message: message, preferredStyle: .alert)
+        alertController.addTextField { textField in
+            textField.text = initialText
         }
-    }
-
-    func deleteFile(viewController: HomeViewController, fileURL: URL) {
-        viewController.activityIndicator.startAnimating()
-        DispatchQueue.global().async {
-            do {
-                try self.fileManager.removeItem(at: fileURL)
-                DispatchQueue.main.async {
-                    viewController.activityIndicator.stopAnimating()
-                    viewController.loadFiles()
-                }
-            } catch {
-                DispatchQueue.main.async {
-                    viewController.activityIndicator.stopAnimating()
-                    viewController.utilities.handleError(error, withTitle: "Deleting File")
-                }
-            }
+        let confirmAction = UIAlertAction(title: actionTitle, style: .default) { [weak alertController] _ in
+            guard let textField = alertController?.textFields?.first, let text = textField.text else { return }
+            completion(text)
         }
+        alertController.addAction(confirmAction)
+        alertController.addAction(UIAlertAction(title: "Cancel", style: .cancel, handler: nil))
+        present(alertController, animated: true, completion: nil)
     }
 
-    func unzipFile(viewController: HomeViewController, fileURL: URL) {
-        let destinationURL = fileURL.deletingLastPathComponent().appendingPathComponent("extracted")
-        viewController.activityIndicator.startAnimating()
-        DispatchQueue.global().async {
-            do {
-                try self.fileManager.unzipItem(at: fileURL, to: destinationURL)
-                DispatchQueue.main.async {
-                    viewController.activityIndicator.stopAnimating()
-                    viewController.loadFiles()
-                }
-            } catch {
-                DispatchQueue.main.async {
-                    viewController.activityIndicator.stopAnimating()
-                    viewController.utilities.handleError(error, withTitle: "Unzipping File")
-                }
-            }
-        }
-    }
-
-    func shareFile(viewController: UIViewController, fileURL: URL) {
-        let activityController = UIActivityViewController(activityItems: [fileURL], applicationActivities: nil)
-        viewController.present(activityController, animated: true, completion: nil)
+    func handleError(_ error: Error, withTitle title: String = "Error") {
+        presentAlert(title: title, message: "An error occurred: \(error.localizedDescription)")
     }
 }
