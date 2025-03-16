@@ -9,10 +9,10 @@ class HomeViewController: UIViewController, UIDocumentPickerDelegate, UISearchRe
     private let fileManager = FileManager.default
     private let searchController = UISearchController(searchResultsController: nil)
     private var sortOrder: SortOrder = .name
-    let fileHandlers = HomeViewFileHandlers()
     let utilities = HomeViewUtilities()
+    let fileHandlers = HomeViewFileHandlers()
     
-    var documentsDirectory: URL { // Changed from private to internal (default)
+    var documentsDirectory: URL {
         let directory = fileManager.urls(for: .documentDirectory, in: .userDomainMask).first!.appendingPathComponent("files")
         createFilesDirectoryIfNeeded(at: directory)
         return directory
@@ -22,8 +22,8 @@ class HomeViewController: UIViewController, UIDocumentPickerDelegate, UISearchRe
         case name, date, size
     }
     
-    let fileListTableView = UITableView() // Changed from private to internal (default)
-    let activityIndicator = UIActivityIndicatorView(style: .large) // Changed from private to internal (default)
+    let fileListTableView = UITableView()
+    let activityIndicator = UIActivityIndicatorView(style: .large)
     
     // MARK: - Lifecycle
     override func viewDidLoad() {
@@ -38,18 +38,15 @@ class HomeViewController: UIViewController, UIDocumentPickerDelegate, UISearchRe
     private func setupUI() {
         view.backgroundColor = .systemBackground
         
-        // Setup Navigation Bar
         let navItem = UINavigationItem(title: "Files")
         let menuButton = UIBarButtonItem(image: UIImage(systemName: "ellipsis.circle"), style: .plain, target: self, action: #selector(showMenu))
         let sortButton = UIBarButtonItem(title: "Sort", style: .plain, target: self, action: #selector(changeSortOrder))
         navItem.rightBarButtonItems = [menuButton, sortButton]
         navigationController?.navigationBar.setItems([navItem], animated: false)
         
-        // Add UI elements to the view
         view.addSubview(fileListTableView)
         view.addSubview(activityIndicator)
         
-        // Set up constraints
         NSLayoutConstraint.activate([
             fileListTableView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
             fileListTableView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
@@ -60,7 +57,6 @@ class HomeViewController: UIViewController, UIDocumentPickerDelegate, UISearchRe
             activityIndicator.centerYAnchor.constraint(equalTo: view.centerYAnchor)
         ])
         
-        // Register the table view cell
         fileListTableView.register(UITableViewCell.self, forCellReuseIdentifier: "FileCell")
     }
     
@@ -81,7 +77,7 @@ class HomeViewController: UIViewController, UIDocumentPickerDelegate, UISearchRe
     }
     
     // MARK: - Load Files
-    private func loadFiles() {
+    func loadFiles() {
         activityIndicator.startAnimating()
         DispatchQueue.global().async { [weak self] in
             do {
@@ -129,9 +125,13 @@ class HomeViewController: UIViewController, UIDocumentPickerDelegate, UISearchRe
             menu.addAction(UIAlertAction(title: actionTitle, style: .default) { _ in
                 switch actionTitle {
                 case "Select": self.selectFiles()
-                case "Import": self.importFile()
-                case "New Folder": self.createNewFolder()
-                case "New File": self.createNewFile()
+                case "Import": self.fileHandlers.importFile(viewController: self)
+                case "New Folder": self.showInputAlert(title: "New Folder", message: "Enter folder name", actionTitle: "Create") { folderName in
+                    self.fileHandlers.createNewFolder(viewController: self, folderName: folderName)
+                }
+                case "New File": self.showInputAlert(title: "New File", message: "Enter file name", actionTitle: "Create") { fileName in
+                    self.fileHandlers.createNewFile(viewController: self, fileName: fileName)
+                }
                 default: break
                 }
             })
@@ -162,81 +162,35 @@ class HomeViewController: UIViewController, UIDocumentPickerDelegate, UISearchRe
     }
     
     @objc private func uploadFile() {
-        let documentPicker = UIDocumentPickerViewController(forOpeningContentTypes: [.data], asCopy: true)
-        documentPicker.delegate = self
-        documentPicker.modalPresentationStyle = .formSheet
-        present(documentPicker, animated: true, completion: nil)
+        fileHandlers.uploadFile(viewController: self)
     }
     
-    private func importFile() {
-        let documentPicker = UIDocumentPickerViewController(forOpeningContentTypes: [.data], asCopy: true)
-        documentPicker.delegate = self
-        documentPicker.modalPresentationStyle = .formSheet
-        present(documentPicker, animated: true, completion: nil)
-    }
-    
-    private func createNewFolder() {
-        utilities.showInputAlert(title: "New Folder", message: "Enter folder name", actionTitle: "Create") { folderName in
-            let folderURL = self.documentsDirectory.appendingPathComponent(folderName)
-            do {
-                try self.fileManager.createDirectory(at: folderURL, withIntermediateDirectories: true, attributes: nil)
-                self.loadFiles()
-            } catch {
-                self.utilities.handleError(error, withTitle: "Creating Folder")
-            }
-        }
-    }
-    
-    private func createNewFile() {
-        utilities.showInputAlert(title: "New File", message: "Enter file name", actionTitle: "Create") { fileName in
-            let fileURL = self.documentsDirectory.appendingPathComponent(fileName)
-            self.fileManager.createFile(atPath: fileURL.path, contents: nil, attributes: nil)
-            self.loadFiles()
-        }
-    }
-
-    private func renameFile(at fileURL: URL) {
-        utilities.showInputAlert(title: "Rename File", message: "Enter new file name", actionTitle: "Rename", initialText: fileURL.lastPathComponent) { newName in
-            let destinationURL = fileURL.deletingLastPathComponent().appendingPathComponent(newName)
-            self.activityIndicator.startAnimating()
-            DispatchQueue.global().async {
-                do {
-                    try self.fileManager.moveItem(at: fileURL, to: destinationURL)
-                    DispatchQueue.main.async {
-                        self.activityIndicator.stopAnimating()
-                        self.loadFiles()
-                    }
-                } catch {
-                    DispatchQueue.main.async {
-                        self.activityIndicator.stopAnimating()
-                        self.utilities.handleError(error, withTitle: "Renaming File")
-                    }
-                }
-            }
-        }
-    }
-
-    // MARK: - UIDocumentPickerViewControllerDelegate
-    func documentPicker(_ controller: UIDocumentPickerViewController, didPickDocumentsAt urls: [URL]) {
-        guard let selectedFileURL = urls.first else {
-            return
-        }
-        let destinationURL = documentsDirectory.appendingPathComponent(selectedFileURL.lastPathComponent)
+    private func createFilesDirectoryIfNeeded(at directory: URL) {
         do {
-            try fileManager.copyItem(at: selectedFileURL, to: destinationURL)
-            loadFiles()
+            try fileManager.createDirectory(at: directory, withIntermediateDirectories: true, attributes: nil)
         } catch {
-            utilities.handleError(error, withTitle: "Importing File")
+            utilities.handleError(error, withTitle: "Creating Files Directory")
         }
     }
-
+    
+    // MARK: - UITableViewDataSource
+    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+        return filteredFileList.count
+    }
+    
+    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+        let cell = tableView.dequeueReusableCell(withIdentifier: "FileCell", for: indexPath)
+        cell.textLabel?.text = filteredFileList[indexPath.row]
+        return cell
+    }
+    
     // MARK: - UISearchResultsUpdating
     func updateSearchResults(for searchController: UISearchController) {
         guard let searchText = searchController.searchBar.text else { return }
         filteredFileList = fileList.filter { $0.localizedCaseInsensitiveContains(searchText) }
         fileListTableView.reloadData()
     }
-
+    
     // MARK: - UITableViewDragDelegate
     func tableView(_ tableView: UITableView, itemsForBeginning session: UIDragSession, at indexPath: IndexPath) -> [UIDragItem] {
         let item = self.fileList[indexPath.row]
@@ -244,7 +198,7 @@ class HomeViewController: UIViewController, UIDocumentPickerDelegate, UISearchRe
         let dragItem = UIDragItem(itemProvider: itemProvider)
         return [dragItem]
     }
-
+    
     // MARK: - UITableViewDropDelegate
     func tableView(_ tableView: UITableView, performDropWith coordinator: UITableViewDropCoordinator) {
         coordinator.session.loadObjects(ofClass: NSString.self) { items in
@@ -253,32 +207,12 @@ class HomeViewController: UIViewController, UIDocumentPickerDelegate, UISearchRe
             self.loadFiles()
         }
     }
-
+    
     func tableView(_ tableView: UITableView, canHandle session: UIDropSession) -> Bool {
         return session.canLoadObjects(ofClass: NSString.self)
     }
-
+    
     func tableView(_ tableView: UITableView, dropSessionDidUpdate session: UIDropSession, withDestinationIndexPath destinationIndexPath: IndexPath?) -> UITableViewDropProposal {
         return UITableViewDropProposal(operation: .copy, intent: .insertAtDestinationIndexPath)
-    }
-
-    // MARK: - Helper Methods
-    private func createFilesDirectoryIfNeeded(at directory: URL) {
-        do {
-            try fileManager.createDirectory(at: directory, withIntermediateDirectories: true, attributes: nil)
-        } catch {
-            utilities.handleError(error, withTitle: "Creating Files Directory")
-        }
-    }
-
-    // MARK: - UITableViewDataSource
-    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return filteredFileList.count
-    }
-
-    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell = tableView.dequeueReusableCell(withIdentifier: "FileCell", for: indexPath)
-        cell.textLabel?.text = filteredFileList[indexPath.row]
-        return cell
     }
 }
