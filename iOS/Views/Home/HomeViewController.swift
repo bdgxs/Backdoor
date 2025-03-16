@@ -9,7 +9,7 @@ class HomeViewController: UIViewController, UIDocumentPickerDelegate, UISearchRe
     private let fileManager = FileManager.default
     private let searchController = UISearchController(searchResultsController: nil)
     private var sortOrder: SortOrder = .name
-    private var documentsDirectory: URL {
+    var documentsDirectory: URL { // Changed from private to internal (default)
         let directory = fileManager.urls(for: .documentDirectory, in: .userDomainMask).first!.appendingPathComponent("files")
         createFilesDirectoryIfNeeded(at: directory)
         return directory
@@ -19,8 +19,8 @@ class HomeViewController: UIViewController, UIDocumentPickerDelegate, UISearchRe
         case name, date, size
     }
 
-    private let fileListTableView = UITableView()
-    private let activityIndicator = UIActivityIndicatorView(style: .large)
+    let fileListTableView = UITableView() // Changed from private to internal (default)
+    let activityIndicator = UIActivityIndicatorView(style: .large) // Changed from private to internal (default)
 
     // MARK: - Lifecycle
     override func viewDidLoad() {
