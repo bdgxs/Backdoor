@@ -1,102 +1,97 @@
 import UIKit
 import ZIPFoundation
 
-extension HomeViewController {
+class HomeViewFileHandlers {
+    private let fileManager = FileManager.default
 
-    @objc func uploadFile() {
+    func uploadFile(viewController: UIViewController) {
         let documentPicker = UIDocumentPickerViewController(forOpeningContentTypes: [.data], asCopy: true)
-        documentPicker.delegate = self
+        documentPicker.delegate = viewController as? UIDocumentPickerDelegate
         documentPicker.modalPresentationStyle = .formSheet
-        present(documentPicker, animated: true, completion: nil)
+        viewController.present(documentPicker, animated: true, completion: nil)
     }
 
-    func importFile() {
+    func importFile(viewController: UIViewController) {
         let documentPicker = UIDocumentPickerViewController(forOpeningContentTypes: [.data], asCopy: true)
-        documentPicker.delegate = self
+        documentPicker.delegate = viewController as? UIDocumentPickerDelegate
         documentPicker.modalPresentationStyle = .formSheet
-        present(documentPicker, animated: true, completion: nil)
+        viewController.present(documentPicker, animated: true, completion: nil)
     }
 
-    func createNewFolder() {
-        showInputAlert(title: "New Folder", message: "Enter folder name", actionTitle: "Create") { folderName in
-            let folderURL = self.documentsDirectory.appendingPathComponent(folderName)
+    func createNewFolder(viewController: HomeViewController, folderName: String) {
+        let folderURL = viewController.documentsDirectory.appendingPathComponent(folderName)
+        do {
+            try fileManager.createDirectory(at: folderURL, withIntermediateDirectories: true, attributes: nil)
+            viewController.loadFiles()
+        } catch {
+            viewController.utilities.handleError(error, withTitle: "Creating Folder")
+        }
+    }
+
+    func createNewFile(viewController: HomeViewController, fileName: String) {
+        let fileURL = viewController.documentsDirectory.appendingPathComponent(fileName)
+        fileManager.createFile(atPath: fileURL.path, contents: nil, attributes: nil)
+        viewController.loadFiles()
+    }
+
+    func renameFile(viewController: HomeViewController, fileURL: URL, newName: String) {
+        let destinationURL = fileURL.deletingLastPathComponent().appendingPathComponent(newName)
+        viewController.activityIndicator.startAnimating()
+        DispatchQueue.global().async {
             do {
-                try self.fileManager.createDirectory(at: folderURL, withIntermediateDirectories: true, attributes: nil)
-                self.loadFiles()
+                try self.fileManager.moveItem(at: fileURL, to: destinationURL)
+                DispatchQueue.main.async {
+                    viewController.activityIndicator.stopAnimating()
+                    viewController.loadFiles()
+                }
             } catch {
-                self.handleError(error, withTitle: "Creating Folder")
-            }
-        }
-    }
-
-    func createNewFile() {
-        showInputAlert(title: "New File", message: "Enter file name", actionTitle: "Create") { fileName in
-            let fileURL = self.documentsDirectory.appendingPathComponent(fileName)
-            self.fileManager.createFile(atPath: fileURL.path, contents: nil, attributes: nil)
-            self.loadFiles()
-        }
-    }
-
-    func renameFile(at fileURL: URL) {
-        showInputAlert(title: "Rename File", message: "Enter new file name", actionTitle: "Rename", initialText: fileURL.lastPathComponent) { newName in
-            let destinationURL = fileURL.deletingLastPathComponent().appendingPathComponent(newName)
-            self.activityIndicator.startAnimating()
-            DispatchQueue.global().async {
-                do {
-                    try self.fileManager.moveItem(at: fileURL, to: destinationURL)
-                    DispatchQueue.main.async {
-                        self.activityIndicator.stopAnimating()
-                        self.loadFiles()
-                    }
-                } catch {
-                    DispatchQueue.main.async {
-                        self.activityIndicator.stopAnimating()
-                        self.handleError(error, withTitle: "Renaming File")
-                    }
+                DispatchQueue.main.async {
+                    viewController.activityIndicator.stopAnimating()
+                    viewController.utilities.handleError(error, withTitle: "Renaming File")
                 }
             }
         }
     }
 
-    func deleteFile(at fileURL: URL) {
-        activityIndicator.startAnimating()
+    func deleteFile(viewController: HomeViewController, fileURL: URL) {
+        viewController.activityIndicator.startAnimating()
         DispatchQueue.global().async {
             do {
                 try self.fileManager.removeItem(at: fileURL)
                 DispatchQueue.main.async {
-                    self.activityIndicator.stopAnimating()
-                    self.loadFiles()
+                    viewController.activityIndicator.stopAnimating()
+                    viewController.loadFiles()
                 }
             } catch {
                 DispatchQueue.main.async {
-                    self.activityIndicator.stopAnimating()
-                    self.handleError(error, withTitle: "Deleting File")
+                    viewController.activityIndicator.stopAnimating()
+                    viewController.utilities.handleError(error, withTitle: "Deleting File")
                 }
             }
         }
     }
 
-    func unzipFile(at fileURL: URL) {
+    func unzipFile(viewController: HomeViewController, fileURL: URL) {
         let destinationURL = fileURL.deletingLastPathComponent().appendingPathComponent("extracted")
-        activityIndicator.startAnimating()
+        viewController.activityIndicator.startAnimating()
         DispatchQueue.global().async {
             do {
                 try self.fileManager.unzipItem(at: fileURL, to: destinationURL)
                 DispatchQueue.main.async {
-                    self.activityIndicator.stopAnimating()
-                    self.loadFiles()
+                    viewController.activityIndicator.stopAnimating()
+                    viewController.loadFiles()
                 }
             } catch {
                 DispatchQueue.main.async {
-                    self.activityIndicator.stopAnimating()
-                    self.handleError(error, withTitle: "Unzipping File")
+                    viewController.activityIndicator.stopAnimating()
+                    viewController.utilities.handleError(error, withTitle: "Unzipping File")
                 }
             }
         }
     }
 
-    func shareFile(at fileURL: URL) {
+    func shareFile(viewController: UIViewController, fileURL: URL) {
         let activityController = UIActivityViewController(activityItems: [fileURL], applicationActivities: nil)
-        present(activityController, animated: true, completion: nil)
+        viewController.present(activityController, animated: true, completion: nil)
     }
 }
