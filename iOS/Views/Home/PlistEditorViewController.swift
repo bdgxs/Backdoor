@@ -1,10 +1,11 @@
 import UIKit
 
 class PlistEditorViewController: UIViewController {
-
     private let fileURL: URL
     private var textView: UITextView!
     private var toolbar: UIToolbar!
+    private var hasUnsavedChanges = false
+    private var autoSaveTimer: Timer?
 
     init(fileURL: URL) {
         self.fileURL = fileURL
@@ -19,23 +20,38 @@ class PlistEditorViewController: UIViewController {
         super.viewDidLoad()
         setupUI()
         loadFileContent()
+        startAutoSaveTimer()
     }
 
-    private func setupUI() {
+    override func viewWillDisappear(_ animated: Bool) {
+        super.viewWillDisappear(animated)
+        if hasUnsavedChanges {
+            promptSaveChanges()
+        } else {
+            navigationController?.popViewController(animated: true)
+        }
+        stopAutoSaveTimer()
+    }
+
+    private void setupUI() {
         view.backgroundColor = .systemBackground
 
         // Setup text view
         textView = UITextView()
         textView.translatesAutoresizingMaskIntoConstraints = false
-        textView.font = UIFont(name: "Courier", size: 14)
+        textView.font = UIFont.monospacedSystemFont(ofSize: 14, weight: .regular)
+        textView.delegate = self
         view.addSubview(textView)
 
         // Setup toolbar
         toolbar = UIToolbar()
         toolbar.translatesAutoresizingMaskIntoConstraints = false
-        let saveButton = UIBarButtonItem(barButtonSystemItem: .save, target: self, action: #selector(savePlistContent))
-        let copyButton = UIBarButtonItem(barButtonSystemItem: .action, target: self, action: #selector(copyPlistContent))
-        toolbar.items = [saveButton, copyButton, UIBarButtonItem.flexibleSpace()]
+        let saveButton = UIBarButtonItem(barButtonSystemItem: .save, target: self, action: #selector(saveChanges))
+        let copyButton = UIBarButtonItem(barButtonSystemItem: .action, target: self, action: #selector(copyContent))
+        let findReplaceButton = UIBarButtonItem(title: "Find/Replace", style: .plain, target: self, action: #selector(promptFindReplace))
+        let undoButton = UIBarButtonItem(barButtonSystemItem: .undo, target: self, action: #selector(undoAction))
+        let redoButton = UIBarButtonItem(barButtonSystemItem: .redo, target: self, action: #selector(redoAction))
+        toolbar.items = [saveButton, copyButton, findReplaceButton, undoButton, redoButton, UIBarButtonItem.flexibleSpace()]
         view.addSubview(toolbar)
 
         // Setup constraints
@@ -59,46 +75,3 @@ class PlistEditorViewController: UIViewController {
             }
         } catch {
             presentAlert(title: "Error", message: "Failed to load plist content: \(error.localizedDescription)")
-        }
-    }
-
-    @objc private func savePlistContent() {
-        guard let content = textView.text else { return }
-        do {
-            let plist = try convertStringToPlist(content: content)
-            let data = try PropertyListSerialization.data(fromPropertyList: plist, format: .xml, options: 0)
-            try data.write(to: fileURL)
-            presentAlert(title: "Success", message: "File saved successfully.")
-        } catch {
-            presentAlert(title: "Error", message: "Failed to save plist content: \(error.localizedDescription)")
-        }
-    }
-
-    @objc private func copyPlistContent() {
-        UIPasteboard.general.string = textView.text
-        presentAlert(title: "Copied", message: "Plist content copied to clipboard.")
-    }
-
-    private func presentAlert(title: String, message: String) {
-        let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
-        alert.addAction(UIAlertAction(title: "OK", style: .default, handler: nil))
-        present(alert, animated: true, completion: nil)
-    }
-
-    private func convertPlistToString(plist: [String: Any]) -> String {
-        return plist.map { "\($0.key): \($0.value)" }.joined(separator: "\n")
-    }
-
-    private func convertStringToPlist(content: String) throws -> [String: Any] {
-        let lines = content.split(separator: "\n")
-        var plist = [String: Any]()
-        for line in lines {
-            let components = line.split(separator: ":")
-            guard components.count == 2 else { throw NSError(domain: "InvalidFormat", code: 1, userInfo: nil) }
-            let key = String(components[0]).trimmingCharacters(in: .whitespaces)
-            let value = String(components[1]).trimmingCharacters(in: .whitespaces)
-            plist[key] = value
-        }
-        return plist
-    }
-}
