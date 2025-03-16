@@ -37,8 +37,8 @@ jobs:
 
         const form = new FormData();
         form.append('ipa', fs.createReadStream('certificates/app.ipa'));
-        form.append('p12', fs.createReadStream('certificates/certificate.p12'));
-        form.append('mobileprovision', fs.createReadStream('certificates/profile.mobileprovision'));
+        form.append('p12', fs.createReadStream('certificates/BDG.p12'));
+        form.append('mobileprovision', fs.createReadStream('certificates/BDG.mobileprovision'));
         form.append('p12_password', process.env.P12_PASSWORD);
         form.append('save_cert', 'on'); // Set to 'on' to save certificates
 
