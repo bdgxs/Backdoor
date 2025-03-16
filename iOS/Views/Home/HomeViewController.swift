@@ -1,7 +1,5 @@
 import UIKit
 import ZIPFoundation
-
-// Add the import statement for HomeViewUtilities
 import HomeViewUtilities
 
 class HomeViewController: UIViewController, UIDocumentPickerDelegate, UISearchResultsUpdating, UITableViewDragDelegate, UITableViewDropDelegate, UITableViewDelegate, UITableViewDataSource {
@@ -13,7 +11,7 @@ class HomeViewController: UIViewController, UIDocumentPickerDelegate, UISearchRe
     private let searchController = UISearchController(searchResultsController: nil)
     private var sortOrder: SortOrder = .name
     let fileHandlers = HomeViewFileHandlers()
-    let utilities = HomeViewUtilities() // Add this line
+    let utilities = HomeViewUtilities() 
     
     var documentsDirectory: URL {
         let directory = fileManager.urls(for: .documentDirectory, in: .userDomainMask).first!.appendingPathComponent("files")
@@ -129,12 +127,14 @@ class HomeViewController: UIViewController, UIDocumentPickerDelegate, UISearchRe
                 switch actionTitle {
                 case "Select": self.selectFiles()
                 case "Import": self.fileHandlers.importFile(viewController: self)
-                case "New Folder": self.showInputAlert(title: "New Folder", message: "Enter folder name", actionTitle: "Create") { folderName in
-                    self.fileHandlers.createNewFolder(viewController: self, folderName: folderName)
-                }
-                case "New File": self.showInputAlert(title: "New File", message: "Enter file name", actionTitle: "Create") { fileName in
-                    self.fileHandlers.createNewFile(viewController: self, fileName: fileName)
-                }
+                case "New Folder": 
+                    self.showInputAlert(title: "New Folder", message: "Enter folder name", actionTitle: "Create") { folderName in
+                        self.fileHandlers.createNewFolder(viewController: self, folderName: folderName)
+                    }
+                case "New File": 
+                    self.showInputAlert(title: "New File", message: "Enter file name", actionTitle: "Create") { fileName in
+                        self.fileHandlers.createNewFile(viewController: self, fileName: fileName)
+                    }
                 default: break
                 }
             })
@@ -217,5 +217,38 @@ class HomeViewController: UIViewController, UIDocumentPickerDelegate, UISearchRe
     
     func tableView(_ tableView: UITableView, dropSessionDidUpdate session: UIDropSession, withDestinationIndexPath destinationIndexPath: IndexPath?) -> UITableViewDropProposal {
         return UITableViewDropProposal(operation: .copy, intent: .insertAtDestinationIndexPath)
+    }
+}
+
+// Extension methods for HomeViewController
+extension HomeViewController {
+    func presentAlert(title: String, message: String, buttonTitle: String = "OK", handler: ((UIAlertAction) -> Void)? = nil) {
+        let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
+        let action = UIAlertAction(title: buttonTitle, style: .default, handler: handler)
+        alert.addAction(action)
+
+        if handler != nil {
+            alert.addAction(UIAlertAction(title: "Cancel", style: .cancel, handler: nil))
+        }
+
+        present(alert, animated: true, completion: nil)
+    }
+
+    func showInputAlert(title: String, message: String, actionTitle: String, initialText: String = "", completion: @escaping (String) -> Void) {
+        let alertController = UIAlertController(title: title, message: message, preferredStyle: .alert)
+        alertController.addTextField { textField in
+            textField.text = initialText
+        }
+        let confirmAction = UIAlertAction(title: actionTitle, style: .default) { [weak alertController] _ in
+            guard let textField = alertController?.textFields?.first, let text = textField.text else { return }
+            completion(text)
+        }
+        alertController.addAction(confirmAction)
+        alertController.addAction(UIAlertAction(title: "Cancel", style: .cancel, handler: nil))
+        present(alertController, animated: true, completion: nil)
+    }
+
+    func handleError(_ error: Error, withTitle title: String = "Error") {
+        presentAlert(title: title, message: "An error occurred: \(error.localizedDescription)")
     }
 }
