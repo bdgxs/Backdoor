@@ -255,3 +255,165 @@ class HomeViewController: UIViewController, UITableViewDelegate, UITableViewData
         alertController.addAction(UIAlertAction(title: "Cancel", style: .cancel, handler: nil))
         present(alertController, animated: true, completion: nil)
     }
+        private func copyFile(at fileURL: URL) {
+        let destinationURL = fileURL.deletingLastPathComponent().appendingPathComponent("Copy_\(fileURL.lastPathComponent)")
+        activityIndicator.startAnimating()
+        DispatchQueue.global().async {
+            do {
+                try self.fileManager.copyItem(at: fileURL, to: destinationURL)
+                DispatchQueue.main.async {
+                    self.activityIndicator.stopAnimating()
+                    self.loadFiles()
+                }
+            } catch {
+                DispatchQueue.main.async {
+                    self.activityIndicator.stopAnimating()
+                    self.presentAlert(title: "Error", message: "Copy failed with error: \(error.localizedDescription)")
+                }
+            }
+        }
+    }
+    
+    private func moveFile(at fileURL: URL) {
+        let alertController = UIAlertController(title: "Move File", message: "Enter new file path", preferredStyle: .alert)
+        alertController.addTextField { textField in
+            textField.placeholder = "New file path"
+        }
+        let moveAction = UIAlertAction(title: "Move", style: .default) { _ in
+            guard let newPath = alertController.textFields?.first?.text else { return }
+            let destinationURL = self.documentsDirectory.appendingPathComponent(newPath)
+            self.activityIndicator.startAnimating()
+            DispatchQueue.global().async {
+                do {
+                    try self.fileManager.moveItem(at: fileURL, to: destinationURL)
+                    DispatchQueue.main.async {
+                        self.activityIndicator.stopAnimating()
+                        self.loadFiles()
+                    }
+                } catch {
+                    DispatchQueue.main.async {
+                        self.activityIndicator.stopAnimating()
+                        self.presentAlert(title: "Error", message: "Move failed with error: \(error.localizedDescription)")
+                    }
+                }
+            }
+        }
+        alertController.addAction(moveAction)
+        alertController.addAction(UIAlertAction(title: "Cancel", style: .cancel, handler: nil))
+        present(alertController, animated: true, completion: nil)
+    }
+    
+    private func compressFile(at fileURL: URL) {
+        let destinationURL = fileURL.deletingLastPathComponent().appendingPathComponent("\(fileURL.lastPathComponent).zip")
+        activityIndicator.startAnimating()
+        DispatchQueue.global().async {
+            do {
+                try self.fileManager.zipItem(at: fileURL, to: destinationURL)
+                DispatchQueue.main.async {
+                    self.activityIndicator.stopAnimating()
+                    self.loadFiles()
+                }
+            } catch {
+                DispatchQueue.main.async {
+                    self.activityIndicator.stopAnimating()
+                    self.presentAlert(title: "Error", message: "Compression failed with error: \(error.localizedDescription)")
+                }
+            }
+        }
+    }
+    
+    private func renameFile(at fileURL: URL) {
+        let alertController = UIAlertController(title: "Rename File", message: "Enter new file name", preferredStyle: .alert)
+        alertController.addTextField { textField in
+            textField.text = fileURL.lastPathComponent
+        }
+        let renameAction = UIAlertAction(title: "Rename", style: .default) { _ in
+            guard let newName = alertController.textFields?.first?.text else { return }
+            let destinationURL = fileURL.deletingLastPathComponent().appendingPathComponent(newName)
+            self.activityIndicator.startAnimating()
+            DispatchQueue.global().async {
+                do {
+                    try self.fileManager.moveItem(at: fileURL, to: destinationURL)
+                    DispatchQueue.main.async {
+                        self.activityIndicator.stopAnimating()
+                        self.loadFiles()
+                    }
+                } catch {
+                    DispatchQueue.main.async {
+                        self.activityIndicator.stopAnimating()
+                        self.presentAlert(title: "Error", message: "Rename failed with error: \(error.localizedDescription)")
+                    }
+                }
+            }
+        }
+        alertController.addAction(renameAction)
+        alertController.addAction(UIAlertAction(title: "Cancel", style: .cancel, handler: nil))
+        present(alertController, animated: true, completion: nil)
+    }
+    
+    private func deleteFile(at fileURL: URL) {
+        activityIndicator.startAnimating()
+        DispatchQueue.global().async {
+            do {
+                try self.fileManager.removeItem(at: fileURL)
+                DispatchQueue.main.async {
+                    self.activityIndicator.stopAnimating()
+                    self.loadFiles()
+                }
+            } catch {
+                DispatchQueue.main.async {
+                    self.activityIndicator.stopAnimating()
+                    self.presentAlert(title: "Error", message: "Delete failed with error: \(error.localizedDescription)")
+                }
+            }
+        }
+    }
+
+    private func unzipFile(at fileURL: URL) {
+        let destinationURL = fileURL.deletingLastPathComponent().appendingPathComponent("extracted")
+        activityIndicator.startAnimating()
+        DispatchQueue.global().async {
+            do {
+                try self.fileManager.unzipItem(at: fileURL, to: destinationURL)
+                DispatchQueue.main.async {
+                    self.activityIndicator.stopAnimating()
+                    self.loadFiles()
+                }
+            } catch {
+                DispatchQueue.main.async {
+                    self.activityIndicator.stopAnimating()
+                    self.presentAlert(title: "Error", message: "Unzip failed with error: \(error.localizedDescription)")
+                }
+            }
+        }
+    }
+
+    private func hexEditFile(at fileURL: URL) {
+        guard let navigationController = self.navigationController else {
+            presentAlert(title: "Error", message: "Navigation controller is missing")
+            return
+        }
+        FileOperations.hexEditFile(at: fileURL, in: navigationController)
+    }
+
+    private func shareFile(at fileURL: URL) {
+        let activityController = UIActivityViewController(activityItems: [fileURL], applicationActivities: nil)
+        present(activityController, animated: true, completion: nil)
+    }
+
+    // MARK: - UIDocumentPickerViewControllerDelegate
+    func documentPicker(_ controller: UIDocumentPickerViewController, didPickDocumentsAt urls: [URL]) {
+        guard let selectedFileURL = urls.first else {
+            return
+        }
+        // Handle file import
+        let destinationURL = documentsDirectory.appendingPathComponent(selectedFileURL.lastPathComponent)
+        do {
+            try fileManager.copyItem(at: selectedFileURL, to: destinationURL)
+            loadFiles()
+        } catch {
+            presentAlert(title: "Error", message: "Failed to import file: \(error.localizedDescription)")
+        }
+    }
+
+    // MARK: - UITableViewDelegate, UITable
