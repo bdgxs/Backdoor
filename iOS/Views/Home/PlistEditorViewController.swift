@@ -68,94 +68,32 @@ class PlistEditorViewController: UIViewController, UITextViewDelegate {
     }
 
     private func loadFileContent() {
-        do {
-            let data = try Data(contentsOf: fileURL)
-            if let plist = try PropertyListSerialization.propertyList(from: data, options: [], format: nil) as? [String: Any] {
-                textView.text = convertPlistToString(plist: plist)
+        DispatchQueue.global(qos: .userInitiated).async {
+            do {
+                let data = try Data(contentsOf: self.fileURL)
+                if let plist = try PropertyListSerialization.propertyList(from: data, options: [], format: nil) as? [String: Any] {
+                    DispatchQueue.main.async {
+                        self.textView.text = self.convertPlistToString(plist: plist)
+                    }
+                }
+            } catch {
+                DispatchQueue.main.async {
+                    self.presentAlert(title: "Error", message: "Failed to load plist content: \(error.localizedDescription)")
+                }
             }
-        } catch {
-            presentAlert(title: "Error", message: "Failed to load plist content: \(error.localizedDescription)")
         }
     }
 
     @objc private func saveChanges() {
-        // Implement save changes logic
-    }
-
-    @objc private func copyContent() {
-        UIPasteboard.general.string = textView.text
-        presentAlert(title: "Copied", message: "Content copied to clipboard.")
-    }
-
-    @objc private func undoAction() {
-        textView.undoManager?.undo()
-    }
-
-    @objc private func redoAction() {
-        textView.undoManager?.redo()
-    }
-
-    @objc private func promptFindReplace() {
-        let alert = UIAlertController(title: "Find and Replace", message: "Enter text to find and replace:", preferredStyle: .alert)
-        alert.addTextField { textField in
-            textField.placeholder = "Find"
-        }
-        alert.addTextField { textField in
-            textField.placeholder = "Replace"
-        }
-        alert.addAction(UIAlertAction(title: "Replace", style: .default, handler: { [weak self] _ in
-            guard let findText = alert.textFields?[0].text, let replaceText = alert.textFields?[1].text else { return }
-            self?.findAndReplace(findText: findText, replaceText: replaceText)
-        }))
-        alert.addAction(UIAlertAction(title: "Cancel", style: .cancel, handler: nil))
-        present(alert, animated: true, completion: nil)
-    }
-
-    private func findAndReplace(findText: String, replaceText: String) {
-        textView.text = textView.text.replacingOccurrences(of: findText, with: replaceText)
-        hasUnsavedChanges = true
-    }
-
-    private func promptSaveChanges() {
-        let alert = UIAlertController(title: "Unsaved Changes", message: "You have unsaved changes. Do you want to save them before leaving?", preferredStyle: .alert)
-        alert.addAction(UIAlertAction(title: "Save", style: .default, handler: { [weak self] _ in
-            self?.saveChanges()
-            self?.navigationController?.popViewController(animated: true)
-        }))
-        alert.addAction(UIAlertAction(title: "Discard", style: .destructive, handler: { [weak self] _ in
-            self?.navigationController?.popViewController(animated: true)
-        }))
-        alert.addAction(UIAlertAction(title: "Cancel", style: .cancel, handler: nil))
-        present(alert, animated: true, completion: nil)
-    }
-
-    private func startAutoSaveTimer() {
-        autoSaveTimer = Timer.scheduledTimer(timeInterval: 60, target: self, selector: #selector(autoSaveChanges), userInfo: nil, repeats: true)
-    }
-
-    private func stopAutoSaveTimer() {
-        autoSaveTimer?.invalidate()
-        autoSaveTimer = nil
-    }
-
-    @objc private func autoSaveChanges() {
-        if hasUnsavedChanges {
-            saveChanges()
-        }
-    }
-
-    func textViewDidChange(_ textView: UITextView) {
-        hasUnsavedChanges = true
-    }
-
-    private func convertPlistToString(plist: [String: Any]) -> String {
-        // Implement conversion logic
-        return ""
-    }
-
-    private func presentAlert(title: String, message: String) {
-        let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
-        alert.addAction(UIAlertAction(title: "OK", style: .default, handler: nil))
-        present(alert, animated: true, completion: nil)
-    }
-}
+        guard let plistString = textView.text else { return }
+        let plistData = plistString.data(using: .utf8)!
+        DispatchQueue.global(qos: .userInitiated).async {
+            do {
+                try plistData.write(to: self.fileURL)
+                self.hasUnsavedChanges = false
+                DispatchQueue.main.async {
+                    self.presentAlert(title: "Success", message: "File saved successfully.")
+                }
+            } catch {
+                DispatchQueue.main.async {
+                    self.present
