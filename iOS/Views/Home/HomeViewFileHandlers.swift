@@ -1,43 +1,57 @@
 import UIKit
 import ZIPFoundation
 
+protocol FileHandlingDelegate: AnyObject {
+    var documentsDirectory: URL { get }
+    var activityIndicator: UIActivityIndicatorView { get }
+    func loadFiles()
+    func present(_ viewControllerToPresent: UIViewController, animated flag: Bool, completion: (() -> Void)?)
+}
+
 class HomeViewFileHandlers {
     private let fileManager = FileManager.default
     private let utilities = HomeViewUtilities()
 
-    // Existing functions...
-
-    func uploadFile(viewController: UIViewController) {
+    func uploadFile(viewController: UIViewController & UIDocumentPickerDelegate & FileHandlingDelegate) {
         let documentPicker = UIDocumentPickerViewController(forOpeningContentTypes: [.data], asCopy: true)
-        documentPicker.delegate = viewController as? UIDocumentPickerDelegate
+        documentPicker.delegate = viewController
         documentPicker.modalPresentationStyle = .formSheet
         viewController.present(documentPicker, animated: true, completion: nil)
     }
 
-    func importFile(viewController: UIViewController) {
+    func importFile(viewController: UIViewController & UIDocumentPickerDelegate & FileHandlingDelegate) {
         let documentPicker = UIDocumentPickerViewController(forOpeningContentTypes: [.data], asCopy: true)
-        documentPicker.delegate = viewController as? UIDocumentPickerDelegate
+        documentPicker.delegate = viewController
         documentPicker.modalPresentationStyle = .formSheet
         viewController.present(documentPicker, animated: true, completion: nil)
     }
 
-    func createNewFolder(viewController: HomeViewController, folderName: String) {
+    func createNewFolder(viewController: FileHandlingDelegate, folderName: String, completion: @escaping (Result<URL, Error>) -> Void) {
         let folderURL = viewController.documentsDirectory.appendingPathComponent(folderName)
         do {
             try fileManager.createDirectory(at: folderURL, withIntermediateDirectories: true, attributes: nil)
             viewController.loadFiles()
+            completion(.success(folderURL))
         } catch {
-            utilities.handleError(in: viewController, error: error, withTitle: "Creating Folder")
+            utilities.handleError(in: viewController as! UIViewController, error: error, withTitle: "Creating Folder")
+            completion(.failure(error))
         }
     }
 
-    func createNewFile(viewController: HomeViewController, fileName: String) {
+    func createNewFile(viewController: FileHandlingDelegate, fileName: String, completion: @escaping (Result<URL, Error>) -> Void) {
         let fileURL = viewController.documentsDirectory.appendingPathComponent(fileName)
-        fileManager.createFile(atPath: fileURL.path, contents: nil, attributes: nil)
-        viewController.loadFiles()
+        if !fileManager.fileExists(atPath: fileURL.path) {
+            fileManager.createFile(atPath: fileURL.path, contents: nil, attributes: nil)
+            viewController.loadFiles()
+            completion(.success(fileURL))
+        } else {
+            let error = NSError(domain: "FileExists", code: 1, userInfo: [NSLocalizedDescriptionKey: "File already exists"])
+            utilities.handleError(in: viewController as! UIViewController, error: error, withTitle: "Creating File")
+            completion(.failure(error))
+        }
     }
 
-    func renameFile(viewController: HomeViewController, fileURL: URL, newName: String) {
+    func renameFile(viewController: FileHandlingDelegate, fileURL: URL, newName: String, completion: @escaping (Result<URL, Error>) -> Void) {
         let destinationURL = fileURL.deletingLastPathComponent().appendingPathComponent(newName)
         viewController.activityIndicator.startAnimating()
         DispatchQueue.global().async {
@@ -46,17 +60,19 @@ class HomeViewFileHandlers {
                 DispatchQueue.main.async {
                     viewController.activityIndicator.stopAnimating()
                     viewController.loadFiles()
+                    completion(.success(destinationURL))
                 }
             } catch {
                 DispatchQueue.main.async {
                     viewController.activityIndicator.stopAnimating()
-                    self.utilities.handleError(in: viewController, error: error, withTitle: "Renaming File")
+                    self.utilities.handleError(in: viewController as! UIViewController, error: error, withTitle: "Renaming File")
+                    completion(.failure(error))
                 }
             }
         }
     }
 
-    func deleteFile(viewController: HomeViewController, fileURL: URL) {
+    func deleteFile(viewController: FileHandlingDelegate, fileURL: URL, completion: @escaping (Result<Void, Error>) -> Void) {
         viewController.activityIndicator.startAnimating()
         DispatchQueue.global().async {
             do {
@@ -64,30 +80,34 @@ class HomeViewFileHandlers {
                 DispatchQueue.main.async {
                     viewController.activityIndicator.stopAnimating()
                     viewController.loadFiles()
+                    completion(.success(()))
                 }
             } catch {
                 DispatchQueue.main.async {
                     viewController.activityIndicator.stopAnimating()
-                    self.utilities.handleError(in: viewController, error: error, withTitle: "Deleting File")
+                    self.utilities.handleError(in: viewController as! UIViewController, error: error, withTitle: "Deleting File")
+                    completion(.failure(error))
                 }
             }
         }
     }
 
-    func unzipFile(viewController: HomeViewController, fileURL: URL) {
-        let destinationURL = fileURL.deletingLastPathComponent().appendingPathComponent("extracted")
+    func unzipFile(viewController: FileHandlingDelegate, fileURL: URL, destinationName: String, progressHandler: ((Double) -> Void)? = nil, completion: @escaping (Result<URL, Error>) -> Void) {
+        let destinationURL = fileURL.deletingLastPathComponent().appendingPathComponent(destinationName)
         viewController.activityIndicator.startAnimating()
         DispatchQueue.global().async {
             do {
-                try self.fileManager.unzipItem(at: fileURL, to: destinationURL)
+                try self.fileManager.unzipItem(at: fileURL, to: destinationURL, progress: progressHandler)
                 DispatchQueue.main.async {
                     viewController.activityIndicator.stopAnimating()
                     viewController.loadFiles()
+                    completion(.success(destinationURL))
                 }
             } catch {
                 DispatchQueue.main.async {
                     viewController.activityIndicator.stopAnimating()
-                    self.utilities.handleError(in: viewController, error: error, withTitle: "Unzipping File")
+                    self.utilities.handleError(in: viewController as! UIViewController, error: error, withTitle: "Unzipping File")
+                    completion(.failure(error))
                 }
             }
         }
@@ -98,16 +118,15 @@ class HomeViewFileHandlers {
         viewController.present(activityController, animated: true, completion: nil)
     }
 
-    // New functions
-
-    func listDylibs(filePath: String) throws -> [String]? {
+    // Process Execution Helper
+    private func executeProcess(executableURL: URL, arguments: [String]) throws -> String {
         let task = Process()
-        task.executableURL = URL(fileURLWithPath: "/usr/bin/otool")
-        task.arguments = ["-L", filePath]
+        task.executableURL = executableURL
+        task.arguments = arguments
 
         let pipe = Pipe()
         task.standardOutput = pipe
-        task.standardError = Pipe() // Capture standard error too
+        task.standardError = pipe
 
         try task.run()
         task.waitUntilExit()
@@ -115,182 +134,48 @@ class HomeViewFileHandlers {
         if task.terminationStatus == 0 {
             let data = pipe.fileHandleForReading.readDataToEndOfFile()
             if let output = String(data: data, encoding: .utf8) {
-                let lines = output.components(separatedBy: .newlines)
-                var dylibs: [String] = []
-
-                for line in lines {
-                    let trimmedLine = line.trimmingCharacters(in: .whitespaces)
-                    if trimmedLine.hasPrefix("\t") {
-                        if let dylib = trimmedLine.components(separatedBy: "(").first?.trimmingCharacters(in: .whitespaces) {
-                            dylibs.append(dylib)
-                        }
-                    }
-                }
-                return dylibs
+                return output
+            } else {
+                throw NSError(domain: "Process", code: -1, userInfo: [NSLocalizedDescriptionKey: "Failed to decode output"])
             }
         } else {
-            let errorData = task.standardError as! Pipe
-            let errorString = String(data: errorData.fileHandleForReading.readDataToEndOfFile(), encoding: .utf8)
-            print("otool error: \(errorString ?? "Unknown error")")
-            throw NSError(domain: "otool", code: Int(task.terminationStatus), userInfo: [NSLocalizedDescriptionKey: "otool failed with status \(task.terminationStatus)"])
-        }
-        return nil
-    }
-
-    func fetchSources() {
-        sources = CoreDataManager.shared.getAZSources()
-        searchResultsTableViewController.sources = sources
-        DispatchQueue.main.async {
-            self.tableView.reloadSections(IndexSet(integer: 1), with: .automatic)
+            let errorData = task.standardError.fileHandleForReading.readDataToEndOfFile()
+            if let errorString = String(data: errorData, encoding: .utf8) {
+                throw NSError(domain: "Process", code: Int(task.terminationStatus), userInfo: [NSLocalizedDescriptionKey: "Process failed: \(errorString)"])
+            } else {
+                throw NSError(domain: "Process", code: Int(task.terminationStatus), userInfo: [NSLocalizedDescriptionKey: "Process failed with unknown error"])
+            }
         }
     }
 
-    func uninstallDylibs(filePath: String, dylibPaths: [String]) throws {
-        let task = Process()
-        task.executableURL = URL(fileURLWithPath: "/usr/bin/otool")
-        task.arguments = ["-L", filePath]
-
-        let pipe = Pipe()
-        task.standardOutput = pipe
-        task.standardError = Pipe() // Capture standard error too
-
-        try task.run()
-        task.waitUntilExit()
-
-        if task.terminationStatus == 0 {
-            let data = pipe.fileHandleForReading.readDataToEndOfFile()
-            if let output = String(data: data, encoding: .utf8) {
+    func listDylibs(filePath: String, completion: @escaping (Result<[String], Error>) -> Void) {
+        let otoolURL = URL(fileURLWithPath: "/usr/bin/otool")
+        let arguments = ["-L", filePath]
+        DispatchQueue.global().async {
+            do {
+                let output = try self.executeProcess(executableURL: otoolURL, arguments: arguments)
                 let lines = output.components(separatedBy: .newlines)
-                var dylibs: [String] = []
-
-                for line in lines {
-                    let trimmedLine = line.trimmingCharacters(in: .whitespaces)
-                    if trimmedLine.hasPrefix("\t") {
-                        if let dylib = trimmedLine.components(separatedBy: "(").first?.trimmingCharacters(in: .whitespaces) {
-                            dylibs.append(dylib)
-                        }
-                    }
+                let dylibs = lines.filter { $0.hasPrefix("\t") }.compactMap { line in
+                    line.components(separatedBy: "(").first?.trimmingCharacters(in: .whitespaces)
                 }
-                return dylibs
-            }
-        } else {
-            let errorData = task.standardError as! Pipe
-            let errorString = String(data: errorData.fileHandleForReading.readDataToEndOfFile(), encoding: .utf8)
-            print("otool error: \(errorString ?? "Unknown error")")
-            throw NSError(domain: "otool", code: Int(task.terminationStatus), userInfo: [NSLocalizedDescriptionKey: "otool failed with status \(task.terminationStatus)"])
-        }
-        return nil
-    }
-
-    func updatePlugIns(options: SigningOptions, app: URL) throws {
-        let plugInsPath = app.appendingPathComponent("PlugIns")
-        let plugIns = try fileManager.contentsOfDirectory(atPath: plugInsPath.path)
-        
-        for plugIn in plugIns {
-            let plugInPath = plugInsPath.appendingPathComponent(plugIn)
-            let infoPlistPath = plugInPath.appendingPathComponent("Info.plist")
-            
-            if fileManager.fileExists(atPath: infoPlistPath.path) {
-                if let info = NSDictionary(contentsOf: infoPlistPath)?.mutableCopy() as? NSMutableDictionary {
-                    try updateInfoPlist(infoDict: info, main: options.mainOptions, options: options, icon: options.mainOptions.iconURL, app: plugInPath)
-                }
-            }
-            
-            let handler = TweakHandler(urls: options.signingOptions.toInject, app: plugInPath)
-            try handler.getInputFiles()
-            
-            if !options.mainOptions.removeInjectPaths.isEmpty {
-                if let appexe = try? TweakHandler.findExecutable(at: plugInPath) {
-                    _ = uninstallDylibs(filePath: appexe.path, dylibPaths: options.mainOptions.removeInjectPaths)
-                }
+                DispatchQueue.main.async { completion(.success(dylibs)) }
+            } catch {
+                DispatchQueue.main.async { completion(.failure(error)) }
             }
         }
     }
 
-    func removeDumbAssPlaceHolderExtension(options: SigningOptions, app: URL) throws {
-        let extensionsPath = app.appendingPathComponent("Extensions")
-        let extensions = try fileManager.contentsOfDirectory(atPath: extensionsPath.path)
-        
-        for extensionItem in extensions {
-            let extensionPath = extensionsPath.appendingPathComponent(extensionItem)
-            
-            if extensionPath.lastPathComponent == "DumbAssPlaceHolderExtension.appex" {
-                try fileManager.removeItem(at: extensionPath)
-            }
-        }
+    func listDylibsFromApp(filePath: String, completion: @escaping (Result<[String], Error>) -> Void) {
+        listDylibs(filePath: filePath, completion: completion)
     }
 
-    func updateMobileProvision(app: URL) throws {
-        let provisioningPath = app.appendingPathComponent("embedded.mobileprovision")
-        
-        if fileManager.fileExists(atPath: provisioningPath.path) {
-            try fileManager.removeItem(at: provisioningPath)
-        }
-        
-        let certPath = try CoreDataManager.shared.getCertifcatePath(source: mainOptions.mainOptions.certificate)
-        let provisionPath = certPath.appendingPathComponent("\(mainOptions.mainOptions.certificate?.provisionPath ?? "")").path
-        
-        try fileManager.copyItem(atPath: provisionPath, toPath: provisioningPath.path)
-    }
+    // Add other functions here, using executeProcess and DispatchQueue.global().async for stability.
+}
 
-    func signAppWithZSign(tmpDirApp: URL, certPaths: (String, String), password: String, main: MainOptions, options: SigningOptions) throws {
-        let zsignCmd = "/usr/local/bin/zsign"
-        let args = [
-            "-k", certPaths.1,
-            "-m", certPaths.0,
-            "-p", password,
-            "-o", tmpDirApp.path,
-            tmpDirApp.path
-        ]
-        
-        let task = Process()
-        task.executableURL = URL(fileURLWithPath: zsignCmd)
-        task.arguments = args
-        
-        let pipe = Pipe()
-        task.standardOutput = pipe
-        task.standardError = Pipe()
-        
-        try task.run()
-        task.waitUntilExit()
-        
-        if task.terminationStatus != 0 {
-            let errorData = task.standardError as! Pipe
-            let errorString = String(data: errorData.fileHandleForReading.readDataToEndOfFile(), encoding: .utf8)
-            print("zsign error: \(errorString ?? "Unknown error")")
-            throw NSError(domain: "zsign", code: Int(task.terminationStatus), userInfo: [NSLocalizedDescriptionKey: "zsign failed with status \(task.terminationStatus)"])
-        }
-    }
-
-    func changeDylib(oldPath: String, newPath: String, appPath: String) throws {
-        let task = Process()
-        task.launchPath = "/usr/bin/install_name_tool"
-        task.arguments = ["-change", oldPath, newPath, appPath]
-        
-        try task.run()
-        task.waitUntilExit()
-        
-        if task.terminationStatus != 0 {
-            let errorData = task.standardError as! Pipe
-            let errorString = String(data: errorData.fileHandleForReading.readDataToEndOfFile(), encoding: .utf8)
-            print("install_name_tool error: \(errorString ?? "Unknown error")")
-            throw NSError(domain: "install_name_tool", code: Int(task.terminationStatus), userInfo: [NSLocalizedDescriptionKey: "install_name_tool failed with status \(task.terminationStatus)"])
-        }
-    }
-
-    func injectDylib(dylibPath: String, appPath: String) throws {
-        let task = Process()
-        task.launchPath = "/usr/bin/install_name_tool"
-        task.arguments = ["-add_rpath", dylibPath, appPath]
-        
-        try task.run()
-        task.waitUntilExit()
-        
-        if task.terminationStatus != 0 {
-            let errorData = task.standardError as! Pipe
-            let errorString = String(data: errorData.fileHandleForReading.readDataToEndOfFile(), encoding: .utf8)
-            print("install_name_tool error: \(errorString ?? "Unknown error")")
-            throw NSError(domain: "install_name_tool", code: Int(task.terminationStatus), userInfo: [NSLocalizedDescriptionKey: "install_name_tool failed with status \(task.terminationStatus)"])
-        }
+class HomeViewUtilities {
+    func handleError(in viewController: UIViewController, error: Error, withTitle title: String) {
+        let alert = UIAlertController(title: title, message: error.localizedDescription, preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: "OK", style: .default, handler: nil))
+        viewController.present(alert, animated: true, completion: nil)
     }
 }
