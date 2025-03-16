@@ -91,7 +91,7 @@ class HomeViewController: UIViewController, UIDocumentPickerDelegate, UISearchRe
             } catch {
                 DispatchQueue.main.async {
                     self?.activityIndicator.stopAnimating()
-                    self?.utilities.handleError(error, withTitle: "Loading Files")
+                    self?.utilities.handleError(on: self!, error: error, withTitle: "Loading Files")
                 }
             }
         }
@@ -126,10 +126,10 @@ class HomeViewController: UIViewController, UIDocumentPickerDelegate, UISearchRe
                 switch actionTitle {
                 case "Select": self.selectFiles()
                 case "Import": self.fileHandlers.importFile(viewController: self)
-                case "New Folder": self.showInputAlert(title: "New Folder", message: "Enter folder name", actionTitle: "Create") { folderName in
+                case "New Folder": self.utilities.showInputAlert(on: self, title: "New Folder", message: "Enter folder name", actionTitle: "Create") { folderName in
                     self.fileHandlers.createNewFolder(viewController: self, folderName: folderName)
                 }
-                case "New File": self.showInputAlert(title: "New File", message: "Enter file name", actionTitle: "Create") { fileName in
+                case "New File": self.utilities.showInputAlert(on: self, title: "New File", message: "Enter file name", actionTitle: "Create") { fileName in
                     self.fileHandlers.createNewFile(viewController: self, fileName: fileName)
                 }
                 default: break
@@ -169,7 +169,7 @@ class HomeViewController: UIViewController, UIDocumentPickerDelegate, UISearchRe
         do {
             try fileManager.createDirectory(at: directory, withIntermediateDirectories: true, attributes: nil)
         } catch {
-            utilities.handleError(error, withTitle: "Creating Files Directory")
+            utilities.handleError(on: self, error: error, withTitle: "Creating Files Directory")
         }
     }
     
