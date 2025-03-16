@@ -1,6 +1,5 @@
 import UIKit
 import ZIPFoundation
-import HomeViewUtilities
 
 class HomeViewController: UIViewController, UIDocumentPickerDelegate, UISearchResultsUpdating, UITableViewDragDelegate, UITableViewDropDelegate, UITableViewDelegate, UITableViewDataSource {
     
