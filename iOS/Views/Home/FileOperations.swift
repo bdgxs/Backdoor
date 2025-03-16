@@ -85,7 +85,7 @@ class FileOperations {
                 if entry.type == .directory {
                     try fileManager.createDirectory(at: destination, withIntermediateDirectories: true, attributes: nil)
                 } else {
-                    try archive.extract(entry, to: destination)
+                    _ = try archive.extract(entry, to: destination)
                 }
             }
             print("File unzipped from \(fileURL.path) to \(destinationURL.path)")
