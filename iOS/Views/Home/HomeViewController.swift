@@ -21,7 +21,7 @@ class HexEditorViewController: UIViewController {
     }
 
     private func setupUI() {
-        view.backgroundColor = .white
+        view.backgroundColor = .black
         textView = UITextView(frame: view.bounds)
         textView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
         textView.font = UIFont(name: "Courier", size: 12)
