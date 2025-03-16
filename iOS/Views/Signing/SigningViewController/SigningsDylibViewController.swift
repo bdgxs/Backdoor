@@ -147,7 +147,6 @@ class SigningsDylibViewController: UITableViewController {
             let errorString = String(data: errorData.fileHandleForReading.readDataToEndOfFile(), encoding: .utf8)
             print("otool error: \(errorString ?? "Unknown error")")
             throw NSError(domain: "otool", code: Int(task.terminationStatus), userInfo: [NSLocalizedDescriptionKey: "otool failed with status \(task.terminationStatus)"])
-
         }
         return nil
     }
