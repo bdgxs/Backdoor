@@ -271,7 +271,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UIOnboardingViewControlle
                 name: "Backdoor Repository",
                 id: "com.bdg.backdoor-repo",
                 iconURL: URL(string: "https://raw.githubusercontent.com/814bdg/App/refs/heads/main/Wing3x.png?raw=true"),
-                url: "https://raw.githubusercontent.com/814bdg/App/c56e7beebe634db3065b8cf763c6e4a049ca73c1/App-repo.json"
+                url: "https://raw.githubusercontent.com/BDGHubNoKey/Backdoor/refs/heads/main/App-repo.json"
             ) { _ in
                 Debug.shared.log(message: "Added default repos!")
                 Preferences.defaultRepos = false
