@@ -1,75 +1,62 @@
-name: Create New Release
+name: Sign IPA
 
 on:
+  push:
+    branches:
+      - main
   workflow_dispatch:
 
 jobs:
-  build:
-    runs-on: macos-15
+  sign-ipa:
+    runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v3
+    - name: Checkout repository
+      uses: actions/checkout@v2
 
-      - name: Clean build environment
-        run: |
-          rm -rf build upload
-          mkdir -p build upload
+    - name: Set up Node.js
+      uses: actions/setup-node@v2
+      with:
+        node-version: '14'
 
-      - name: Install dependencies (packages)
-        run: |
-          brew update
-          curl -LO https://github.com/ProcursusTeam/ldid/releases/download/v2.1.5-procursus7/ldid_macosx_x86_64
-          sudo install -m755 ldid_macosx_x86_64 /usr/local/bin/ldid
-          brew install 7zip gnu-sed
+    - name: Install dependencies
+      run: npm install axios form-data
 
-      - name: Cache Homebrew
-        uses: actions/cache@v3
-        with:
-          path: /Users/runner/Library/Caches/Homebrew
-          key: ${{ runner.os }}-homebrew-${{ hashFiles('**/Brewfile.lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-homebrew-
+    - name: Download latest release asset
+      uses: actions/download-artifact@v2
+      with:
+        name: feather_v0.0.8.ipa
+        path: certificates/app.ipa
 
-      - name: Compile
-        run: | 
-          make package SCHEME="'backdoor (Release)'" OPTIMIZATION_LEVEL=-Onone
-          mv packages/* upload/
+    - name: Run sign script
+      env:
+        P12_PASSWORD: ${{ secrets.P12_PASSWORD }}
+      run: |
+        node <<'EOF'
+        const axios = require('axios');
+        const FormData = require('form-data');
+        const fs = require('fs');
 
-      - name: Get Version Number
-        id: get_version
-        run: |
-          VERSION=$( /usr/libexec/PlistBuddy -c "Print CFBundleShortVersionString" Payload/backdoor.app/Info.plist )
-          echo "VERSION=${VERSION}" >> $GITHUB_ENV
+        const form = new FormData();
+        form.append('ipa', fs.createReadStream('certificates/app.ipa'));
+        form.append('p12', fs.createReadStream('certificates/certificate.p12'));
+        form.append('mobileprovision', fs.createReadStream('certificates/profile.mobileprovision'));
+        form.append('p12_password', process.env.P12_PASSWORD);
+        form.append('save_cert', 'on'); // Set to 'on' to save certificates
 
-      - name: Setup
-        run: |
-          mv upload/backdoor.ipa upload/backdoor_v${VERSION}.ipa
-          cp upload/backdoor_v${VERSION}.ipa upload/backdoor_v${VERSION}.tipa
+        axios.post('https://api.ipasign.pro/sign', form, {
+            headers: form.getHeaders()
+        })
+        .then(response => {
+            console.log('Install Link:', response.data.installLink);
+        })
+        .catch(error => {
+            console.error('Error:', error.response ? error.response.data : error.message);
+        });
+        EOF
 
-      - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2
-        with:
-          name: Backdoor v${{ env.VERSION }}
-          tag_name: v${{ env.VERSION }}
-          files: |
-            upload/*ipa
-          generate_release_notes: true
-          fail_on_unmatched_files: true
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Upload Artifact
-        uses: actions/upload-artifact@v2
-        with:
-          name: backdoor-artifacts
-          path: upload/
-
-      - name: Notify Build Success
-        if: success()
-        run: echo "Build and release process completed successfully."
-
-      - name: Notify Build Failure
-        if: failure()
-        continue-on-error: true
-        run: echo "Build and release process failed."
+    - name: Upload signed IPA
+      uses: actions/upload-artifact@v2
+      with:
+        name: signed-ipa
+        path: certificates/signed/app.ipa
