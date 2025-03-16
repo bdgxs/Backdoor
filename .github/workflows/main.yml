@@ -1,7 +1,9 @@
 name: Create New Release
 
 on:
-  workflow_dispatch:
+  push:
+    branches:
+      - main
 
 jobs:
   build:
@@ -32,7 +34,7 @@ jobs:
             ${{ runner.os }}-homebrew-
 
       - name: Compile
-        run: | 
+        run: |
           make package SCHEME="'feather (Release)'" OPTIMIZATION_LEVEL=-Onone
           mv packages/* upload/
 
