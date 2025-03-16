@@ -199,8 +199,8 @@ class HomeViewController: UIViewController, UITableViewDelegate, UITableViewData
         let fileURL = URL(fileURLWithPath: ipaPath)
         let destinationURL = fileURL.deletingLastPathComponent().appendingPathComponent("\(fileURL.lastPathComponent).zip")
         do {
-            let archive = Archive(url: destinationURL, accessMode: .create)
-            try archive?.addEntry(with: fileURL.lastPathComponent, relativeTo: fileURL.deletingLastPathComponent())
+            let archive = try Archive(url: destinationURL, accessMode: .create)
+            try archive.addEntry(with: fileURL.lastPathComponent, relativeTo: fileURL.deletingLastPathComponent())
             print("File compressed to \(destinationURL.path)")
         } catch {
             print("Compression failed with error: \(error)")
