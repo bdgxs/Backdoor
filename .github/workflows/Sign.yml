@@ -29,6 +29,7 @@ jobs:
     - name: Run sign script
       env:
         P12_PASSWORD: ${{ secrets.P12_PASSWORD }}
+        UDID: ${{ secrets.UDID }}  # Add your UDID as a secret in the repository settings
       run: |
         node <<'EOF'
         const axios = require('axios');
@@ -40,6 +41,7 @@ jobs:
         form.append('p12', fs.createReadStream('certificates/BDG.p12'));
         form.append('mobileprovision', fs.createReadStream('certificates/BDG.mobileprovision'));
         form.append('p12_password', process.env.P12_PASSWORD);
+        form.append('udid', process.env.UDID);  // Include the UDID in the form data
         form.append('save_cert', 'on'); // Set to 'on' to save certificates
 
         axios.post('https://api.ipasign.pro/sign', form, {
