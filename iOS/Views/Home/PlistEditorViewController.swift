@@ -1,8 +1,10 @@
 import UIKit
 
 class PlistEditorViewController: UIViewController {
-    private var fileURL: URL
+
+    private let fileURL: URL
     private var textView: UITextView!
+    private var toolbar: UIToolbar!
 
     init(fileURL: URL) {
         self.fileURL = fileURL
@@ -20,27 +22,83 @@ class PlistEditorViewController: UIViewController {
     }
 
     private func setupUI() {
-        textView = UITextView(frame: view.bounds)
+        view.backgroundColor = .systemBackground
+
+        // Setup text view
+        textView = UITextView()
+        textView.translatesAutoresizingMaskIntoConstraints = false
+        textView.font = UIFont(name: "Courier", size: 14)
         view.addSubview(textView)
-        navigationItem.rightBarButtonItem = UIBarButtonItem(title: "Save", style: .done, target: self, action: #selector(saveChanges))
+
+        // Setup toolbar
+        toolbar = UIToolbar()
+        toolbar.translatesAutoresizingMaskIntoConstraints = false
+        let saveButton = UIBarButtonItem(barButtonSystemItem: .save, target: self, action: #selector(savePlistContent))
+        let copyButton = UIBarButtonItem(barButtonSystemItem: .action, target: self, action: #selector(copyPlistContent))
+        toolbar.items = [saveButton, copyButton, UIBarButtonItem.flexibleSpace()]
+        view.addSubview(toolbar)
+
+        // Setup constraints
+        NSLayoutConstraint.activate([
+            textView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
+            textView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            textView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            textView.bottomAnchor.constraint(equalTo: toolbar.topAnchor),
+
+            toolbar.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            toolbar.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            toolbar.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor)
+        ])
     }
 
     private func loadFileContent() {
-        if let data = try? Data(contentsOf: fileURL),
-           let plist = try? PropertyListSerialization.propertyList(from: data, options: .mutableContainers, format: nil),
-           let plistData = try? PropertyListSerialization.data(fromPropertyList: plist, format: .xml, options: 0),
-           let plistString = String(data: plistData, encoding: .utf8) {
-            textView.text = plistString
+        do {
+            let data = try Data(contentsOf: fileURL)
+            if let plist = try PropertyListSerialization.propertyList(from: data, options: [], format: nil) as? [String: Any] {
+                textView.text = convertPlistToString(plist: plist)
+            }
+        } catch {
+            presentAlert(title: "Error", message: "Failed to load plist content: \(error.localizedDescription)")
         }
     }
 
-    @objc private func saveChanges() {
-        if let newText = textView.text,
-           let data = newText.data(using: .utf8),
-           let plist = try? PropertyListSerialization.propertyList(from: data, options: .mutableContainers, format: nil),
-           let plistData = try? PropertyListSerialization.data(fromPropertyList: plist, format: .binary, options: 0) {
-            try? plistData.write(to: fileURL)
+    @objc private func savePlistContent() {
+        guard let content = textView.text else { return }
+        do {
+            let plist = try convertStringToPlist(content: content)
+            let data = try PropertyListSerialization.data(fromPropertyList: plist, format: .xml, options: 0)
+            try data.write(to: fileURL)
+            presentAlert(title: "Success", message: "File saved successfully.")
+        } catch {
+            presentAlert(title: "Error", message: "Failed to save plist content: \(error.localizedDescription)")
         }
-        navigationController?.popViewController(animated: true)
+    }
+
+    @objc private func copyPlistContent() {
+        UIPasteboard.general.string = textView.text
+        presentAlert(title: "Copied", message: "Plist content copied to clipboard.")
+    }
+
+    private func presentAlert(title: String, message: String) {
+        let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: "OK", style: .default, handler: nil))
+        present(alert, animated: true, completion: nil)
+    }
+
+    private func convertPlistToString(plist: [String: Any]) -> String {
+        return plist.map { "\($0.key): \($0.value)" }.joined(separator: "\n")
+    }
+
+    private func convertStringToPlist(content: String) throws -> [String: Any] {
+        let lines = content.split(separator: "\n")
+        var plist = [String: Any]()
+        for line in lines {
+            let components = line.split(separator: ":")
+            guard components.count == 2 else { throw NSError(domain: "InvalidFormat", code: 1, userInfo: nil) }
+            let key = String(components[0]).trimmingCharacters(in: .whitespaces)
+            let value = String(components[1]).trimmingCharacters(in: .whitespaces)
+            plist[key] = value
+        }
+        return plist
     }
 }
