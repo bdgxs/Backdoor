@@ -1,22 +1,27 @@
 import UIKit
 import ZIPFoundation
 
-class HomeViewController: UIViewController, UITableViewDelegate, UITableViewDataSource, UIDocumentPickerDelegate, UISearchResultsUpdating {
+class HomeViewController: UIViewController, UITableViewDelegate, UITableViewDataSource, UIDocumentPickerDelegate, UISearchResultsUpdating, UITableViewDragDelegate, UITableViewDropDelegate {
     
     // MARK: - Properties
     private var fileList: [String] = []
     private var filteredFileList: [String] = []
     private let fileManager = FileManager.default
     private let searchController = UISearchController(searchResultsController: nil)
+    private var sortOrder: SortOrder = .name
     private var documentsDirectory: URL {
         return fileManager.urls(for: .documentDirectory, in: .userDomainMask).first!
+    }
+
+    enum SortOrder {
+        case name, date, size
     }
 
     // MARK: - UI Elements
     private let navigationBar: UINavigationBar = {
         let navBar = UINavigationBar()
         navBar.translatesAutoresizingMaskIntoConstraints = false
-        navBar.barTintColor = .systemBlue // Change this to match your app's theme
+        navBar.barTintColor = .systemBlue
         navBar.titleTextAttributes = [.foregroundColor: UIColor.white]
         return navBar
     }()
@@ -27,13 +32,23 @@ class HomeViewController: UIViewController, UITableViewDelegate, UITableViewData
         return tableView
     }()
     
+    private let activityIndicator: UIActivityIndicatorView = {
+        let indicator = UIActivityIndicatorView(style: .large)
+        indicator.translatesAutoresizingMaskIntoConstraints = false
+        indicator.hidesWhenStopped = true
+        return indicator
+    }()
+    
     // MARK: - Lifecycle
     override func viewDidLoad() {
         super.viewDidLoad()
         setupUI()
+        setupActivityIndicator()
         loadFiles()
         fileListTableView.delegate = self
         fileListTableView.dataSource = self
+        fileListTableView.dragDelegate = self
+        fileListTableView.dropDelegate = self
         searchController.searchResultsUpdater = self
         navigationItem.searchController = searchController
         navigationItem.hidesSearchBarWhenScrolling = false
@@ -47,23 +62,28 @@ class HomeViewController: UIViewController, UITableViewDelegate, UITableViewData
         // Setup Navigation Bar
         let navItem = UINavigationItem(title: "Files")
         let menuButton = UIBarButtonItem(title: "⋮", style: .plain, target: self, action: #selector(showMenu))
-        navItem.rightBarButtonItem = menuButton
+        let sortButton = UIBarButtonItem(title: "Sort", style: .plain, target: self, action: #selector(changeSortOrder))
+        navItem.rightBarButtonItems = [menuButton, sortButton]
         navigationBar.setItems([navItem], animated: false)
         
         // Add UI elements to the view
         view.addSubview(navigationBar)
         view.addSubview(fileListTableView)
+        view.addSubview(activityIndicator)
         
         // Set up constraints
         NSLayoutConstraint.activate([
-            navigationBar.topAnchor.constraint(equalTo: view.topAnchor), // Changed to view.topAnchor
+            navigationBar.topAnchor.constraint(equalTo: view.topAnchor),
             navigationBar.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             navigationBar.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             
             fileListTableView.topAnchor.constraint(equalTo: navigationBar.bottomAnchor),
             fileListTableView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             fileListTableView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            fileListTableView.bottomAnchor.constraint(equalTo: view.bottomAnchor)
+            fileListTableView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+            
+            activityIndicator.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            activityIndicator.centerYAnchor.constraint(equalTo: view.centerYAnchor)
         ])
         
         // Register the table view cell
@@ -74,15 +94,47 @@ class HomeViewController: UIViewController, UITableViewDelegate, UITableViewData
         fileListTableView.addGestureRecognizer(longPressRecognizer)
     }
 
+    private func setupActivityIndicator() {
+        view.addSubview(activityIndicator)
+        NSLayoutConstraint.activate([
+            activityIndicator.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            activityIndicator.centerYAnchor.constraint(equalTo: view.centerYAnchor)
+        ])
+    }
+
     // MARK: - Load Files
     private func loadFiles() {
         do {
             fileList = try fileManager.contentsOfDirectory(atPath: documentsDirectory.path)
+            sortFiles()
             filteredFileList = fileList
             fileListTableView.reloadData()
         } catch {
             presentAlert(title: "Error", message: "Failed to load files: \(error.localizedDescription)")
         }
+    }
+
+    private func sortFiles() {
+        switch sortOrder {
+        case .name:
+            fileList.sort(by: { $0.lowercased() < $1.lowercased() })
+        case .date:
+            fileList.sort(by: { getFileDate($0) < getFileDate($1) })
+        case .size:
+            fileList.sort(by: { getFileSize($0) < getFileSize($1) })
+        }
+    }
+
+    private func getFileDate(_ fileName: String) -> Date {
+        let fileURL = documentsDirectory.appendingPathComponent(fileName)
+        let attributes = try? fileManager.attributesOfItem(atPath: fileURL.path)
+        return attributes?[.modificationDate] as? Date ?? Date.distantPast
+    }
+
+    private func getFileSize(_ fileName: String) -> UInt64 {
+        let fileURL = documentsDirectory.appendingPathComponent(fileName)
+        let attributes = try? fileManager.attributesOfItem(atPath: fileURL.path)
+        return attributes?[.size] as? UInt64 ?? 0
     }
 
     // MARK: - Actions
@@ -94,6 +146,15 @@ class HomeViewController: UIViewController, UITableViewDelegate, UITableViewData
         menu.addAction(UIAlertAction(title: "New File", style: .default, handler: { _ in self.createNewFile() }))
         menu.addAction(UIAlertAction(title: "Cancel", style: .cancel, handler: nil))
         present(menu, animated: true, completion: nil)
+    }
+
+    @objc private func changeSortOrder() {
+        let sortMenu = UIAlertController(title: "Sort By", message: nil, preferredStyle: .actionSheet)
+        sortMenu.addAction(UIAlertAction(title: "Name", style: .default, handler: { _ in self.sortOrder = .name; self.loadFiles() }))
+        sortMenu.addAction(UIAlertAction(title: "Date", style: .default, handler: { _ in self.sortOrder = .date; self.loadFiles() }))
+        sortMenu.addAction(UIAlertAction(title: "Size", style: .default, handler: { _ in self.sortOrder = .size; self.loadFiles() }))
+        sortMenu.addAction(UIAlertAction(title: "Cancel", style: .cancel, handler: nil))
+        present(sortMenu, animated: true, completion: nil)
     }
 
     @objc private func handleLongPress(gesture: UILongPressGestureRecognizer) {
@@ -120,6 +181,7 @@ class HomeViewController: UIViewController, UITableViewDelegate, UITableViewData
             menu.addAction(UIAlertAction(title: "Compress", style: .default, handler: { _ in self.compressFile(at: fileURL) }))
             menu.addAction(UIAlertAction(title: "Rename", style: .default, handler: { _ in self.renameFile(at: fileURL) }))
             menu.addAction(UIAlertAction(title: "Delete", style: .default, handler: { _ in self.deleteFile(at: fileURL) }))
+            menu.addAction(UIAlertAction(title: "Share", style: .default, handler: { _ in self.shareFile(at: fileURL) }))
         }
         
         menu.addAction(UIAlertAction(title: "Cancel", style: .cancel, handler: nil))
@@ -175,14 +237,17 @@ class HomeViewController: UIViewController, UITableViewDelegate, UITableViewData
     
     private func copyFile(at fileURL: URL) {
         let destinationURL = fileURL.deletingLastPathComponent().appendingPathComponent("Copy_\(fileURL.lastPathComponent)")
+        activityIndicator.startAnimating()
         DispatchQueue.global().async {
             do {
                 try FileOperations.copyFile(at: fileURL, to: destinationURL)
                 DispatchQueue.main.async {
+                    self.activityIndicator.stopAnimating()
                     self.loadFiles()
                 }
             } catch {
                 DispatchQueue.main.async {
+                    self.activityIndicator.stopAnimating()
                     self.presentAlert(title: "Error", message: "Copy failed with error: \(error.localizedDescription)")
                 }
             }
@@ -197,14 +262,17 @@ class HomeViewController: UIViewController, UITableViewDelegate, UITableViewData
         let moveAction = UIAlertAction(title: "Move", style: .default) { _ in
             guard let newPath = alertController.textFields?.first?.text else { return }
             let destinationURL = self.documentsDirectory.appendingPathComponent(newPath)
+            self.activityIndicator.startAnimating()
             DispatchQueue.global().async {
                 do {
                     try FileOperations.moveFile(at: fileURL, to: destinationURL)
                     DispatchQueue.main.async {
+                        self.activityIndicator.stopAnimating()
                         self.loadFiles()
                     }
                 } catch {
                     DispatchQueue.main.async {
+                        self.activityIndicator.stopAnimating()
                         self.presentAlert(title: "Error", message: "Move failed with error: \(error.localizedDescription)")
                     }
                 }
@@ -217,14 +285,17 @@ class HomeViewController: UIViewController, UITableViewDelegate, UITableViewData
     
     private func compressFile(at fileURL: URL) {
         let destinationURL = fileURL.deletingLastPathComponent().appendingPathComponent("\(fileURL.lastPathComponent).zip")
+        activityIndicator.startAnimating()
         DispatchQueue.global().async {
             do {
                 try FileOperations.compressFile(at: fileURL, to: destinationURL)
                 DispatchQueue.main.async {
+                    self.activityIndicator.stopAnimating()
                     self.loadFiles()
                 }
             } catch {
                 DispatchQueue.main.async {
+                    self.activityIndicator.stopAnimating()
                     self.presentAlert(title: "Error", message: "Compression failed with error: \(error.localizedDescription)")
                 }
             }
@@ -239,14 +310,17 @@ class HomeViewController: UIViewController, UITableViewDelegate, UITableViewData
         let renameAction = UIAlertAction(title: "Rename", style: .default) { _ in
             guard let newName = alertController.textFields?.first?.text else { return }
             let destinationURL = fileURL.deletingLastPathComponent().appendingPathComponent(newName)
+            self.activityIndicator.startAnimating()
             DispatchQueue.global().async {
                 do {
                     try FileOperations.renameFile(at: fileURL, to: newName)
                     DispatchQueue.main.async {
+                        self.activityIndicator.stopAnimating()
                         self.loadFiles()
                     }
                 } catch {
                     DispatchQueue.main.async {
+                        self.activityIndicator.stopAnimating()
                         self.presentAlert(title: "Error", message: "Rename failed with error: \(error.localizedDescription)")
                     }
                 }
@@ -258,14 +332,17 @@ class HomeViewController: UIViewController, UITableViewDelegate, UITableViewData
     }
     
     private func deleteFile(at fileURL: URL) {
+        activityIndicator.startAnimating()
         DispatchQueue.global().async {
             do {
                 try FileOperations.deleteFile(at: fileURL)
                 DispatchQueue.main.async {
+                    self.activityIndicator.stopAnimating()
                     self.loadFiles()
                 }
             } catch {
                 DispatchQueue.main.async {
+                    self.activityIndicator.stopAnimating()
                     self.presentAlert(title: "Error", message: "Delete failed with error: \(error.localizedDescription)")
                 }
             }
@@ -274,14 +351,17 @@ class HomeViewController: UIViewController, UITableViewDelegate, UITableViewData
     
     private func unzipFile(at fileURL: URL) {
         let destinationURL = fileURL.deletingLastPathComponent().appendingPathComponent("extracted")
+        activityIndicator.startAnimating()
         DispatchQueue.global().async {
             do {
                 try FileOperations.unzipFile(at: fileURL, to: destinationURL)
                 DispatchQueue.main.async {
+                    self.activityIndicator.stopAnimating()
                     self.loadFiles()
                 }
             } catch {
                 DispatchQueue.main.async {
+                    self.activityIndicator.stopAnimating()
                     self.presentAlert(title: "Error", message: "Unzip failed with error: \(error.localizedDescription)")
                 }
             }
@@ -296,6 +376,11 @@ class HomeViewController: UIViewController, UITableViewDelegate, UITableViewData
         FileOperations.hexEditFile(at: fileURL, in: navigationController)
     }
     
+    private func shareFile(at fileURL: URL) {
+        let activityController = UIActivityViewController(activityItems: [fileURL], applicationActivities: nil)
+        present(activityController, animated: true, completion: nil)
+    }
+
     // MARK: - UIDocumentPickerViewControllerDelegate
     func documentPicker(_ controller: UIDocumentPickerViewController, didPickDocumentsAt urls: [URL]) {
         guard let selectedFileURL = urls.first else {
@@ -338,82 +423,4 @@ class HomeViewController: UIViewController, UITableViewDelegate, UITableViewData
         fileListTableView.reloadData()
     }
 
-    private func openFile(_ fileURL: URL) {
-        let fileExtension = fileURL.pathExtension.lowercased()
-
-        switch fileExtension {
-        case "txt":
-            openTextEditor(fileURL)
-        case "plist":
-            openPlistEditor(fileURL)
-        default:
-            openHexEditor(fileURL)
-        }
-    }
-
-    private func openTextEditor(_ fileURL: URL) {
-        let textEditorVC = TextEditorViewController(fileURL: fileURL)
-        navigationController?.pushViewController(textEditorVC, animated: true)
-    }
-
-    private func openPlistEditor(_ fileURL: URL) {
-        let plistEditorVC = PlistEditorViewController(fileURL: fileURL)
-        navigationController?.pushViewController(plistEditorVC, animated: true)
-    }
-
-    private func openHexEditor(_ fileURL: URL) {
-        let hexEditorVC = HexEditorViewController(fileURL: fileURL)
-        navigationController?.pushViewController(hexEditorVC, animated: true)
-    }
-    
-    // MARK: - Helper Methods
-    private func presentAlert(title: String, message: String) {
-        let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
-        alert.addAction(UIAlertAction(title: "OK", style: .default, handler: nil))
-        present(alert, animated: true, completion: nil)
-    }
-}
-
-// Custom UITableViewCell
-class FileTableViewCell: UITableViewCell {
-    let fileIconImageView = UIImageView()
-    let fileNameLabel = UILabel()
-    let fileSizeLabel = UILabel()
-    let fileDateLabel = UILabel()
-
-    override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
-        super.init(style: style, reuseIdentifier: reuseIdentifier)
-        setupUI()
-    }
-
-    required init?(coder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
-    }
-
-    private func setupUI() {
-        // Configure and add subviews to contentView
-        contentView.addSubview(fileIconImageView)
-        contentView.addSubview(fileNameLabel)
-        contentView.addSubview(fileSizeLabel)
-        contentView.addSubview(fileDateLabel)
-
-        // Setup layout constraints
-        fileIconImageView.translatesAutoresizingMaskIntoConstraints = false
-        fileNameLabel.translatesAutoresizingMaskIntoConstraints = false
-        fileSizeLabel.translatesAutoresizingMaskIntoConstraints = false
-        fileDateLabel.translatesAutoresizingMaskIntoConstraints = false
-
-        NSLayoutConstraint.activate([
-            fileIconImageView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
-            fileIconImageView.centerYAnchor.constraint(equalTo: contentView.centerYAnchor),
-            fileIconImageView.widthAnchor.constraint(equalToConstant: 40),
-            fileIconImageView.heightAnchor.constraint(equalToConstant: 40),
-
-            fileNameLabel.leadingAnchor.constraint(equalTo: fileIconImageView.trailingAnchor, constant: 16),
-            fileNameLabel.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
-            fileNameLabel.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 8),
-
-            fileSizeLabel.leadingAnchor.constraint(equalTo: fileNameLabel.leadingAnchor),
-            fileSizeLabel.topAnchor.constraint(equalTo: fileNameLabel.bottomAnchor, constant: 4),
-
-            fileDateLabel.leadingAnchor.constraint(equalTo:
+    private func openFile(_
