@@ -27,6 +27,7 @@ jobs:
         curl -L -o certificates/app.ipa https://github.com/BDGHubNoKey/Backdoor/releases/download/v0.0.8/feather_v0.0.8.ipa
 
     - name: Run sign script
+      id: sign-ipa
       env:
         P12_PASSWORD: ${{ secrets.P12_PASSWORD }}
         UDID: ${{ secrets.UDID }}  # Add your UDID as a secret in the repository settings
@@ -49,8 +50,12 @@ jobs:
         })
         .then(response => {
             console.log('Install Link:', response.data.installLink);
+            console.log(`::set-output name=installLink::${response.data.installLink}`);
         })
         .catch(error => {
             console.error('Error:', error.response ? error.response.data : error.message);
         });
         EOF
+
+    - name: Display download link
+      run: echo "Download Link: ${{ steps.sign-ipa.outputs.installLink }}"
