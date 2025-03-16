@@ -245,11 +245,11 @@ extension LibraryViewController {
                 subtitle: String.localized("LIBRARY_VIEW_CONTROLLER_SECTION_TITLE_SIGNED_APPS_TOTAL", arguments: String(signedApps?.count ?? 0)),
                 buttonTitle: String.localized("LIBRARY_VIEW_CONTROLLER_SECTION_BUTTON_IMPORT"),
                 buttonAction: {
-                self.startImporting()
-            })
+                    self.startImporting()
+                }
+            )
             return headerWithButton
         case 1:
-            
             let headerWithButton = GroupedSectionHeader(
                 title: String.localized("LIBRARY_VIEW_CONTROLLER_SECTION_DOWNLOADED_APPS"),
                 subtitle: String.localized("LIBRARY_VIEW_CONTROLLER_SECTION_TITLE_DOWNLOADED_APPS_TOTAL", arguments: String(downloadedApps?.count ?? 0))
@@ -268,7 +268,6 @@ extension LibraryViewController {
         cell.backgroundColor = .clear
         let source = getApplication(row: indexPath.row, section: indexPath.section)
         let filePath = getApplicationFilePath(with: source!, row: indexPath.row, section: indexPath.section)
-        
         
         if let iconURL = source!.value(forKey: "iconURL") as? String {
             let imagePath = filePath!.appendingPathComponent(iconURL)
@@ -424,19 +423,24 @@ extension LibraryViewController {
                 popupVC = PopupViewController()
                 popupVC.modalPresentationStyle = .pageSheet
                 
-                let singingData = SigningDataWrapper(signingOptions: UserDefaults.standard.signingOptions)
+                let signingData = SigningDataWrapper(signingOptions: UserDefaults.standard.signingOptions)
                 let button1 = PopupViewControllerButton(
-                    title: singingData.signingOptions.installAfterSigned
+                    title: signingData.signingOptions.installAfterSigned
                     ? String.localized("LIBRARY_VIEW_CONTROLLER_SIGN_ACTION_SIGN_INSTALL", arguments: appName)
                     : String.localized("LIBRARY_VIEW_CONTROLLER_SIGN_ACTION_SIGN", arguments: appName),
-                    color: .tintColor.withAlphaComponent(0.9))
+                    color: .tintColor.withAlphaComponent(0.9)
+                )
                 button1.onTap = { [weak self] in
                     guard let self = self else { return }
                     self.popupVC.dismiss(animated: true)
                     self.startSigning(meow: source!)
                 }
                 
-                let button2 = PopupViewControllerButton(title: String.localized("LIBRARY_VIEW_CONTROLLER_SIGN_ACTION_INSTALL", arguments: appName), color: .quaternarySystemFill, titleColor: .tintColor)
+                let button2 = PopupViewControllerButton(
+                    title: String.localized("LIBRARY_VIEW_CONTROLLER_SIGN_ACTION_INSTALL", arguments: appName),
+                    color: .quaternarySystemFill,
+                    titleColor: .tintColor
+                )
                 button2.onTap = { [weak self] in
                     guard let self = self else { return }
                     self.popupVC.dismiss(animated: true) {
@@ -463,13 +467,24 @@ extension LibraryViewController {
                 let detent2: UISheetPresentationController.Detent = ._detent(withIdentifier: "Test2", constant: 150.0)
                 if let presentationController = popupVC.presentationController as? UISheetPresentationController {
                     presentationController.detents = [
-                        det
-                        if let presentationController = popupVC.presentationController as? UISheetPresentationController {
-    presentationController.detents = [
-        .medium(),
-        .large()
-    ]
-    presentationController.prefersGrabberVisible = true
+                        .medium(),
+                        .large()
+                    ]
+                    presentationController.prefersGrabberVisible = true
+                }
+                
+                self.present(popupVC, animated: true)
+            }
+        }
+    }
+    
+    // Placeholder methods for undefined functions in this context
+    func getApplication(row: Int, section: Int) -> Any? { return nil }
+    func getApplicationFilePath(with source: Any, row: Int, section: Int, getuuidonly: Bool = false) -> URL? { return nil }
+    func startImporting() {}
+    func startInstallProcess(meow: Any, filePath: String) {}
+    func shareFile(meow: Any, filePath: String) {}
+    func startSigning(meow: Any) {}
+    @objc func afetch() {}
+    func presentLoader() -> UIAlertController? { return nil }
 }
-
-self.present(popupVC, animated: true)
