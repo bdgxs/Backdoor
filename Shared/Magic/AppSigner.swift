@@ -1,11 +1,3 @@
-//
-//  AppSigner.swift
-//  feather
-//
-//  Created by HAHALOSAH on 7/17/24.
-//  Copyright (c) 2024 Samara M (khcrysalis)
-//
-
 import Foundation
 import UIKit
 import AlertKit
@@ -18,7 +10,7 @@ func signInitialApp(bundle: BundleOptions, mainOptions: SigningMainDataWrapper, 
         let tmpDir = fileManager.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         let tmpDirApp = tmpDir.appendingPathComponent(appPath.lastPathComponent)
         var iconURL = ""
-
+    
         do {
             Debug.shared.log(message: "============================================")
             Debug.shared.log(message: "\(mainOptions.mainOptions)")
@@ -40,35 +32,35 @@ func signInitialApp(bundle: BundleOptions, mainOptions: SigningMainDataWrapper, 
             } else {
                 throw NSError(domain: "AppSigner", code: -1, userInfo: [NSLocalizedDescriptionKey: "Failed to read Info.plist"])
             }
-
+    
             let handler = TweakHandler(urls: signingOptions.signingOptions.toInject, app: tmpDirApp)
             try handler.getInputFiles()
-
+    
             if !mainOptions.mainOptions.removeInjectPaths.isEmpty {
                 if let appexe = try? TweakHandler.findExecutable(at: tmpDirApp) {
                     _ = uninstallDylibs(filePath: appexe.path, dylibPaths: mainOptions.mainOptions.removeInjectPaths)
                 }
             }
-
+    
             try updatePlugIns(options: signingOptions, app: tmpDirApp)
             try removeDumbAssPlaceHolderExtension(options: signingOptions, app: tmpDirApp)
             try updateMobileProvision(app: tmpDirApp)
-
+    
             let certPath = try CoreDataManager.shared.getCertifcatePath(source: mainOptions.mainOptions.certificate)
             let provisionPath = certPath.appendingPathComponent(mainOptions.mainOptions.certificate?.provisionPath ?? "").path
             let p12Path = certPath.appendingPathComponent(mainOptions.mainOptions.certificate?.p12Path ?? "").path
-
+    
             Debug.shared.log(message: "🦋 Start Signing 🦋")
-
+    
             try signAppWithZSign(tmpDirApp: tmpDirApp, certPaths: (provisionPath, p12Path), password: mainOptions.mainOptions.certificate?.password ?? "", main: mainOptions, options: signingOptions)
-
+    
             Debug.shared.log(message: "🦋 End Signing 🦋")
-
+    
             let signedUUID = UUID().uuidString
             try fileManager.createDirectory(at: getDocumentsDirectory().appendingPathComponent("Apps/Signed"), withIntermediateDirectories: true)
             let signedPath = getDocumentsDirectory().appendingPathComponent("Apps/Signed").appendingPathComponent(signedUUID)
             try fileManager.moveItem(at: tmpDir, to: signedPath)
-
+    
             DispatchQueue.main.async {
                 var signedAppObject: NSManagedObject? = nil
                 
@@ -181,9 +173,9 @@ func updateMobileProvision(app: URL) throws {
 
 func listDylibs(filePath: String) -> [String]? {
     let dylibPathsArray = NSMutableArray()
-
+    
     let success = ListDylibs(filePath, dylibPathsArray)
-
+    
     if success {
         let dylibPaths = dylibPathsArray as! [String]
         return dylibPaths
