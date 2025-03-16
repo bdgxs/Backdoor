@@ -297,9 +297,9 @@
 "DONATION_CELL_2_DESCRIPTION" = "Show your support by donating! If you're unable to donate, spreading the word about Feather works too!";
 
 // MARK: - SettingsViewController -> LogsViewController.swift
-"LOGS_VIEW_SECTION_TITLE_ERROR" = "%@ Critical Errors.";
+"LOGS_VIEW_SECTION_TITLE_ERROR" = "%@ Critical Errors";
 "LOGS_VIEW_SECTION_TITLE_SHARE" = "Share Logs";
 "LOGS_VIEW_SECTION_TITLE_COPY" = "Copy Logs";
 "LOGS_VIEW_SUCCESS_DESCRIPTION" = "Log contents have been copied to clipboard.";
 "LOGS_VIEW_FAIL_DESCRIPTION" = "Failed to copy log contents.";
-```​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​
+"LOGS_VIEW_TITLE" = "Backdoor Logs";
