@@ -52,9 +52,3 @@ jobs:
             console.error('Error:', error.response ? error.response.data : error.message);
         });
         EOF
-
-    - name: Upload signed IPA
-      uses: actions/upload-artifact@v3
-      with:
-        name: signed-ipa
-        path: certificates/signed/app.ipa
