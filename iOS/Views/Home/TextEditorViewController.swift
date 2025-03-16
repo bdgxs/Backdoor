@@ -68,22 +68,34 @@ class TextEditorViewController: UIViewController {
     }
 
     private func loadFileContent() {
-        do {
-            let fileContent = try String(contentsOf: fileURL)
-            textView.text = fileContent
-        } catch {
-            presentAlert(title: "Error", message: "Failed to load file content: \(error.localizedDescription)")
+        DispatchQueue.global(qos: .userInitiated).async {
+            do {
+                let fileContent = try String(contentsOf: self.fileURL)
+                DispatchQueue.main.async {
+                    self.textView.text = fileContent
+                }
+            } catch {
+                DispatchQueue.main.async {
+                    self.presentAlert(title: "Error", message: "Failed to load file content: \(error.localizedDescription)")
+                }
+            }
         }
     }
 
     @objc private func saveChanges() {
         guard let newText = textView.text else { return }
-        do {
-            try newText.write(to: fileURL, atomically: true, encoding: .utf8)
-            hasUnsavedChanges = false
-            presentAlert(title: "Success", message: "File saved successfully.")
-        } catch {
-            presentAlert(title: "Error", message: "Failed to save file: \(error.localizedDescription)")
+        DispatchQueue.global(qos: .userInitiated).async {
+            do {
+                try newText.write(to: self.fileURL, atomically: true, encoding: .utf8)
+                self.hasUnsavedChanges = false
+                DispatchQueue.main.async {
+                    self.presentAlert(title: "Success", message: "File saved successfully.")
+                }
+            } catch {
+                DispatchQueue.main.async {
+                    self.presentAlert(title: "Error", message: "Failed to save file: \(error.localizedDescription)")
+                }
+            }
         }
     }
 
@@ -119,12 +131,6 @@ class TextEditorViewController: UIViewController {
     private func findAndReplace(findText: String, replaceText: String) {
         textView.text = textView.text.replacingOccurrences(of: findText, with: replaceText)
         hasUnsavedChanges = true
-    }
-
-    private func presentAlert(title: String, message: String) {
-        let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
-        alert.addAction(UIAlertAction(title: "OK", style: .default, handler: nil))
-        present(alert, animated: true, completion: nil)
     }
 
     private func promptSaveChanges() {
