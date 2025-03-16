@@ -270,3 +270,64 @@ extension TweakHandler {
         }
     }
 }
+
+// MARK: - External functions
+func changeDylib(filePath: String, oldPath: String, newPath: String) -> Bool {
+    let process = Process()
+    process.executableURL = URL(fileURLWithPath: "/usr/bin/install_name_tool")
+    process.arguments = ["-change", oldPath, newPath, filePath]
+
+    do {
+        try process.run()
+        process.waitUntilExit()
+        return process.terminationStatus == 0
+    } catch {
+        print("Error changing dylib path: \(error)")
+        return false
+    }
+}
+
+func injectDylib(filePath: String, dylibPath: String, weakInject: Bool) -> Bool {
+    let process = Process()
+    process.executableURL = URL(fileURLWithPath: "/usr/bin/install_name_tool")
+    process.arguments = weakInject ? ["-add_rpath", dylibPath, filePath] : ["-add_rpath", dylibPath, filePath]
+
+    do {
+        try process.run()
+        process.waitUntilExit()
+        return process.terminationStatus == 0
+    } catch {
+        print("Error injecting dylib: \(error)")
+        return false
+    }
+}
+
+func extractAR(_ data: Data) throws -> [ARFile] {
+    let arContainer = try ARContainer.open(container: data)
+    return arContainer.contents
+}
+
+func processFile(at url: inout URL) throws {
+    let fileManager = FileManager.default
+    
+    switch url.pathExtension.lowercased() {
+    case "lzma":
+        let decompressedURL = url.deletingPathExtension()
+        try SWCompression.decompress(file: url, to: decompressedURL, compressionType: .lzma)
+        url = decompressedURL
+    case "gz":
+        let decompressedURL = url.deletingPathExtension()
+        try SWCompression.decompress(file: url, to: decompressedURL, compressionType: .gzip)
+        url = decompressedURL
+    case "xz":
+        let decompressedURL = url.deletingPathExtension()
+        try SWCompression.decompress(file: url, to: decompressedURL, compressionType: .xz)
+        url = decompressedURL
+    case "bz2":
+        let decompressedURL = url.deletingPathExtension()
+        try SWCompression.decompress(file: url, to: decompressedURL, compressionType: .bzip2)
+        url = decompressedURL
+    default:
+        throw FileProcessingError.unsupportedFileExtension(url.pathExtension)
+    }
+}
