@@ -1,4 +1,4 @@
-name: Sign and Download IPA
+name: Sign IPA
 
 on:
   push:
@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  sign-and-download-ipa:
+  sign-ipa:
     runs-on: ubuntu-latest
 
     steps:
@@ -48,7 +48,7 @@ jobs:
             headers: form.getHeaders()
         })
         .then(response => {
-            console.log('Download Link:', response.data.downloadLink);
+            console.log('Install Link:', response.data.installLink);
         })
         .catch(error => {
             console.error('Error:', error.response ? error.response.data : error.message);
