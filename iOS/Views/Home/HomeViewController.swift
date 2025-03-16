@@ -167,7 +167,7 @@ class HomeViewController: UIViewController, UITableViewDelegate, UITableViewData
             }
         }
     }
-    
+
     private func showFileOptions(for fileURL: URL) {
         let fileExtension = fileURL.pathExtension.lowercased()
         let menu = UIAlertController(title: nil, message: nil, preferredStyle: .actionSheet)
@@ -420,40 +420,4 @@ class HomeViewController: UIViewController, UITableViewDelegate, UITableViewData
     func updateSearchResults(for searchController: UISearchController) {
         guard let searchText = searchController.searchBar.text else { return }
         filteredFileList = fileList.filter { $0.contains(searchText) }
-        fileListTableView.reloadData()
-    }
-
-        private func openFile(_ fileURL: URL) {
-        let fileExtension = fileURL.pathExtension.lowercased()
-
-        switch fileExtension {
-        case "txt":
-            openTextEditor(fileURL)
-        case "plist":
-            openPlistEditor(fileURL)
-        default:
-            openHexEditor(fileURL)
-        }
-    }
-
-    private func openTextEditor(_ fileURL: URL) {
-        let textEditorVC = TextEditorViewController(fileURL: fileURL)
-        navigationController?.pushViewController(textEditorVC, animated: true)
-    }
-
-    private func openPlistEditor(_ fileURL: URL) {
-        let plistEditorVC = PlistEditorViewController(fileURL: fileURL)
-        navigationController?.pushViewController(plistEditorVC, animated: true)
-    }
-
-    private func openHexEditor(_ fileURL: URL) {
-        let hexEditorVC = HexEditorViewController(fileURL: fileURL)
-        navigationController?.pushViewController(hexEditorVC, animated: true)
-    }
-
-    private func presentAlert(title: String, message: String) {
-        let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
-        alert.addAction(UIAlertAction(title: "OK", style: .default, handler: nil))
-        present(alert, animated: true, completion: nil)
-    }
-}
+       
