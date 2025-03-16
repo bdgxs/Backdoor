@@ -14,11 +14,15 @@
       "versions": [
         {
           "version": "0.0.8",
-          "date": "2025-03-08T18:35:10Z",
-          "size": 12375230,
+          "date": "2025-03-14T22:42:33Z",
+          "size": 12684769,
           "downloadURL": "https://github.com/BDGHubNoKey/Backdoor/releases/download/v0.0.8/feather_v0.0.8.ipa"
         }
-      ]
+      ],
+      "size": 12684769,
+      "version": "0.0.8",
+      "versionDate": "2025-03-14T22:42:33Z",
+      "downloadURL": "https://github.com/BDGHubNoKey/Backdoor/releases/download/v0.0.8/feather_v0.0.8.ipa"
     }
   ]
 }
