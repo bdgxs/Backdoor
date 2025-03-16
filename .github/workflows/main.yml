@@ -6,9 +6,16 @@ on:
 jobs:
   build:
     runs-on: macos-15
+
     steps:
       - name: Checkout
         uses: actions/checkout@v3
+
+      - name: Clean build environment
+        run: |
+          rm -rf build
+          rm -rf upload
+          mkdir -p build upload
 
       - name: Install dependencies (packages)
         run: |
@@ -16,9 +23,24 @@ jobs:
           sudo install -m755 ldid_macosx_x86_64 /usr/local/bin/ldid
           brew install 7zip gnu-sed
 
-      - name: Compile f
+      - name: Cache Homebrew
+        uses: actions/cache@v3
+        with:
+          path: /Users/runner/Library/Caches/Homebrew
+          key: ${{ runner.os }}-homebrew-${{ hashFiles('**/Brewfile.lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-homebrew-
+
+      - name: Cache Ruby gems
+        uses: actions/cache@v3
+        with:
+          path: vendor/bundle
+          key: ${{ runner.os }}-gems-${{ hashFiles('**/Gemfile.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-gems-
+
+      - name: Compile
         run: | 
-          mkdir upload
           make package SCHEME="'feather (Release)'" OPTIMIZATION_LEVEL=-Onone
           mv packages/* upload/
 
@@ -33,6 +55,12 @@ jobs:
           mv upload/feather.ipa upload/feather_v${VERSION}.ipa
           cp upload/feather_v${VERSION}.ipa upload/feather_v${VERSION}.tipa
 
+      - name: Upload Build Artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: build-artifacts
+          path: upload/
+
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
@@ -44,4 +72,20 @@ jobs:
           fail_on_unmatched_files: true
           draft: true
         env:
-          GITHUB_TOKEN: ${{ env.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Notify Build Success
+        if: success()
+        run: echo "Build and release process completed successfully."
+
+      - name: Notify Build Failure
+        if: failure()
+        run: echo "Build and release process failed."
+
+notifications:
+  slack:
+    channels:
+      - '#builds'
+    on:
+      - success
+      - failure
