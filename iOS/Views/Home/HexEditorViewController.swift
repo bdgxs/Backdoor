@@ -1,10 +1,11 @@
 import UIKit
 
 class HexEditorViewController: UIViewController {
-
     private let fileURL: URL
     private var textView: UITextView!
     private var toolbar: UIToolbar!
+    private var hasUnsavedChanges = false
+    private var autoSaveTimer: Timer?
 
     init(fileURL: URL) {
         self.fileURL = fileURL
@@ -19,6 +20,17 @@ class HexEditorViewController: UIViewController {
         super.viewDidLoad()
         setupUI()
         loadFileContent()
+        startAutoSaveTimer()
+    }
+
+    override func viewWillDisappear(_ animated: Bool) {
+        super.viewWillDisappear(animated)
+        if hasUnsavedChanges {
+            promptSaveChanges()
+        } else {
+            navigationController?.popViewController(animated: true)
+        }
+        stopAutoSaveTimer()
     }
 
     private func setupUI() {
@@ -27,16 +39,19 @@ class HexEditorViewController: UIViewController {
         // Setup text view
         textView = UITextView()
         textView.translatesAutoresizingMaskIntoConstraints = false
-        textView.font = UIFont(name: "Courier", size: 12)
+        textView.font = UIFont.monospacedSystemFont(ofSize: 14, weight: .regular)
+        textView.delegate = self
         view.addSubview(textView)
 
         // Setup toolbar
         toolbar = UIToolbar()
         toolbar.translatesAutoresizingMaskIntoConstraints = false
-        let saveButton = UIBarButtonItem(barButtonSystemItem: .save, target: self, action: #selector(saveHexContent))
-        let copyButton = UIBarButtonItem(barButtonSystemItem: .action, target: self, action: #selector(copyHexContent))
-        let searchButton = UIBarButtonItem(barButtonSystemItem: .search, target: self, action: #selector(promptSearch))
-        toolbar.items = [saveButton, copyButton, UIBarButtonItem.flexibleSpace(), searchButton]
+        let saveButton = UIBarButtonItem(barButtonSystemItem: .save, target: self, action: #selector(saveChanges))
+        let copyButton = UIBarButtonItem(barButtonSystemItem: .action, target: self, action: #selector(copyContent))
+        let findReplaceButton = UIBarButtonItem(title: "Find/Replace", style: .plain, target: self, action: #selector(promptFindReplace))
+        let undoButton = UIBarButtonItem(barButtonSystemItem: .undo, target: self, action: #selector(undoAction))
+        let redoButton = UIBarButtonItem(barButtonSystemItem: .redo, target: self, action: #selector(redoAction))
+        toolbar.items = [saveButton, copyButton, findReplaceButton, undoButton, redoButton, UIBarButtonItem.flexibleSpace()]
         view.addSubview(toolbar)
 
         // Setup constraints
@@ -62,7 +77,7 @@ class HexEditorViewController: UIViewController {
         }
     }
 
-    @objc private func saveHexContent() {
+    @objc private func saveChanges() {
         guard let hexString = textView.text else { return }
         let hexValues = hexString.split(separator: " ").map(String.init)
         var data = Data()
@@ -76,45 +91,84 @@ class HexEditorViewController: UIViewController {
         }
         do {
             try data.write(to: fileURL)
+            hasUnsavedChanges = false
             presentAlert(title: "Success", message: "File saved successfully.")
         } catch {
             presentAlert(title: "Error", message: "Failed to save file: \(error.localizedDescription)")
         }
     }
 
-    @objc private func copyHexContent() {
+    @objc private func copyContent() {
         UIPasteboard.general.string = textView.text
-        presentAlert(title: "Copied", message: "Hex content copied to clipboard.")
+        presentAlert(title: "Copied", message: "Content copied to clipboard.")
     }
 
-    @objc private func promptSearch() {
-        let alert = UIAlertController(title: "Search Hex", message: "Enter hex value to search:", preferredStyle: .alert)
+    @objc private func undoAction() {
+        textView.undoManager?.undo()
+    }
+
+    @objc private func redoAction() {
+        textView.undoManager?.redo()
+    }
+
+    @objc private func promptFindReplace() {
+        let alert = UIAlertController(title: "Find and Replace", message: "Enter hex value to find and replace:", preferredStyle: .alert)
         alert.addTextField { textField in
-            textField.placeholder = "e.g., 4a 6f 68 6e"
+            textField.placeholder = "Find (e.g., 4a 6f 68)"
         }
-        alert.addAction(UIAlertAction(title: "Search", style: .default, handler: { [weak self] _ in
-            if let hexValue = alert.textFields?.first?.text {
-                self?.searchHexValue(hexValue)
-            }
+        alert.addTextField { textField in
+            textField.placeholder = "Replace (e.g., 4b 6c 69)"
+        }
+        alert.addAction(UIAlertAction(title: "Replace", style: .default, handler: { [weak self] _ in
+            guard let findText = alert.textFields?[0].text, let replaceText = alert.textFields?[1].text else { return }
+            self?.findAndReplace(findText: findText, replaceText: replaceText)
         }))
         alert.addAction(UIAlertAction(title: "Cancel", style: .cancel, handler: nil))
         present(alert, animated: true, completion: nil)
     }
 
-    private func searchHexValue(_ hexValue: String) {
-        guard let hexContent = textView.text else { return }
-        if let range = hexContent.range(of: hexValue, options: .caseInsensitive) {
-            textView.scrollRangeToVisible(NSRange(range, in: hexContent))
-            textView.becomeFirstResponder()
-            textView.selectedRange = NSRange(range, in: hexContent)
-        } else {
-            presentAlert(title: "Not Found", message: "Hex value not found in the file.")
-        }
+    private func findAndReplace(findText: String, replaceText: String) {
+        textView.text = textView.text.replacingOccurrences(of: findText, with: replaceText)
+        hasUnsavedChanges = true
     }
 
     private func presentAlert(title: String, message: String) {
         let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
         alert.addAction(UIAlertAction(title: "OK", style: .default, handler: nil))
         present(alert, animated: true, completion: nil)
+    }
+
+    private void promptSaveChanges() {
+        let alert = UIAlertController(title: "Unsaved Changes", message: "You have unsaved changes. Do you want to save them before leaving?", preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: "Save", style: .default, handler: { [weak self] _ in
+            self?.saveChanges()
+            self?.navigationController?.popViewController(animated: true)
+        }))
+        alert.addAction(UIAlertAction(title: "Discard", style: .destructive, handler: { [weak self] _ in
+            self?.navigationController?.popViewController(animated: true)
+        }))
+        alert.addAction(UIAlertAction(title: "Cancel", style: .cancel, handler: nil))
+        present(alert, animated: true, completion: nil)
+    }
+
+    private func startAutoSaveTimer() {
+        autoSaveTimer = Timer.scheduledTimer(timeInterval: 60, target: self, selector: #selector(autoSaveChanges), userInfo: nil, repeats: true)
+    }
+
+    private func stopAutoSaveTimer() {
+        autoSaveTimer?.invalidate()
+        autoSaveTimer = nil
+    }
+
+    @objc private func autoSaveChanges() {
+        if hasUnsavedChanges {
+            saveChanges()
+        }
+    }
+}
+
+extension HexEditorViewController: UITextViewDelegate {
+    func textViewDidChange(_ textView: UITextView) {
+        hasUnsavedChanges = true
     }
 }
