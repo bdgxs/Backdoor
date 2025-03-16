@@ -464,3 +464,12 @@ extension LibraryViewController {
                 if let presentationController = popupVC.presentationController as? UISheetPresentationController {
                     presentationController.detents = [
                         det
+                        if let presentationController = popupVC.presentationController as? UISheetPresentationController {
+    presentationController.detents = [
+        .medium(),
+        .large()
+    ]
+    presentationController.prefersGrabberVisible = true
+}
+
+self.present(popupVC, animated: true)
