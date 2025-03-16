@@ -354,4 +354,15 @@ class HomeViewController: UIViewController, UIDocumentPickerDelegate, UISearchRe
     private func handleError(_ error: Error, withTitle title: String = "Error") {
         presentAlert(title: title, message: "An error occurred: \(error.localizedDescription)")
     }
+
+    // MARK: - UITableViewDataSource
+    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+        return filteredFileList.count
+    }
+
+    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+        let cell = tableView.dequeueReusableCell(withIdentifier: "FileCell", for: indexPath)
+        cell.textLabel?.text = filteredFileList[indexPath.row]
+        return cell
+    }
 }
