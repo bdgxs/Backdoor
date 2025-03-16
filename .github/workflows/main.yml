@@ -81,11 +81,3 @@ jobs:
       - name: Notify Build Failure
         if: failure()
         run: echo "Build and release process failed."
-
-notifications:
-  slack:
-    channels:
-      - '#builds'
-    on:
-      - success
-      - failure
