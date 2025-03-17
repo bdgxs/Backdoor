@@ -13,6 +13,9 @@ APP_TMP         = $(TMPDIR)/$(NAME)
 STAGE_DIR   = $(APP_TMP)/stage
 APP_DIR 	   = $(APP_TMP)/Build/Products/$(RELEASE)/$(NAME).app
 
+# Paths to your source files
+SOURCES = Sources/FileHelpers/FileHelpers.swift # Add this line
+
 all: package
 
 package:
@@ -57,4 +60,3 @@ clean:
 	@rm -rf $(APP_TMP)
 
 .PHONY: apple-include
-
