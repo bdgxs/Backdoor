@@ -1,5 +1,4 @@
 import Foundation
-import FileHelpers
 
 func getCertificates() {
     let sourceGET = SourceGET()
