@@ -69,25 +69,25 @@ class LibraryViewController: UITableViewController {
     }
     
     // MARK: - Table view data source
-
+    
     override func numberOfSections(in tableView: UITableView) -> Int {
         return 2
     }
-
+    
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         if isFiltering() {
             return section == 0 ? filteredSignedApps.count : filteredDownloadedApps.count
         }
         return section == 0 ? signedApps?.count ?? 0 : downloadedApps?.count ?? 0
     }
-
+    
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: "RoundedBackgroundCell", for: indexPath) as! AppsTableViewCell
-
+        
         let app = isFiltering()
             ? (indexPath.section == 0 ? filteredSignedApps[indexPath.row] : filteredDownloadedApps[indexPath.row])
             : (indexPath.section == 0 ? signedApps?[indexPath.row] : downloadedApps?[indexPath.row])
-
+        
         if let app = app {
             cell.configure(
                 image: UIImage(systemName: "questionmark.app.dashed"), // Placeholder image
@@ -95,7 +95,7 @@ class LibraryViewController: UITableViewController {
                 subtitle: app.bundleIdentifier ?? "Unknown Bundle ID"
             )
         }
-
+        
         return cell
     }
     
@@ -193,7 +193,6 @@ class LibraryViewController: UITableViewController {
     // Placeholder methods for undefined functions in this context
     func getApplication(row: Int, section: Int) -> Any? { return nil }
     func getApplicationFilePath(with source: Any, row: Int, section: Int, getuuidonly: Bool = false) -> URL? { return nil }
-    func startImporting() {}
     func startInstallProcess(meow: Any, filePath: String) {}
     func shareFile(meow: Any, filePath: String) {}
     func startSigning(meow: Any) {}
