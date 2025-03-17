@@ -36,14 +36,30 @@ jobs:
           echo "$LOGS" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
 
-      - name: Save Logs to File
+      - name: Save Logs to File (Line-Based Chunking)
         run: |
-          echo "${{ steps.get_logs.outputs.LOGS }}" > build.log
+          LOGS="${{ steps.get_logs.outputs.LOGS }}"
+          CHUNK_SIZE=2500 # Adjusted chunk size to 2500 lines.
+          LINES=$(echo "$LOGS" | wc -l)
+          START=0
+          PART=1
+
+          while [ $START -lt $LINES ]; do
+            END=$((START + CHUNK_SIZE))
+            if [ $END -gt $LINES ]; then
+              END=$LINES
+            fi
+            echo "$LOGS" | head -n $END | tail -n $CHUNK_SIZE >> build.log.part$PART
+            START=$END
+            PART=$((PART + 1))
+          done
+          cat build.log.part* > build.log
+          rm build.log.part*
 
       - name: Setup Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.12' # Use the latest stable Python version
+          python-version: '3.12'
 
       - name: Run Python Script to Extract Errors
         run: |
