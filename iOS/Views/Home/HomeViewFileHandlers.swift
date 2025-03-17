@@ -1,7 +1,7 @@
 import UIKit
 import ZIPFoundation
 import os.log
-import Foundation  // Add this import
+import Foundation
 import FileHelpers
 
 protocol FileHandlingDelegate: AnyObject {
@@ -142,7 +142,7 @@ class HomeViewFileHandlers {
                 throw NSError(domain: "Process", code: -1, userInfo: [NSLocalizedDescriptionKey: "Failed to decode output"])
             }
         } else {
-            let errorData = task.standardError.fileHandleForReading.readDataToEndOfFile()
+            let errorData = task.standardError!.fileHandleForReading.readDataToEndOfFile()
             if let errorString = String(data: errorData, encoding: .utf8) {
                 throw NSError(domain: "Process", code: Int(task.terminationStatus), userInfo: [NSLocalizedDescriptionKey: "Process failed: \(errorString)"])
             } else {
