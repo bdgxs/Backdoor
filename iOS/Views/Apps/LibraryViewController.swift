@@ -177,7 +177,6 @@ class LibraryViewController: UITableViewController {
                 
                 popupVC.configureButtons([button1, button2])
                 
-                let detent2: UISheetPresentationController.Detent = ._detent(withIdentifier: "Test2", constant: 150.0)
                 if let presentationController = popupVC.presentationController as? UISheetPresentationController {
                     presentationController.detents = [
                         .medium(),
