@@ -2,7 +2,7 @@ import UIKit
  import ZIPFoundation
  
 
- class HomeViewController: UIViewController, UIDocumentPickerDelegate, UISearchResultsUpdating, UITableViewDragDelegate, UITableViewDropDelegate, UITableViewDelegate, UITableViewDataSource {
+ class HomeViewController: UIViewController, UIDocumentPickerDelegate, UISearchResultsUpdating, UITableViewDragDelegate, UITableViewDropDelegate, UITableViewDelegate, UITableViewDataSource, FileHandlingDelegate {
  
 
   // MARK: - Properties
@@ -116,27 +116,39 @@ import UIKit
   fileListTableView.dataSource = self
   fileListTableView.dragDelegate = self
   fileListTableView.dropDelegate = self
+  searchController.searchResultsUpdater = self
+  navigationItem.searchController = searchController
+  definesPresentationContext = true
   fileListTableView.register(FileTableViewCell.self, forCellReuseIdentifier: "FileCell")
   }
  
 
   // MARK: - File Operations
   func loadFiles() {
+  activityIndicator.startAnimating()
   fileList =
+  DispatchQueue.global().async { [weak self] in
+  guard let self = self else { return }
   do {
-  let files = try fileManager.contentsOfDirectory(atPath: documentsDirectory.path)
-  fileList = files.filter { !$0.hasPrefix(".") }
-  sortFiles()
+  let files = try self.fileManager.contentsOfDirectory(atPath: self.documentsDirectory.path)
+  self.fileList = files.filter { !$0.hasPrefix(".") }
+  self.sortFiles()
   DispatchQueue.main.async {
+  self.filteredFileList = self.fileList
   self.fileListTableView.reloadData()
+  self.activityIndicator.stopAnimating()
   }
   } catch {
-  utilities.handleError(in: self, error: error, withTitle: "Error Loading Files")
+  DispatchQueue.main.async {
+  self.activityIndicator.stopAnimating()
+  self.utilities.handleError(in: self, error: error, withTitle: "Error Loading Files")
+  }
   }
   }
  
 
   func sortFiles() {
+  guard !fileList.isEmpty else { return }
   switch sortOrder {
   case .name:
   fileList.sort { $0.localizedCaseInsensitiveCompare($1) == .orderedAscending }
@@ -341,9 +353,13 @@ import UIKit
   self.fileHandlers.createNewFile(viewController: self, fileName: fileName) { result in
   switch result {
   case .success(_):
+  // Handle success, e.g., reload file list, show a message
+  self.loadFiles() // Assuming this reloads the file list
   break
   case .failure(let error):
+  // Handle failure, e.g., show an error message to the user
   self.utilities.handleError(in: self, error: error, withTitle: "Error Creating File")
+  break
   }
   }
   }
@@ -354,33 +370,32 @@ import UIKit
   }
  
 
-  /// Shows options to sort the file list.
   func showSortOptions() {
   let alertController = UIAlertController(title: "Sort By", message: nil, preferredStyle: .actionSheet)
  
 
-  let nameAction = UIAlertAction(title: "Name", style: .default) { [weak self] _ in
+  let sortByNameAction = UIAlertAction(title: "Name", style: .default) { [weak self] _ in
   self?.sortOrder = .name
   self?.sortFiles()
   self?.fileListTableView.reloadData()
   }
-  alertController.addAction(nameAction)
+  alertController.addAction(sortByNameAction)
  
 
-  let dateAction = UIAlertAction(title: "Date", style: .default) { [weak self] _ in
+  let sortByDateAction = UIAlertAction(title: "Date", style: .default) { [weak self] _ in
   self?.sortOrder = .date
   self?.sortFiles()
   self?.fileListTableView.reloadData()
   }
-  alertController.addAction(dateAction)
+  alertController.addAction(sortByDateAction)
  
 
-  let sizeAction = UIAlertAction(title: "Size", style: .default) { [weak self] _ in
+  let sortBySizeAction = UIAlertAction(title: "Size", style: .default) { [weak self] _ in
   self?.sortOrder = .size
   self?.sortFiles()
   self?.fileListTableView.reloadData()
   }
-  alertController.addAction(sizeAction)
+  alertController.addAction(sortBySizeAction)
  
 
   let cancelAction = UIAlertAction(title: "Cancel", style: .cancel, handler: nil)
@@ -391,31 +406,7 @@ import UIKit
   }
  
 
-  // MARK: - UIDocumentPickerDelegate
- 
-
-  /// Handles the selection of a document from the document picker.
-  ///
-  /// - Parameter controller: The document picker controller.
-  /// - Parameter urls: The URLs of the selected documents.
-  func documentPicker(_ controller: UIDocumentPickerViewController, didPickDocumentsAt urls: [URL]) {
-  guard let url = urls.first else { return }
-  let destinationURL = documentsDirectory.appendingPathComponent(url.lastPathComponent)
-  do {
-  try FileManager.default.copyItem(at: url, to: destinationURL)
-  loadFiles()
-  } catch {
-  utilities.handleError(in: self, error: error, withTitle: "Error Importing File")
-  }
-  }
- 
-
   // MARK: - UISearchResultsUpdating
- 
-
-  /// Updates the search results based on the search query.
-  ///
-  /// - Parameter searchController: The search controller.
   func updateSearchResults(for searchController: UISearchController) {
   guard let searchText = searchController.searchBar.text else { return }
   filteredFileList = fileList.filter { $0.localizedCaseInsensitiveContains(searchText) }
@@ -442,39 +433,4 @@ import UIKit
   }
  
 
-  func tableView(_ tableView: UITableView, canHandle session: UIDropSession) -> Bool {
-  return session.canLoadObjects(ofClass: NSString.self)
-  }
- 
-
-  func tableView(_ tableView: UITableView, dropSessionDidUpdate session: UIDropSession, withDestinationIndexPath destinationIndexPath: IndexPath?) -> UITableViewDropProposal {
-  return UITableViewDropProposal(operation: .copy, intent: .insertAtDestinationIndexPath)
-  }
- }
- 
-
- // MARK: - UITableViewDelegate, UITableViewDataSource
- 
-
- extension HomeViewController: UITableViewDelegate, UITableViewDataSource {
-  func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-  return searchController.isActive ? filteredFileList.count : fileList.count
-  }
- 
-
-  func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-  let cell = tableView.dequeueReusableCell(withIdentifier: "FileCell", for: indexPath) as! FileTableViewCell
-  let fileName = searchController.isActive ? filteredFileList[indexPath.row] : fileList[indexPath.row]
-  let fileURL = documentsDirectory.appendingPathComponent(fileName)
-  let file = File(url: fileURL)
-  cell.configure(with: file)
-  return cell
-  }
- 
-
-  func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-  let fileName = searchController.isActive ? filteredFileList[indexPath.row] : fileList[indexPath.row]
-  let fileURL = documentsDirectory.appendingPathComponent(fileName)
-  showFileOptions(for: fileURL)
-  }
- }
+  func tableView(_ tableView:
