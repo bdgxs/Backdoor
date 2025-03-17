@@ -42,9 +42,9 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-homebrew-
 
-      - name: Compile
+      - name: Compile (Error-Focused Logs)
         run: |
-          make package SCHEME="'feather (Release)'" OPTIMIZATION_LEVEL=-Onone
+          make package SCHEME="'feather (Release)'" OPTIMIZATION_LEVEL=-Onone 2>&1 | grep -E "(error|warning):" > ${GITHUB_WORKSPACE}/build_errors.log
           mv packages/* upload/
 
       - name: Get Version Number
