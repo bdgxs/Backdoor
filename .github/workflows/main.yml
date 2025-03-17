@@ -10,18 +10,22 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
 
-      - name: Install Dependencies
+      - name: Clean Swift Environment
+        run: |
+          rm -rf ~/Library/Developer/Xcode/DerivedData
+          xcodebuild clean
+
+      - name: Install dependencies (packages)
         run: |
           curl -LO https://github.com/ProcursusTeam/ldid/releases/download/v2.1.5-procursus7/ldid_macosx_x86_64
           sudo install -m755 ldid_macosx_x86_64 /usr/local/bin/ldid
           brew install 7zip gnu-sed
-          brew install xcbeautify  # xcbeautify instead of xcpretty
 
       - name: Compile f
         run: | 
           mkdir upload
-          # Assuming the Makefile is in the root directory of your repository
-          make package
+          # Set optimization level to -Onone
+          make package SCHEME="'feather (Release)'" OPTIMIZATION_LEVEL=-Onone
           mv packages/* upload/
 
       - name: Get Version Number
