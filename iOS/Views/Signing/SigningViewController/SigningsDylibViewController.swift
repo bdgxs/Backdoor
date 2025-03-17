@@ -1,4 +1,5 @@
 import UIKit
+import Foundation // Import Foundation for Process class
 
 class SigningsDylibViewController: UITableViewController {
     var applicationPath: URL
@@ -49,11 +50,8 @@ class SigningsDylibViewController: UITableViewController {
         tableView.register(UITableViewCell.self, forCellReuseIdentifier: "dylibCell")
 
         let alertController = UIAlertController(title: "ADVANCED USERS ONLY", message: "This section can make installed applications UNUSABLE and potentially UNSTABLE. USE THIS SECTION WITH CAUTION.", preferredStyle: .alert)
-
         let continueAction = UIAlertAction(title: "WHO CARES", style: .destructive, handler: nil)
-
         alertController.addAction(continueAction)
-
         present(alertController, animated: true, completion: nil)
     }
 
