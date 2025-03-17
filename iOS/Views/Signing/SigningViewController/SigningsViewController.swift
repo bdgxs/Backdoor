@@ -259,7 +259,7 @@ class SigningsViewController: UIViewController {
         { result in
             switch result {
             case .success(let (signedPath, signedApp)):
-                self.appsViewController?.fetchSources()
+                self.appsViewController?.fetchSources()  // Changed to 'public' in LibraryViewController
                 self.appsViewController?.tableView.reloadData()
                 Debug.shared.log(message: signedPath.path)
                 if self.signingDataWrapper.signingOptions.installAfterSigned {
