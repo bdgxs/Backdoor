@@ -9,6 +9,7 @@
 import AlertKit
 import Foundation
 import OSLog
+import FileHelpers
 
 public enum LogType {
     /// Default
