@@ -1,10 +1,3 @@
-//
-//  SigningsViewController.swift
-//  feather
-//
-//  Created by samara on 26.10.2024.
-//
-
 import UIKit
 import CoreData
 
