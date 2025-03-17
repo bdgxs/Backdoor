@@ -1,6 +1,4 @@
-import Foundation
-import CoreData
-import UniformTypeIdentifiers
+import UIKit
 
 class LibraryViewController: UITableViewController {
     var signedApps: [SignedApps]?
@@ -42,6 +40,9 @@ class LibraryViewController: UITableViewController {
             name: Notification.Name("InstallDownloadedApp"),
             object: nil
         )
+        
+        // Setting background color using hex initializer
+        self.view.backgroundColor = UIColor(hex: "#F0F0F0") // Example hex color
     }
     
     @objc func handleInstallNotification(_ notification: Notification) {
@@ -157,6 +158,9 @@ class LibraryViewController: UITableViewController {
 
                             alertController.addAction(confirmAction)
                             alertController.addAction(cancelAction)
+
+                            // Example of updating the alert view colors
+                            alertController.view.tintColor = UIColor(hex: "#FF5733") // Example hex color
 
                             self.present(alertController, animated: true, completion: nil)
                         }
