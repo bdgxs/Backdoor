@@ -21,7 +21,7 @@ class LogsViewController: UIViewController {
         setupNavigation()
         setupViews()
         startObservingLogFile()
-        loadInitialLogContents() // Moved inside viewDidLoad for better organization
+        loadInitialLogContents()
     }
     
     override func viewDidAppear(_ animated: Bool) {
