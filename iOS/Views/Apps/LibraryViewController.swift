@@ -117,7 +117,7 @@ class LibraryViewController: UITableViewController {
                 // Handle Signed Apps action
                 let button1 = PopupViewController.PopupButton(
                     title: "Sign",
-                    style: .normal
+                    style: .default
                 ) {
                     self.startSigning(meow: app)
                 }
@@ -139,7 +139,7 @@ class LibraryViewController: UITableViewController {
                 
                 let button1 = PopupViewController.PopupButton(
                     title: "Install",
-                    style: .normal
+                    style: .default
                 ) {
                     
                     if let filePath = self.getApplicationFilePath(with: app, row: indexPath.row, section: indexPath.section) {
@@ -168,7 +168,7 @@ class LibraryViewController: UITableViewController {
                 
                 let button2 = PopupViewController.PopupButton(
                     title: "Share",
-                    style: .normal
+                    style: .default
                 ) {
                     if let filePath = self.getApplicationFilePath(with: app, row: indexPath.row, section: indexPath.section) {
                         self.shareFile(meow: app, filePath: filePath.path)
