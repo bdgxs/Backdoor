@@ -56,7 +56,7 @@ class HomeViewFileHandlers {
     func renameFile(viewController: FileHandlingDelegate, fileURL: URL, newName: String, completion: @escaping (Result<URL, Error>) -> Void) {
         let destinationURL = fileURL.deletingLastPathComponent().appendingPathComponent(newName)
         viewController.activityIndicator.startAnimating()
-        DispatchQueue.global().async(execute: {
+        DispatchQueue.global().async {
             do {
                 try self.fileManager.moveItem(at: fileURL, to: destinationURL)
                 DispatchQueue.main.async {
@@ -71,12 +71,12 @@ class HomeViewFileHandlers {
                     completion(.failure(error))
                 }
             }
-        })
+        }
     }
 
     func deleteFile(viewController: FileHandlingDelegate, fileURL: URL, completion: @escaping (Result<Void, Error>) -> Void) {
         viewController.activityIndicator.startAnimating()
-        DispatchQueue.global().async(execute: {
+        DispatchQueue.global().async {
             do {
                 try self.fileManager.removeItem(at: fileURL)
                 DispatchQueue.main.async {
@@ -91,13 +91,13 @@ class HomeViewFileHandlers {
                     completion(.failure(error))
                 }
             }
-        })
+        }
     }
 
     func unzipFile(viewController: FileHandlingDelegate, fileURL: URL, destinationName: String, progressHandler: ((Double) -> Void)? = nil, completion: @escaping (Result<URL, Error>) -> Void) {
         let destinationURL = fileURL.deletingLastPathComponent().appendingPathComponent(destinationName)
         viewController.activityIndicator.startAnimating()
-        DispatchQueue.global().async(execute: {
+        DispatchQueue.global().async {
             do {
                 try self.fileManager.unzipItem(at: fileURL, to: destinationURL, progress: { progress in
                     if let progressHandler = progressHandler {
@@ -116,7 +116,7 @@ class HomeViewFileHandlers {
                     completion(.failure(error))
                 }
             }
-        })
+        }
     }
 
     func shareFile(viewController: UIViewController, fileURL: URL) {
