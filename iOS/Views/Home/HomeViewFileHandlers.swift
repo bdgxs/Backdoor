@@ -99,7 +99,7 @@ class HomeViewFileHandlers {
         viewController.activityIndicator.startAnimating()
         DispatchQueue.global().async {
             do {
-                try self.fileManager.unzipItem(at: fileURL, to: destinationURL, progress: progressHandler)
+                try self.fileManager.unzipItem(at: fileURL, to: destinationURL, progress: progressHandler as? Progress)
                 DispatchQueue.main.async {
                     viewController.activityIndicator.stopAnimating()
                     viewController.loadFiles()
