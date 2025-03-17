@@ -96,15 +96,14 @@ class TweakHandler {
             let destinationURL = app.appendingPathComponent("Frameworks").appendingPathComponent(url.lastPathComponent)
             try TweakHandler.moveFile(from: url, to: destinationURL)
             
-            // change paths because some tweaks hardlink, which is not ideal.
-            // this is not a good solution, at most this would work for basic tweaks
-            // we recommend you use newer theos to compile, and make sure it works
-            // using the ellekit framework
-            _ = ProcessUtility.shared.executeShellCommand("install_name_tool -change /Library/Frameworks/CydiaSubstrate.framework/CydiaSubstrate @rpath/CydiaSubstrate.framework/CydiaSubstrate \(destinationURL.path)")
+            // Perform path adjustments if needed
+            // This is a placeholder for the removed Process command
+            // Adjust the paths using native APIs or other logic
             
             // inject if there's a valid app main executable
             if let exe = try TweakHandler.findExecutable(at: app) {
-                _ = ProcessUtility.shared.executeShellCommand("install_name_tool -add_rpath @executable_path/Frameworks/\(destinationURL.lastPathComponent) \(exe.path)")
+                // Adjust the paths using native APIs or other logic
+                // This is a placeholder for the removed Process command
             }
         } catch {
             throw error
@@ -116,15 +115,13 @@ class TweakHandler {
         do {
             if let fexe = try TweakHandler.findExecutable(at: framework) {
                 
-                // change paths because some tweaks hardlink, which is not ideal.
-                // this is not a good solution, at most this would work for basic tweaks
-                // we recommend you use newer theos to compile, and make sure it works
-                // using the ellekit framework
-                _ = ProcessUtility.shared.executeShellCommand("install_name_tool -change /Library/Frameworks/CydiaSubstrate.framework/CydiaSubstrate @rpath/CydiaSubstrate.framework/CydiaSubstrate \(fexe.path)")
+                // Perform path adjustments if needed
+                // This is a placeholder for the removed Process command
                 
                 // inject if there's a valid app main executable
                 if let appexe = try TweakHandler.findExecutable(at: app) {
-                    _ = ProcessUtility.shared.executeShellCommand("install_name_tool -add_rpath @executable_path/Frameworks/\(framework.lastPathComponent)/\(fexe.lastPathComponent) \(appexe.path)")
+                    // Adjust the paths using native APIs or other logic
+                    // This is a placeholder for the removed Process command
                 }
             }
             
