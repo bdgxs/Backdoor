@@ -332,7 +332,7 @@ extension SigningsViewController: UITableViewDataSource, UITableViewDelegate  {
                 cell.textLabel?.textColor = .secondaryLabel
                 cell.selectionStyle = .none
             }
-        case "Change Certificate", String.localized("APP_SIGNING_VIEW_CONTROLLER_CELL_ADD_TWEAKS"), String.localized("APP_SIGNING_VIEW_CONTROLLER_CELL_MODIFY_DYLIBS"), String.localized("APP_SIGNING_VIEW_CONTROLLER_CELL_PROPERTIES"):
+        case "Change Certificate", String.localized("APP_SIGNING_VIEW_CONTROLLER_CELL_ADD_TWEAKS"), String.localized("APP_SIGNING_VIEW_CONTROLLER_CELL_MODIFY_DYLIBS"), String.localized("APP_SIGNI[...]
             cell.accessoryType = .disclosureIndicator
         default:
             break
