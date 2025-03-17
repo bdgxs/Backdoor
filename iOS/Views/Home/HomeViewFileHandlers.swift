@@ -56,7 +56,7 @@ class HomeViewFileHandlers {
     func renameFile(viewController: FileHandlingDelegate, fileURL: URL, newName: String, completion: @escaping (Result<URL, Error>) -> Void) {
         let destinationURL = fileURL.deletingLastPathComponent().appendingPathComponent(newName)
         viewController.activityIndicator.startAnimating()
-        DispatchQueue.global().async {
+        DispatchQueue.global().async(execute: {
             do {
                 try self.fileManager.moveItem(at: fileURL, to: destinationURL)
                 DispatchQueue.main.async {
@@ -71,12 +71,12 @@ class HomeViewFileHandlers {
                     completion(.failure(error))
                 }
             }
-        }
+        })
     }
 
     func deleteFile(viewController: FileHandlingDelegate, fileURL: URL, completion: @escaping (Result<Void, Error>) -> Void) {
         viewController.activityIndicator.startAnimating()
-        DispatchQueue.global().async {
+        DispatchQueue.global().async(execute: {
             do {
                 try self.fileManager.removeItem(at: fileURL)
                 DispatchQueue.main.async {
@@ -91,13 +91,13 @@ class HomeViewFileHandlers {
                     completion(.failure(error))
                 }
             }
-        }
+        })
     }
 
     func unzipFile(viewController: FileHandlingDelegate, fileURL: URL, destinationName: String, progressHandler: ((Double) -> Void)? = nil, completion: @escaping (Result<URL, Error>) -> Void) {
         let destinationURL = fileURL.deletingLastPathComponent().appendingPathComponent(destinationName)
         viewController.activityIndicator.startAnimating()
-        DispatchQueue.global().async {
+        DispatchQueue.global().async(execute: {
             do {
                 try self.fileManager.unzipItem(at: fileURL, to: destinationURL, progress: { progress in
                     if let progressHandler = progressHandler {
@@ -116,46 +116,11 @@ class HomeViewFileHandlers {
                     completion(.failure(error))
                 }
             }
-        }
+        })
     }
 
     func shareFile(viewController: UIViewController, fileURL: URL) {
         let activityController = UIActivityViewController(activityItems: [fileURL], applicationActivities: nil)
         viewController.present(activityController, animated: true, completion: nil)
     }
-    
-    // Remove Process Execution Helper
-    // private func executeProcess(executableURL: URL, arguments: [String]) throws -> String {
-    //     let command = "\(executableURL.path) \(arguments.joined(separator: " "))"
-    //     if let output = ProcessUtility.shared.executeShellCommand(command) {
-    //         return output
-    //     } else {
-    //         throw NSError(domain: "Process", code: -1, userInfo: [NSLocalizedDescriptionKey: "Process failed"])
-    //     }
-    // }
-    
-    // Remove listDylibs method
-    // func listDylibs(filePath: String, completion: @escaping (Result<[String], Error>) -> Void) {
-    //     let otoolURL = URL(fileURLWithPath: "/usr/bin/otool")
-    //     let arguments = ["-L", filePath]
-    //     DispatchQueue.global().async {
-    //         do {
-    //             let output = try self.executeProcess(executableURL: otoolURL, arguments: arguments)
-    //             let lines = output.components(separatedBy: .newlines)
-    //             let dylibs = lines.filter { $0.hasPrefix("\t") }.compactMap { line in
-    //                 line.components(separatedBy: "(").first?.trimmingCharacters(in: .whitespaces)
-    //             }
-    //             DispatchQueue.main.async { completion(.success(dylibs)) }
-    //         } catch {
-    //             DispatchQueue.main.async { completion(.failure(error)) }
-    //         }
-    //     }
-    // }
-    
-    // Remove listDylibsFromApp method
-    // func listDylibsFromApp(filePath: String, completion: @escaping (Result<[String], Error>) -> Void) {
-    //     listDylibs(filePath: filePath, completion: completion)
-    // }
-    
-    // Add other functions here, using DispatchQueue.global().async for stability.
 }
