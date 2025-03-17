@@ -59,20 +59,18 @@ class HomeViewUtilities {
     ///   - title: The title for the error alert.
     func handleError(in viewController: UIViewController, error: Error, withTitle title: String) {
         var message: String
-        var logType: OSLogType = .error
 
         if let fileError = error as? FileAppError {
             switch fileError {
             case .fileNotFound(let fileName):
                 message = "File not found: \(fileName). Please check the file name and try again."
-                logType = .info // Log as info, user error
+                logger.info("File not found: \(fileName).")
             case .fileAlreadyExists(let fileName):
                 message = "A file with the name \(fileName) already exists. Please choose a different name."
-                logType = .info
+                logger.info("File already exists: \(fileName).")
             case .unknown(let underlyingError):
                 message = "An unknown error occurred: \(underlyingError.localizedDescription)"
                 logger.error("Unknown error: \(underlyingError.localizedDescription)")
-                // Log the underlyingError here using os_log
             default:
                 message = error.localizedDescription
             }
@@ -139,15 +137,15 @@ class HomeViewUtilities {
     ///   - cancelHandler: Handler to be executed when the "Cancel" action is tapped.
     ///   - viewController: The view controller to present the alert in.
     func showInputAlert(title: String?, message: String?, textFieldHandler: ((UITextField) -> Void)?, okHandler: ((String?) -> Void)?, cancelHandler: (() -> Void)?, in viewController: UIViewController) {
-        let okAction = AlertActionConfig(title: "OK", style: .default) { [weak alert] in
-            let textField = alert?.textFields?.first
+        let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
+        alert.addTextField(configurationHandler: textFieldHandler)
+        
+        let okAction = AlertActionConfig(title: "OK", style: .default) {
+            let textField = alert.textFields?.first
             okHandler?(textField?.text)
         }
         let cancelAction = AlertActionConfig(title: "Cancel", style: .cancel, handler: cancelHandler)
         let config = AlertConfig(title: title, message: message, style: .alert, actions: [okAction, cancelAction], preferredAction: nil, completionHandler: nil)
-
-        let alert = UIAlertController(title: config.title, message: config.message, preferredStyle: config.style)
-        alert.addTextField(configurationHandler: textFieldHandler)
 
         for actionConfig in config.actions {
             let action = UIAlertAction(title: actionConfig.title, style: actionConfig.style) { _ in
