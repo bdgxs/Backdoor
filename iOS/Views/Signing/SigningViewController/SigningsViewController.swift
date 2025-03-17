@@ -1,5 +1,6 @@
 import UIKit
 import CoreData
+import FileHelpers
 
 struct BundleOptions {
     var name: String?
