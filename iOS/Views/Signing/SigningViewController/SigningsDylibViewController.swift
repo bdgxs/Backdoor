@@ -1,4 +1,4 @@
- import UIKit
+import UIKit
 import Foundation // Import Foundation for Process class
 import FileHelpers
 
@@ -112,7 +112,6 @@ class SigningsDylibViewController: UITableViewController {
         tableView.deselectRow(at: indexPath, animated: true)
     }
 
-    // Add the missing functions here
     func listDylibs(filePath: String) throws -> [String]? {
         let task = Process()
         task.executableURL = URL(fileURLWithPath: "/usr/bin/otool")
@@ -148,10 +147,5 @@ class SigningsDylibViewController: UITableViewController {
             throw NSError(domain: "otool", code: Int(task.terminationStatus), userInfo: [NSLocalizedDescriptionKey: "otool failed with status \(task.terminationStatus)"])
         }
         return nil
-    }
-
-    // Ensure fetchSources is accessible
-    internal func fetchSources() {
-        // Implementation of fetchSources
     }
 }
