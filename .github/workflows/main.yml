@@ -87,23 +87,36 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
+      - name: Install jq
+        run: sudo apt-get install -y jq
+
       - name: Retrieve Workflow Logs
-        uses: Superbasil3/retrieve-workflow-logs-action@v0.1.0
-        with:
-          github-token: ${{ secrets.WORKFLOW_SECRET }}
-          keep-only-error-files: true
+        continue-on-error: true
+        run: |
+          # Fetch the workflow run information first to get logs_url
+          RUN_INFO=$(curl -s -H "Authorization: token ${{ secrets.WORKFLOW_SECRET }}" \
+                         -H "Accept: application/vnd.github.v3+json" \
+                         "https://api.github.com/repos/${{ github.repository }}/actions/runs/${{ github.run_id }}")
+          
+          # Extract logs_url from the run info
+          LOGS_URL=$(echo $RUN_INFO | jq -r '.logs_url')
+          
+          if [ -n "$LOGS_URL" ]; then
+            # Download logs if logs_url is available
+            curl -s -H "Authorization: token ${{ secrets.WORKFLOW_SECRET }}" \
+                 -H "Accept: application/vnd.github.v3+json" \
+                 "$LOGS_URL" -o logs.zip
+            mkdir -p logs
+            unzip -o logs.zip -d logs/
+          else
+            echo "No logs URL found for this run."
+          fi
+        shell: bash
 
       - name: Save Logs
         run: |
-          # Create Logs directory if it doesn't exist
           mkdir -p Logs
-          
-          # Assuming the logs are saved by the action in a specific directory or format, adjust as needed
-          # Here we're assuming logs are in the current working directory after the action runs
-          cp -r *.log Logs/
-          
-          # If logs are in a specific folder created by the action, you might need to adjust the path
-          # cp -r some_action_output_dir/*.log Logs/
+          cp -r logs/*.log Logs/ || echo "No logs to copy"
 
       - name: Commit and Push Logs
         run: |
