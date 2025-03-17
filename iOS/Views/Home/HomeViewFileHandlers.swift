@@ -122,31 +122,11 @@ class HomeViewFileHandlers {
 
     // Process Execution Helper
     private func executeProcess(executableURL: URL, arguments: [String]) throws -> String {
-        let task = Process()
-        task.executableURL = executableURL
-        task.arguments = arguments
-
-        let pipe = Pipe()
-        task.standardOutput = pipe
-        task.standardError = pipe
-
-        try task.run()
-        task.waitUntilExit()
-
-        if task.terminationStatus == 0 {
-            let data = pipe.fileHandleForReading.readDataToEndOfFile()
-            if let output = String(data: data, encoding: .utf8) {
-                return output
-            } else {
-                throw NSError(domain: "Process", code: -1, userInfo: [NSLocalizedDescriptionKey: "Failed to decode output"])
-            }
+        let command = "\(executableURL.path) \(arguments.joined(separator: " "))"
+        if let output = ProcessUtility.shared.executeShellCommand(command) {
+            return output
         } else {
-            let errorData = task.standardError!.fileHandleForReading.readDataToEndOfFile()
-            if let errorString = String(data: errorData, encoding: .utf8) {
-                throw NSError(domain: "Process", code: Int(task.terminationStatus), userInfo: [NSLocalizedDescriptionKey: "Process failed: \(errorString)"])
-            } else {
-                throw NSError(domain: "Process", code: Int(task.terminationStatus), userInfo: [NSLocalizedDescriptionKey: "Process failed with unknown error"])
-            }
+            throw NSError(domain: "Process", code: -1, userInfo: [NSLocalizedDescriptionKey: "Process failed"])
         }
     }
 
