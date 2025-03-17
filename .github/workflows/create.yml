@@ -1,4 +1,4 @@
-name: Create New Release
+name: Create New Beta
 
 on:
   workflow_dispatch:
