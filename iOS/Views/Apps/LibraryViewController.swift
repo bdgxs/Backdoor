@@ -47,9 +47,10 @@ class LibraryViewController: UITableViewController {
     @objc func handleInstallNotification(_ notification: Notification) {
         if let userInfo = notification.userInfo,
            let app = userInfo["app"] as? DownloadedApps {
-            
-            DispatchQueue.main.async {
-                self.startInstallProcess(meow: app, filePath: app.filePath ?? "")
+            if let filePath = app.value(forKey: "filePath") as? String {
+                DispatchQueue.main.async {
+                    self.startInstallProcess(meow: app, filePath: filePath)
+                }
             }
         }
     }
@@ -89,11 +90,8 @@ class LibraryViewController: UITableViewController {
             : (indexPath.section == 0 ? signedApps?[indexPath.row] : downloadedApps?[indexPath.row])
         
         if let app = app {
-            cell.configure(
-                image: UIImage(systemName: "questionmark.app.dashed"), // Placeholder image
-                title: app.name ?? "Unknown App",
-                subtitle: app.bundleIdentifier ?? "Unknown Bundle ID"
-            )
+            let filePath = app.value(forKey: "filePath") as? String ?? ""
+            cell.configure(with: app, filePath: URL(fileURLWithPath: filePath))
         }
         
         return cell
@@ -117,13 +115,13 @@ class LibraryViewController: UITableViewController {
                 // Handle Signed Apps action
                 let button1 = PopupViewController.PopupButton(
                     title: "Sign",
-                    style: .default
-                ) {
-                    self.startSigning(meow: app)
-                }
+                    style: .default,
+                    handler: {
+                        self.startSigning(meow: app)
+                    }
+                )
                 
                 popupVC.configureButtons([button1])
-                
                 
                 if let presentationController = popupVC.presentationController as? UISheetPresentationController {
                     presentationController.detents = [
@@ -136,44 +134,44 @@ class LibraryViewController: UITableViewController {
                 
             } else {
                 // Handle Downloaded Apps actions
-                
                 let button1 = PopupViewController.PopupButton(
                     title: "Install",
-                    style: .default
-                ) {
-                    
-                    if let filePath = self.getApplicationFilePath(with: app, row: indexPath.row, section: indexPath.section) {
-                        
-                        let alertController = UIAlertController(
-                            title: "Install App",
-                            message: "Are you sure you want to install this app?",
-                            preferredStyle: .alert
-                        )
-                        
-                        let confirmAction = UIAlertAction(
-                            title: "Install",
-                            style: .default
-                        ) { _ in
-                            self.startInstallProcess(meow: app, filePath: filePath.path)
+                    style: .default,
+                    handler: {
+                        if let filePath = self.getApplicationFilePath(with: app, row: indexPath.row, section: indexPath.section) {
+                            let alertController = UIAlertController(
+                                title: "Install App",
+                                message: "Are you sure you want to install this app?",
+                                preferredStyle: .alert
+                            )
+
+                            let confirmAction = UIAlertAction(
+                                title: "Install",
+                                style: .default,
+                                handler: { _ in
+                                    self.startInstallProcess(meow: app, filePath: filePath.path)
+                                }
+                            )
+
+                            let cancelAction = UIAlertAction(title: "Cancel", style: .cancel, handler: nil)
+
+                            alertController.addAction(confirmAction)
+                            alertController.addAction(cancelAction)
+
+                            self.present(alertController, animated: true, completion: nil)
                         }
-                        
-                        let cancelAction = UIAlertAction(title: "Cancel", style: .cancel, handler: nil)
-                        
-                        alertController.addAction(confirmAction)
-                        alertController.addAction(cancelAction)
-                        
-                        self.present(alertController, animated: true, completion: nil)
                     }
-                }
+                )
                 
                 let button2 = PopupViewController.PopupButton(
                     title: "Share",
-                    style: .default
-                ) {
-                    if let filePath = self.getApplicationFilePath(with: app, row: indexPath.row, section: indexPath.section) {
-                        self.shareFile(meow: app, filePath: filePath.path)
+                    style: .default,
+                    handler: {
+                        if let filePath = self.getApplicationFilePath(with: app, row: indexPath.row, section: indexPath.section) {
+                            self.shareFile(meow: app, filePath: filePath.path)
+                        }
                     }
-                }
+                )
                 
                 popupVC.configureButtons([button1, button2])
                 
@@ -237,7 +235,6 @@ extension LibraryViewController: UISearchResultsUpdating {
     }
     
     fileprivate func filterContentForSearchText(_ searchText: String, scope: String = "All") {
-        
         filteredSignedApps = signedApps?.filter { app in
             return app.name?.lowercased().contains(searchText.lowercased()) ?? false
         } ?? []
