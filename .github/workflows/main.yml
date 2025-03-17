@@ -1,7 +1,6 @@
 name: Create New Release
 
 on:
-
   workflow_dispatch:
 
 jobs:
@@ -10,6 +9,11 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v3
+
+      - name: Clean Swift Environment
+        run: |
+          rm -rf ~/Library/Developer/Xcode/DerivedData
+          xcodebuild clean
 
       - name: Install dependencies (packages)
         run: |
@@ -20,7 +24,8 @@ jobs:
       - name: Compile f
         run: | 
           mkdir upload
-          make package SCHEME="'feather (Release)'"
+          # Set optimization level to -Onone
+          make package SCHEME="'feather (Release)'" OPTIMIZATION_LEVEL=-Onone
           mv packages/* upload/
 
       - name: Get Version Number
