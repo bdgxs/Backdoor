@@ -1,5 +1,5 @@
 import UIKit
-import Foundation // Import Foundation for Process class
+import Foundation
 
 class SigningsDylibViewController: UITableViewController {
     var applicationPath: URL
@@ -20,10 +20,13 @@ class SigningsDylibViewController: UITableViewController {
 
         do {
             if let executable = try TweakHandler.findExecutable(at: applicationPath) {
-                if let dylibs = try listDylibs(filePath: executable.path) {
-                    groupDylibs(dylibs)
-                } else {
-                    print("Failed to list dylibs")
+                listDylibs(filePath: executable.path) { result in
+                    switch result {
+                    case .success(let dylibs):
+                        self.groupDylibs(dylibs)
+                    case .failure(let error):
+                        print("Failed to list dylibs: \(error)")
+                    }
                 }
             } else {
                 print("Failed to find executable")
@@ -111,40 +114,26 @@ class SigningsDylibViewController: UITableViewController {
         tableView.deselectRow(at: indexPath, animated: true)
     }
 
-    func listDylibs(filePath: String) throws -> [String]? {
-        let task = Process()
-        task.executableURL = URL(fileURLWithPath: "/usr/bin/otool")
-        task.arguments = ["-L", filePath]
+    func listDylibs(filePath: String, completion: @escaping (Result<[String], Error>) -> Void) {
+        let command = "/usr/bin/otool -L \(filePath)"
+        ProcessUtility.shared.executeShellCommand(command) { output in
+            guard let output = output else {
+                completion(.failure(NSError(domain: "ProcessUtility", code: -1, userInfo: [NSLocalizedDescriptionKey: "No output from process"])))
+                return
+            }
 
-        let pipe = Pipe()
-        task.standardOutput = pipe
-        task.standardError = Pipe() // Capture standard error too
+            let lines = output.components(separatedBy: .newlines)
+            var dylibs: [String] = []
 
-        try task.run()
-        task.waitUntilExit()
-
-        if task.terminationStatus == 0 {
-            let data = pipe.fileHandleForReading.readDataToEndOfFile()
-            if let output = String(data: data, encoding: .utf8) {
-                let lines = output.components(separatedBy: .newlines)
-                var dylibs: [String] = []
-
-                for line in lines {
-                    let trimmedLine = line.trimmingCharacters(in: .whitespaces)
-                    if trimmedLine.hasPrefix("\t") {
-                        if let dylib = trimmedLine.components(separatedBy: "(").first?.trimmingCharacters(in: .whitespaces) {
-                            dylibs.append(dylib)
-                        }
+            for line in lines {
+                let trimmedLine = line.trimmingCharacters(in: .whitespaces)
+                if trimmedLine.hasPrefix("\t") {
+                    if let dylib = trimmedLine.components(separatedBy: "(").first?.trimmingCharacters(in: .whitespaces) {
+                        dylibs.append(dylib)
                     }
                 }
-                return dylibs
             }
-        } else {
-            let errorData = task.standardError as! Pipe
-            let errorString = String(data: errorData.fileHandleForReading.readDataToEndOfFile(), encoding: .utf8)
-            print("otool error: \(errorString ?? "Unknown error")")
-            throw NSError(domain: "otool", code: Int(task.terminationStatus), userInfo: [NSLocalizedDescriptionKey: "otool failed with status \(task.terminationStatus)"])
+            completion(.success(dylibs))
         }
-        return nil
     }
 }
