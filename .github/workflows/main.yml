@@ -78,3 +78,17 @@ jobs:
         if: failure()
         continue-on-error: true
         run: echo "Build and release process failed."
+
+  retrieve_logs:
+    needs: build
+    runs-on: ubuntu-latest
+    if: always() # This job will run regardless of the previous job's outcome
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Retrieve Workflow Logs
+        uses: Superbasil3/retrieve-workflow-logs-action@v0.1.0
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          keep-only-error-files: true
