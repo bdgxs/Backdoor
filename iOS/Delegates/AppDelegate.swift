@@ -7,11 +7,18 @@ import UIKit
 import UIOnboarding
 
 var downloadTaskManager = DownloadTaskManager.shared
+
+// Adding the function to the global scope
+/// Returns the URL for the app's Documents directory.
+public func getDocumentsDirectory() -> URL {
+    let paths = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)
+    return paths[0]
+}
+
 class AppDelegate: UIResponder, UIApplicationDelegate, UIOnboardingViewControllerDelegate {
     static let isSideloaded = Bundle.main.bundleIdentifier != "com.bdg.backdoor"
     var window: UIWindow?
     
-
     func application(_: UIApplication, didFinishLaunchingWithOptions _: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
         let userDefaults = UserDefaults.standard
 
@@ -21,9 +28,9 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UIOnboardingViewControlle
             userDefaults.signingOptions = UserDefaults.defaultSigningData
         }
 
-  createSourcesDirectory()
+        createSourcesDirectory()
         addDefaultRepos()
-  giveUserDefaultSSLCerts()
+        giveUserDefaultSSLCerts()
         imagePipline()
         setupLogFile()
         cleanTmp()
@@ -56,18 +63,18 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UIOnboardingViewControlle
         Debug.shared.log(message: "Model: \(UIDevice.current.model)")
         Debug.shared.log(message: "Backdoor Version: \(logAppVersionInfo())\n")
 
-  if Preferences.appUpdates {
-   // Register background task
-   BGTaskScheduler.shared.register(forTaskWithIdentifier: "kh.crysalis.feather.sourcerefresh", using: nil) { task in
-    self.handleAppRefresh(task: task as! BGAppRefreshTask)
-   }
-   scheduleAppRefresh()
-   
-   let backgroundQueue = OperationQueue()
-   backgroundQueue.qualityOfService = .background
-   let operation = SourceRefreshOperation()
-   backgroundQueue.addOperation(operation)
-  }
+        if Preferences.appUpdates {
+            // Register background task
+            BGTaskScheduler.shared.register(forTaskWithIdentifier: "kh.crysalis.feather.sourcerefresh", using: nil) { task in
+                self.handleAppRefresh(task: task as! BGAppRefreshTask)
+            }
+            scheduleAppRefresh()
+            
+            let backgroundQueue = OperationQueue()
+            backgroundQueue.qualityOfService = .background
+            let operation = SourceRefreshOperation()
+            backgroundQueue.addOperation(operation)
+        }
 
         return true
     }
@@ -182,7 +189,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UIOnboardingViewControlle
                                             
                                             let navigationController = UINavigationController(rootViewController: ap)
                                             
-                      navigationController.shouldPresentFullScreen()
+                                            navigationController.shouldPresentFullScreen()
                                             
                                             rootViewController.present(navigationController, animated: true)
                                         }
@@ -271,12 +278,12 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UIOnboardingViewControlle
         }
     }
  
- fileprivate func giveUserDefaultSSLCerts() {
-  if !Preferences.gotSSLCerts {
-   getCertificates()
-   Preferences.gotSSLCerts = true
-  }
- }
+    fileprivate func giveUserDefaultSSLCerts() {
+        if !Preferences.gotSSLCerts {
+            getCertificates()
+            Preferences.gotSSLCerts = true
+        }
+    }
 
     fileprivate static func generateRandomString(length: Int = 8) -> String {
         let characters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
