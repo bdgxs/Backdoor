@@ -1,4 +1,4 @@
-import UIKit
+ import UIKit
 import Foundation // Import Foundation for Process class
 
 class SigningsDylibViewController: UITableViewController {
@@ -147,5 +147,10 @@ class SigningsDylibViewController: UITableViewController {
             throw NSError(domain: "otool", code: Int(task.terminationStatus), userInfo: [NSLocalizedDescriptionKey: "otool failed with status \(task.terminationStatus)"])
         }
         return nil
+    }
+
+    // Ensure fetchSources is accessible
+    internal func fetchSources() {
+        // Implementation of fetchSources
     }
 }
