@@ -14,7 +14,8 @@ jobs:
         run: |
           curl -LO https://github.com/ProcursusTeam/ldid/releases/download/v2.1.5-procursus7/ldid_macosx_x86_64
           sudo install -m755 ldid_macosx_x86_64 /usr/local/bin/ldid
-          brew install 7zip gnu-sed xcpretty  # Added xcpretty for better build logs
+          brew install 7zip gnu-sed
+          brew install xcbeautify  # xcbeautify instead of xcpretty
 
       - name: Compile f
         run: | 
