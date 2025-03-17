@@ -1,6 +1,7 @@
 import UIKit
 import ZIPFoundation
 import os.log
+import Foundation  // Add this import
 
 protocol FileHandlingDelegate: AnyObject {
     var documentsDirectory: URL { get }
