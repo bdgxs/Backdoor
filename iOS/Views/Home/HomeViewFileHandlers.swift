@@ -120,36 +120,38 @@ class HomeViewFileHandlers {
         viewController.present(activityController, animated: true, completion: nil)
     }
 
-    // Process Execution Helper
-    private func executeProcess(executableURL: URL, arguments: [String]) throws -> String {
-        let command = "\(executableURL.path) \(arguments.joined(separator: " "))"
-        if let output = ProcessUtility.shared.executeShellCommand(command) {
-            return output
-        } else {
-            throw NSError(domain: "Process", code: -1, userInfo: [NSLocalizedDescriptionKey: "Process failed"])
-        }
-    }
+    // Remove Process Execution Helper
+    // private func executeProcess(executableURL: URL, arguments: [String]) throws -> String {
+    //     let command = "\(executableURL.path) \(arguments.joined(separator: " "))"
+    //     if let output = ProcessUtility.shared.executeShellCommand(command) {
+    //         return output
+    //     } else {
+    //         throw NSError(domain: "Process", code: -1, userInfo: [NSLocalizedDescriptionKey: "Process failed"])
+    //     }
+    // }
 
-    func listDylibs(filePath: String, completion: @escaping (Result<[String], Error>) -> Void) {
-        let otoolURL = URL(fileURLWithPath: "/usr/bin/otool")
-        let arguments = ["-L", filePath]
-        DispatchQueue.global().async {
-            do {
-                let output = try self.executeProcess(executableURL: otoolURL, arguments: arguments)
-                let lines = output.components(separatedBy: .newlines)
-                let dylibs = lines.filter { $0.hasPrefix("\t") }.compactMap { line in
-                    line.components(separatedBy: "(").first?.trimmingCharacters(in: .whitespaces)
-                }
-                DispatchQueue.main.async { completion(.success(dylibs)) }
-            } catch {
-                DispatchQueue.main.async { completion(.failure(error)) }
-            }
-        }
-    }
+    // Remove listDylibs method
+    // func listDylibs(filePath: String, completion: @escaping (Result<[String], Error>) -> Void) {
+    //     let otoolURL = URL(fileURLWithPath: "/usr/bin/otool")
+    //     let arguments = ["-L", filePath]
+    //     DispatchQueue.global().async {
+    //         do {
+    //             let output = try self.executeProcess(executableURL: otoolURL, arguments: arguments)
+    //             let lines = output.components(separatedBy: .newlines)
+    //             let dylibs = lines.filter { $0.hasPrefix("\t") }.compactMap { line in
+    //                 line.components(separatedBy: "(").first?.trimmingCharacters(in: .whitespaces)
+    //             }
+    //             DispatchQueue.main.async { completion(.success(dylibs)) }
+    //         } catch {
+    //             DispatchQueue.main.async { completion(.failure(error)) }
+    //         }
+    //     }
+    // }
 
-    func listDylibsFromApp(filePath: String, completion: @escaping (Result<[String], Error>) -> Void) {
-        listDylibs(filePath: filePath, completion: completion)
-    }
+    // Remove listDylibsFromApp method
+    // func listDylibsFromApp(filePath: String, completion: @escaping (Result<[String], Error>) -> Void) {
+    //     listDylibs(filePath: filePath, completion: completion)
+    // }
 
-    // Add other functions here, using executeProcess and DispatchQueue.global().async for stability.
+    // Add other functions here, using DispatchQueue.global().async for stability.
 }
