@@ -205,7 +205,7 @@ extension LibraryViewController: UISearchResultsUpdating {
         filterContentForSearchText(searchController.searchBar.text!)
     }
     
-    fileprivate func fetchSources() {
+    public func fetchSources() {
         // Fetch Signed Apps
         let signedAppsFetchRequest: NSFetchRequest<SignedApps> = SignedApps.fetchRequest()
         do {
