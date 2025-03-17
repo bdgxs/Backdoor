@@ -1,4 +1,5 @@
 import UIKit
+import FileHelpers
 
 class LogsViewController: UIViewController {
     private var tableView: UITableView!
