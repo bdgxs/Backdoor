@@ -1,6 +1,5 @@
 import UIKit
 import Foundation // Import Foundation for Process class
-import FileHelpers
 
 class SigningsDylibViewController: UITableViewController {
     var applicationPath: URL
