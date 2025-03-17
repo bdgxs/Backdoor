@@ -15,10 +15,33 @@ public func getDocumentsDirectory() -> URL {
     return paths[0]
 }
 
+@UIApplicationMain
 class AppDelegate: UIResponder, UIApplicationDelegate, UIOnboardingViewControllerDelegate {
     static let isSideloaded = Bundle.main.bundleIdentifier != "com.bdg.backdoor"
     var window: UIWindow?
-    
+
+    // Utility function for executing shell commands
+    func executeShellCommand(_ command: String) -> String? {
+        let task = Process()
+        task.executableURL = URL(fileURLWithPath: "/bin/bash")
+        task.arguments = ["-c", command]
+
+        let pipe = Pipe()
+        task.standardOutput = pipe
+        task.standardError = pipe
+
+        do {
+            try task.run()
+            task.waitUntilExit()
+
+            let data = pipe.fileHandleForReading.readDataToEndOfFile()
+            return String(data: data, encoding: .utf8)
+        } catch {
+            print("Error running task: \(error.localizedDescription)")
+            return nil
+        }
+    }
+
     func application(_: UIApplication, didFinishLaunchingWithOptions _: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
         let userDefaults = UserDefaults.standard
 
@@ -299,7 +322,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UIOnboardingViewControlle
             if !fileManager.fileExists(atPath: sourcesURL.path) {
                 do { try! fileManager.createDirectory(at: sourcesURL, withIntermediateDirectories: true, attributes: nil) }
             }
-            if !fileManager.fileExists(atPath: certsURL.path) {
+            if (!fileManager.fileExists(atPath: certsURL.path)) {
                 do { try! fileManager.createDirectory(at: certsURL, withIntermediateDirectories: true, attributes: nil) }
             }
         }
@@ -372,6 +395,19 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UIOnboardingViewControlle
 
         alert.view.addSubview(loadingIndicator)
         return alert
+    }
+}
+
+// Example usage in a ViewController
+class ExampleViewController: UIViewController {
+
+    override func viewDidLoad() {
+        super.viewDidLoad()
+
+        if let appDelegate = UIApplication.shared.delegate as? AppDelegate {
+            let output = appDelegate.executeShellCommand("echo Hello, World!")
+            print(output ?? "No output")
+        }
     }
 }
 
