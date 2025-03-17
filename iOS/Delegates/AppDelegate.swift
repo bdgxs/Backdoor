@@ -20,29 +20,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UIOnboardingViewControlle
     static let isSideloaded = Bundle.main.bundleIdentifier != "com.bdg.backdoor"
     var window: UIWindow?
 
-    // Utility function for executing shell commands
-    func executeShellCommand(_ command: String) -> String? {
-        let task = Process()
-        task.executableURL = URL(fileURLWithPath: "/bin/bash")
-        task.arguments = ["-c", command]
-
-        let pipe = Pipe()
-        task.standardOutput = pipe
-        task.standardError = pipe
-
-        do {
-            try task.run()
-            task.waitUntilExit()
-
-            let data = pipe.fileHandleForReading.readDataToEndOfFile()
-            return String(data: data, encoding: .utf8)
-        } catch {
-            print("Error running task: \(error.localizedDescription)")
-            return nil
-        }
-    }
-
-    func application(_: UIApplication, didFinishLaunchingWithOptions _: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
+    func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
         let userDefaults = UserDefaults.standard
 
         userDefaults.set(Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String, forKey: "currentVersion")
@@ -102,7 +80,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UIOnboardingViewControlle
         return true
     }
 
-    func applicationWillEnterForeground(_: UIApplication) {
+    func applicationWillEnterForeground(_ application: UIApplication) {
         let backgroundQueue = OperationQueue()
         backgroundQueue.qualityOfService = .background
         let operation = SourceRefreshOperation()
@@ -139,7 +117,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UIOnboardingViewControlle
         backgroundQueue.addOperation(operation)
     }
 
-    func application(_: UIApplication, open url: URL, options _: [UIApplication.OpenURLOptionsKey: Any] = [:]) -> Bool {
+    func application(_ application: UIApplication, open url: URL, options: [UIApplication.OpenURLOptionsKey: Any] = [:]) -> Bool {
         if url.scheme == "feather" {
             // I know this is super hacky, honestly
             // I don't *exactly* care as it just works :shrug:
@@ -288,7 +266,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UIOnboardingViewControlle
     }
 
     fileprivate func addDefaultRepos() {
-        if !Preferences.defaultRepos {
+        if (!Preferences.defaultRepos) {
             CoreDataManager.shared.saveSource(
                 name: "Backdoor Repository",
                 id: "com.bdg.backdoor-repo",
@@ -302,7 +280,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UIOnboardingViewControlle
     }
  
     fileprivate func giveUserDefaultSSLCerts() {
-        if !Preferences.gotSSLCerts {
+        if (!Preferences.gotSSLCerts) {
             getCertificates()
             Preferences.gotSSLCerts = true
         }
@@ -404,8 +382,8 @@ class ExampleViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
 
-        if let appDelegate = UIApplication.shared.delegate as? AppDelegate {
-            let output = appDelegate.executeShellCommand("echo Hello, World!")
+        // Use ProcessUtility to execute a shell command
+        ProcessUtility.shared.executeShellCommand("echo Hello, World!") { output in
             print(output ?? "No output")
         }
     }
