@@ -15,7 +15,6 @@ public func getDocumentsDirectory() -> URL {
     return paths[0]
 }
 
-@UIApplicationMain
 class AppDelegate: UIResponder, UIApplicationDelegate, UIOnboardingViewControllerDelegate {
     static let isSideloaded = Bundle.main.bundleIdentifier != "com.bdg.backdoor"
     var window: UIWindow?
