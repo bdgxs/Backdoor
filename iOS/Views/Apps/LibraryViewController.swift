@@ -6,8 +6,8 @@ class LibraryViewController: UITableViewController {
     var signedApps: [SignedApps]?
     var downloadedApps: [DownloadedApps]?
     
-    var filteredSignedApps: [SignedApps] =
-    var filteredDownloadedApps: [DownloadedApps] =
+    var filteredSignedApps: [SignedApps] = []
+    var filteredDownloadedApps: [DownloadedApps] = []
     
     var installer: Installer?
     
@@ -242,11 +242,11 @@ extension LibraryViewController: UISearchResultsUpdating {
         
         filteredSignedApps = signedApps?.filter { app in
             return app.name?.lowercased().contains(searchText.lowercased()) ?? false
-        } ??
+        } ?? []
         
         filteredDownloadedApps = downloadedApps?.filter { app in
             return app.name?.lowercased().contains(searchText.lowercased()) ?? false
-        } ??
+        } ?? []
         
         tableView.reloadData()
     }
