@@ -1,11 +1,17 @@
 import UIKit
 
-class SigningsAdvancedViewController: FRSITableViewController {
+class SigningsAdvancedViewController: UITableViewController {
     private var toggleOptions: [TogglesOption]
+    private var signingDataWrapper: SigningDataWrapper
+    private var mainOptions: SigningMainDataWrapper
+    private var tableData: [[String]] = []
+    private var sectionTitles: [String] = []
     
-    override init(signingDataWrapper: SigningDataWrapper, mainOptions: SigningMainDataWrapper) {
+    init(signingDataWrapper: SigningDataWrapper, mainOptions: SigningMainDataWrapper) {
+        self.signingDataWrapper = signingDataWrapper
+        self.mainOptions = mainOptions
         self.toggleOptions = feather.toggleOptions(signingDataWrapper: signingDataWrapper)
-        super.init(signingDataWrapper: signingDataWrapper, mainOptions: mainOptions)
+        super.init(style: .insetGrouped)
     }
     
     required init?(coder: NSCoder) {
@@ -33,6 +39,14 @@ class SigningsAdvancedViewController: FRSITableViewController {
 }
 
 extension SigningsAdvancedViewController {
+    override func numberOfSections(in tableView: UITableView) -> Int {
+        return tableData.count
+    }
+    
+    override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+        return tableData[section].count
+    }
+    
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let reuseIdentifier = "Cell"
         let cell = UITableViewCell(style: .value1, reuseIdentifier: reuseIdentifier)
