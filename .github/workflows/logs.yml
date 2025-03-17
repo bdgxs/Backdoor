@@ -1,0 +1,49 @@
+name: Retrieve Logs After Release
+
+on:
+  workflow_run:
+    workflows: ["Create New Release"]
+    types:
+      - completed
+
+jobs:
+  retrieve_logs:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Retrieve Workflow Logs
+        uses: Superbasil3/retrieve-workflow-logs-action@v0.1.0
+        with:
+          github-token: ${{ secrets.WORKFLOW_SECRET }}
+          keep-only-error-files: true
+        continue-on-error: true  # This allows the workflow to continue even if this step fails
+
+      - name: Check if logs were retrieved
+        id: check_logs
+        run: |
+          if [ -d "logs" ]; then
+            echo "logs_exist=true" >> $GITHUB_OUTPUT
+          else
+            echo "logs_exist=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Save Logs
+        if: steps.check_logs.outputs.logs_exist == 'true'
+        run: |
+          mkdir -p Logs
+          cp -r logs/* Logs/
+
+      - name: Commit and Push Logs
+        if: steps.check_logs.outputs.logs_exist == 'true'
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add Logs/*.log
+          git commit -m "Add workflow logs" || echo "No changes to commit"
+          git push origin main
+
+      - name: Log Failure
+        if: steps.check_logs.outputs.logs_exist == 'false'
+        run: echo "Failed to retrieve logs. Logs directory does not exist."
