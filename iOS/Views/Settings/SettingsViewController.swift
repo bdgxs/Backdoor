@@ -9,6 +9,7 @@
 import UIKit
 import Nuke
 import SwiftUI
+import FileHelpers
 
 class SettingsViewController: FRSTableViewController {
     let aboutSection = [
