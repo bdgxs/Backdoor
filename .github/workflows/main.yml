@@ -20,7 +20,7 @@ jobs:
       - name: Select Xcode
         uses: maxim-lobanov/setup-xcode@v1
         with:
-          xcode-version: 'latest-stable' # Or a specific version that supports the latest swift
+          xcode-version: 'latest-stable' # Always use latest stable Xcode
 
       - name: Clean build environment
         run: |
@@ -68,7 +68,7 @@ jobs:
           generate_release_notes: true
           fail_on_unmatched_files: true
         env:
-          GITHUB_TOKEN: ${{ secrets.WORKFLOW_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.WORKFLOW_SECRET }} # Using WORKFLOW_SECRET here
 
       - name: Notify Build Success
         if: success()
@@ -78,50 +78,3 @@ jobs:
         if: failure()
         continue-on-error: true
         run: echo "Build and release process failed."
-
-  retrieve_logs:
-    needs: build
-    runs-on: ubuntu-latest
-    if: always() # This job will run regardless of the previous job's outcome
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-
-      - name: Install jq
-        run: sudo apt-get install -y jq
-
-      - name: Retrieve Workflow Logs
-        continue-on-error: true
-        run: |
-          # Fetch the workflow run information first to get logs_url
-          RUN_INFO=$(curl -s -H "Authorization: token ${{ secrets.WORKFLOW_SECRET }}" \
-                         -H "Accept: application/vnd.github.v3+json" \
-                         "https://api.github.com/repos/${{ github.repository }}/actions/runs/${{ github.run_id }}")
-          
-          # Extract logs_url from the run info
-          LOGS_URL=$(echo $RUN_INFO | jq -r '.logs_url')
-          
-          if [ -n "$LOGS_URL" ]; then
-            # Download logs if logs_url is available
-            curl -s -H "Authorization: token ${{ secrets.WORKFLOW_SECRET }}" \
-                 -H "Accept: application/vnd.github.v3+json" \
-                 "$LOGS_URL" -o logs.zip
-            mkdir -p logs
-            unzip -o logs.zip -d logs/
-          else
-            echo "No logs URL found for this run."
-          fi
-        shell: bash
-
-      - name: Save Logs
-        run: |
-          mkdir -p Logs
-          cp -r logs/*.log Logs/ || echo "No logs to copy"
-
-      - name: Commit and Push Logs
-        run: |
-          git config --local user.email "action@github.com"
-          git config --local user.name "GitHub Action"
-          git add Logs/*.log
-          git commit -m "Add workflow logs" || echo "No changes to commit"
-          git push origin main
