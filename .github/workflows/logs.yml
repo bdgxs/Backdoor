@@ -43,7 +43,7 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.x' # Or a specific Python version
+          python-version: '3.12' # Use the latest stable Python version
 
       - name: Run Python Script to Extract Errors
         run: |
