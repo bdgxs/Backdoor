@@ -28,11 +28,11 @@ class TweakHandler {
         }
         
         let frameworksPath = app.appendingPathComponent("Frameworks").appendingPathComponent("CydiaSubstrate.framework")
-        if !fileManager.fileExists(atPath: frameworksPath.path) {
+        if (!fileManager.fileExists(atPath: frameworksPath.path)) {
             if let ellekitURL = Bundle.main.url(forResource: "ellekit", withExtension: "deb") {
                 self.urls.insert(ellekitURL.absoluteString, at: 0)
             } else {
-                Debug.shared.log(message: "Error: ellekit.deb not found in the app bundle \u2049\ufe0f", type: .error)
+                Debug.shared.log(message: "Error: ellekit.deb not found in the app bundle \u{2049}\u{fe0f}", type: .error)
                 return
             }
         }
