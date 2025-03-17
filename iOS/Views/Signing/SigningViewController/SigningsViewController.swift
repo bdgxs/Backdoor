@@ -223,7 +223,7 @@ class SigningsViewController: UIViewController {
         largeButton.layer.zPosition = 4
     }
     
-    fileprivate func certAlert() {
+    internal func certAlert() {
         if (mainOptions.mainOptions.certificate == nil) {
             DispatchQueue.main.async {
                 let alert = UIAlertController(
