@@ -2,7 +2,7 @@ name: Analyze Swift Build
 
 on:
   workflow_run:
-    workflows: ["Create New Release"] # Replace with your Swift build workflow name
+    workflows: ["Create New Build"] # Updated to your workflow name
     types:
       - completed
 
