@@ -12,16 +12,16 @@ class HomeViewFileHandlers {
     private let fileManager = FileManager.default
     private let utilities = HomeViewUtilities()
 
-    func uploadFile(viewController: UIViewController & UIDocumentPickerDelegate & FileHandlingDelegate) {
+    func uploadFile(viewController: FileHandlingDelegate) {
         let documentPicker = UIDocumentPickerViewController(forOpeningContentTypes: [.data], asCopy: true)
-        documentPicker.delegate = viewController
+        documentPicker.delegate = viewController as? UIDocumentPickerDelegate
         documentPicker.modalPresentationStyle = .formSheet
         viewController.present(documentPicker, animated: true, completion: nil)
     }
 
-    func importFile(viewController: UIViewController & UIDocumentPickerDelegate & FileHandlingDelegate) {
+    func importFile(viewController: FileHandlingDelegate) {
         let documentPicker = UIDocumentPickerViewController(forOpeningContentTypes: [.data], asCopy: true)
-        documentPicker.delegate = viewController
+        documentPicker.delegate = viewController as? UIDocumentPickerDelegate
         documentPicker.modalPresentationStyle = .formSheet
         viewController.present(documentPicker, animated: true, completion: nil)
     }
