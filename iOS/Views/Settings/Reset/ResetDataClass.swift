@@ -7,6 +7,7 @@
 
 import Foundation
 import Nuke
+import FileHelpers
 
 class ResetDataClass {
 	static let shared = ResetDataClass()
