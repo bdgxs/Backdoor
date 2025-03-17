@@ -99,7 +99,11 @@ class HomeViewFileHandlers {
         viewController.activityIndicator.startAnimating()
         DispatchQueue.global().async {
             do {
-                try self.fileManager.unzipItem(at: fileURL, to: destinationURL, progress: progressHandler as? Progress)
+                try self.fileManager.unzipItem(at: fileURL, to: destinationURL, progress: { progress in
+                    if let progressHandler = progressHandler {
+                        progressHandler(Double(progress.completedUnitCount) / Double(progress.totalUnitCount))
+                    }
+                })
                 DispatchQueue.main.async {
                     viewController.activityIndicator.stopAnimating()
                     viewController.loadFiles()
@@ -119,7 +123,7 @@ class HomeViewFileHandlers {
         let activityController = UIActivityViewController(activityItems: [fileURL], applicationActivities: nil)
         viewController.present(activityController, animated: true, completion: nil)
     }
-
+    
     // Remove Process Execution Helper
     // private func executeProcess(executableURL: URL, arguments: [String]) throws -> String {
     //     let command = "\(executableURL.path) \(arguments.joined(separator: " "))"
@@ -129,7 +133,7 @@ class HomeViewFileHandlers {
     //         throw NSError(domain: "Process", code: -1, userInfo: [NSLocalizedDescriptionKey: "Process failed"])
     //     }
     // }
-
+    
     // Remove listDylibs method
     // func listDylibs(filePath: String, completion: @escaping (Result<[String], Error>) -> Void) {
     //     let otoolURL = URL(fileURLWithPath: "/usr/bin/otool")
@@ -147,11 +151,11 @@ class HomeViewFileHandlers {
     //         }
     //     }
     // }
-
+    
     // Remove listDylibsFromApp method
     // func listDylibsFromApp(filePath: String, completion: @escaping (Result<[String], Error>) -> Void) {
     //     listDylibs(filePath: filePath, completion: completion)
     // }
-
+    
     // Add other functions here, using DispatchQueue.global().async for stability.
 }
