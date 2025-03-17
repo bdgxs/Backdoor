@@ -1,11 +1,12 @@
 import UIKit
 import ZIPFoundation
+import Foundation
 
-class HomeViewController: UIViewController, UIDocumentPickerDelegate, UISearchResultsUpdating, UITableViewDragDelegate, UITableViewDropDelegate, UITableViewDelegate, UITableViewDataSource {
+class HomeViewController: UIViewController, UISearchResultsUpdating, UITableViewDragDelegate, UITableViewDropDelegate, UITableViewDelegate, UITableViewDataSource {
 
     // MARK: - Properties
-    private var fileList: [String] =
-    private var filteredFileList: [String] =
+    private var fileList: [String] = []
+    private var filteredFileList: [String] = []
     private let fileManager = FileManager.default
     private let searchController = UISearchController(searchResultsController: nil)
     private var sortOrder: SortOrder = .name
@@ -127,7 +128,8 @@ class HomeViewController: UIViewController, UIDocumentPickerDelegate, UISearchRe
             do {
                 if url.startAccessingSecurityScopedResource() {
                     if url.pathExtension == "zip" {
-                        try self.fileManager.unzipItem(at: url, to: destinationURL)
+                        let progressHandler: Progress? = nil // Adjust to match expected type
+                        try self.fileManager.unzipItem(at: url, to: destinationURL, progress: progressHandler)
                     } else {
                         try self.fileManager.copyItem(at: url, to: destinationURL)
                     }
@@ -303,8 +305,8 @@ extension HomeViewController: UIDocumentPickerDelegate {
 extension FileManager {
     func fileSize(at path: String) -> UInt64? {
         do {
-            let attr = try FileManager.default.attributesOfItem(atPath: path)
-            return attr.fileSize()
+            let attr = try attributesOfItem(atPath: path)
+            return attr[.size] as? UInt64
         } catch {
             return nil
         }
@@ -312,8 +314,8 @@ extension FileManager {
     
     func creationDate(at path: String) -> Date? {
         do {
-            let attr = try FileManager.default.attributesOfItem(atPath: path)
-            return attr.fileCreationDate()
+            let attr = try attributesOfItem(atPath: path)
+            return attr[.creationDate] as? Date
         } catch {
             return nil
         }
