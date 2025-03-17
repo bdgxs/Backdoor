@@ -78,37 +78,3 @@ jobs:
         if: failure()
         continue-on-error: true
         run: echo "Build and release process failed."
-
-  retrieve_logs:
-    needs: build
-    runs-on: ubuntu-latest
-    if: always() # This job will run regardless of the previous job's outcome
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-
-      - name: Retrieve Workflow Logs
-        uses: Superbasil3/retrieve-workflow-logs-action@v0.1.0
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          keep-only-error-files: true
-
-      - name: Save Logs
-        run: |
-          # Create Logs directory if it doesn't exist
-          mkdir -p Logs
-          
-          # Assuming the logs are saved by the action in a specific directory or format, adjust as needed
-          # Here we're assuming logs are in the current working directory after the action runs
-          cp -r *.log Logs/
-          
-          # If logs are in a specific folder created by the action, you might need to adjust the path
-          # cp -r some_action_output_dir/*.log Logs/
-
-      - name: Commit and Push Logs
-        run: |
-          git config --local user.email "action@github.com"
-          git config --local user.name "GitHub Action"
-          git add Logs/*.log
-          git commit -m "Add workflow logs" || echo "No changes to commit"
-          git push origin main
