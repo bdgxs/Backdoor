@@ -1,5 +1,6 @@
 import UIKit
 import ZIPFoundation
+import os.log
 
 protocol FileHandlingDelegate: AnyObject {
     var documentsDirectory: URL { get }
@@ -170,12 +171,4 @@ class HomeViewFileHandlers {
     }
 
     // Add other functions here, using executeProcess and DispatchQueue.global().async for stability.
-}
-
-class HomeViewUtilities {
-    func handleError(in viewController: UIViewController, error: Error, withTitle title: String) {
-        let alert = UIAlertController(title: title, message: error.localizedDescription, preferredStyle: .alert)
-        alert.addAction(UIAlertAction(title: "OK", style: .default, handler: nil))
-        viewController.present(alert, animated: true, completion: nil)
-    }
 }
