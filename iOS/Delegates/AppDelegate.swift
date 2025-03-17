@@ -1,11 +1,3 @@
-//
-//  AppDelegate.swift
-//  feather
-//
-//  Created by samara on 5/17/24.
-//  Copyright (c) 2024 Samara M (khcrysalis)
-//
-
 import BackgroundTasks
 import CoreData
 import Foundation
@@ -18,7 +10,7 @@ var downloadTaskManager = DownloadTaskManager.shared
 class AppDelegate: UIResponder, UIApplicationDelegate, UIOnboardingViewControllerDelegate {
     static let isSideloaded = Bundle.main.bundleIdentifier != "com.bdg.backdoor"
     var window: UIWindow?
-    var loaderAlert = presentLoader()
+    
 
     func application(_: UIApplication, didFinishLaunchingWithOptions _: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
         let userDefaults = UserDefaults.standard
@@ -29,9 +21,9 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UIOnboardingViewControlle
             userDefaults.signingOptions = UserDefaults.defaultSigningData
         }
 
-		createSourcesDirectory()
+  createSourcesDirectory()
         addDefaultRepos()
-		giveUserDefaultSSLCerts()
+  giveUserDefaultSSLCerts()
         imagePipline()
         setupLogFile()
         cleanTmp()
@@ -64,18 +56,18 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UIOnboardingViewControlle
         Debug.shared.log(message: "Model: \(UIDevice.current.model)")
         Debug.shared.log(message: "Backdoor Version: \(logAppVersionInfo())\n")
 
-		if Preferences.appUpdates {
-			// Register background task
-			BGTaskScheduler.shared.register(forTaskWithIdentifier: "kh.crysalis.feather.sourcerefresh", using: nil) { task in
-				self.handleAppRefresh(task: task as! BGAppRefreshTask)
-			}
-			scheduleAppRefresh()
-			
-			let backgroundQueue = OperationQueue()
-			backgroundQueue.qualityOfService = .background
-			let operation = SourceRefreshOperation()
-			backgroundQueue.addOperation(operation)
-		}
+  if Preferences.appUpdates {
+   // Register background task
+   BGTaskScheduler.shared.register(forTaskWithIdentifier: "kh.crysalis.feather.sourcerefresh", using: nil) { task in
+    self.handleAppRefresh(task: task as! BGAppRefreshTask)
+   }
+   scheduleAppRefresh()
+   
+   let backgroundQueue = OperationQueue()
+   backgroundQueue.qualityOfService = .background
+   let operation = SourceRefreshOperation()
+   backgroundQueue.addOperation(operation)
+  }
 
         return true
     }
@@ -146,7 +138,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UIOnboardingViewControlle
                     }
                     
                     DispatchQueue.main.async {
-                        rootViewController.present(self.loaderAlert, animated: true)
+                        rootViewController.present(self.presentLoader(), animated: true)
                     }
                     
                     DispatchQueue.global(qos: .background).async {
@@ -163,7 +155,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UIOnboardingViewControlle
                                 try handleIPAFile(destinationURL: destinationURL, uuid: uuid, dl: dl)
                                 
                                 DispatchQueue.main.async {
-                                    self.loaderAlert.dismiss(animated: true) {
+                                    self.presentLoader().dismiss(animated: true) {
                                         let downloadedApps = CoreDataManager.shared.getDatedDownloadedApps()
                                         if let downloadedApp = downloadedApps.first(where: { $0.uuid == uuid }) {
                                             let signingDataWrapper = SigningDataWrapper(signingOptions: UserDefaults.standard.signingOptions)
@@ -190,7 +182,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UIOnboardingViewControlle
                                             
                                             let navigationController = UINavigationController(rootViewController: ap)
                                             
-											navigationController.shouldPresentFullScreen()
+                      navigationController.shouldPresentFullScreen()
                                             
                                             rootViewController.present(navigationController, animated: true)
                                         }
@@ -199,7 +191,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UIOnboardingViewControlle
                             }
                         } catch {
                             DispatchQueue.main.async {
-                                self.loaderAlert.dismiss(animated: true)
+                                self.presentLoader().dismiss(animated: true)
                                 Debug.shared.log(message: "Failed to handle IPA file: \(error)", type: .error)
                             }
                         }
@@ -219,7 +211,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UIOnboardingViewControlle
             }
 
             DispatchQueue.main.async {
-                rootViewController.present(self.loaderAlert, animated: true)
+                rootViewController.present(self.presentLoader(), animated: true)
             }
 
             DispatchQueue.global(qos: .background).async {
@@ -234,12 +226,12 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UIOnboardingViewControlle
                     try handleIPAFile(destinationURL: destinationURL, uuid: uuid, dl: dl)
 
                     DispatchQueue.main.async {
-                        self.loaderAlert.dismiss(animated: true)
+                        self.presentLoader().dismiss(animated: true)
                         Debug.shared.log(message: "Moved IPA file to: \(destinationURL)")
                     }
                 } catch {
                     DispatchQueue.main.async {
-                        self.loaderAlert.dismiss(animated: true)
+                        self.presentLoader().dismiss(animated: true)
                         Debug.shared.log(message: "Failed to move IPA file: \(error)")
                     }
                 }
@@ -278,13 +270,13 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UIOnboardingViewControlle
             }
         }
     }
-	
-	fileprivate func giveUserDefaultSSLCerts() {
-		if !Preferences.gotSSLCerts {
-			getCertificates()
-			Preferences.gotSSLCerts = true
-		}
-	}
+ 
+ fileprivate func giveUserDefaultSSLCerts() {
+  if !Preferences.gotSSLCerts {
+   getCertificates()
+   Preferences.gotSSLCerts = true
+  }
+ }
 
     fileprivate static func generateRandomString(length: Int = 8) -> String {
         let characters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
@@ -362,6 +354,17 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UIOnboardingViewControlle
             return "App Version: \(version) (\(build))"
         }
         return ""
+    }
+
+    func presentLoader() -> UIAlertController {
+        let alert = UIAlertController(title: "Loading...", message: nil, preferredStyle: .alert)
+
+        let loadingIndicator = UIActivityIndicatorView(frame: CGRect(x: 10, y: 5, width: 50, height: 50))
+        loadingIndicator.style = .large
+        loadingIndicator.startAnimating()
+
+        alert.view.addSubview(loadingIndicator)
+        return alert
     }
 }
 
