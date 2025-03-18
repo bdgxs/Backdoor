@@ -1,5 +1,27 @@
 import UIKit
 import CoreData
+import UniformTypeIdentifiers
+
+// Define PopupViewControllerButton if not already defined
+class PopupViewControllerButton: UIButton {
+    var onTap: (() -> Void)?
+
+    init(title: String, color: UIColor, titleColor: UIColor = .white) {
+        super.init(frame: .zero)
+        self.setTitle(title, for: .normal)
+        self.backgroundColor = color
+        self.setTitleColor(titleColor, for: .normal)
+        self.addTarget(self, action: #selector(buttonTapped), for: .touchUpInside)
+    }
+
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+
+    @objc private func buttonTapped() {
+        onTap?()
+    }
+}
 
 class LibraryViewController: UITableViewController {
     var signedApps: [SignedApps]?
@@ -87,6 +109,7 @@ class LibraryViewController: UITableViewController {
         
         present(loaderAlert!, animated: true)
         
+        // Create mock source if in debug mode
         if isDebugMode {
             let mockSource = SourceRefreshOperation()
             mockSource.createMockSource { mockSourceData in
@@ -100,6 +123,7 @@ class LibraryViewController: UITableViewController {
                 }
             }
         } else {
+            // Normal source fetch
             SourceGET().downloadURL(from: sourceURL) { [weak self] result in
                 guard let self = self else { return }
                 
@@ -135,8 +159,10 @@ class LibraryViewController: UITableViewController {
             return
         }
         
+        // Look for the version that matches our update version
         for version in versions {
             if version.version == updateVersion {
+                // Found the matching version
                 Debug.shared.log(message: "Found matching version: \(version.version)", type: .info)
                 
                 let uuid = UUID().uuidString
@@ -146,6 +172,7 @@ class LibraryViewController: UITableViewController {
                         let tempDirectory = FileManager.default.temporaryDirectory
                         let destinationURL = tempDirectory.appendingPathComponent("\(uuid).ipa")
                         
+                        // Download the file
                         if let data = try? Data(contentsOf: version.downloadURL) {
                             try data.write(to: destinationURL)
                             
@@ -154,11 +181,13 @@ class LibraryViewController: UITableViewController {
                             
                             DispatchQueue.main.async {
                                 self.loaderAlert?.dismiss(animated: true) {
+                                    // Force Sign & Install
                                     let downloadedApps = CoreDataManager.shared.getDatedDownloadedApps()
                                     if let downloadedApp = downloadedApps.first(where: { $0.uuid == uuid }) {
                                         let signingDataWrapper = SigningDataWrapper(signingOptions: UserDefaults.standard.signingOptions)
                                         signingDataWrapper.signingOptions.installAfterSigned = true
                                         
+                                        // Store the original signed app for deletion after update
                                         let originalSignedApp = signedApp
                                         
                                         let ap = SigningsViewController(
@@ -167,6 +196,7 @@ class LibraryViewController: UITableViewController {
                                             appsViewController: self
                                         )
                                         
+                                        // Add completion handler to delete the original app after successful signing
                                         ap.signingCompletionHandler = { [weak self] success in
                                             if success {
                                                 CoreDataManager.shared.deleteAllSignedAppContent(for: originalSignedApp)
@@ -209,37 +239,6 @@ class LibraryViewController: UITableViewController {
         }())
         return isDebug
     }
-    
-    func presentLoader() -> UIAlertController {
-        let alert = UIAlertController(title: nil, message: "", preferredStyle: .alert)
-        let activityIndicator = UIActivityIndicatorView(style: .large)
-        activityIndicator.translatesAutoresizingMaskIntoConstraints = false
-        activityIndicator.isUserInteractionEnabled = false
-        activityIndicator.startAnimating()
-
-        alert.view.addSubview(activityIndicator)
-        
-        NSLayoutConstraint.activate([
-            alert.view.heightAnchor.constraint(equalToConstant: 95),
-            alert.view.widthAnchor.constraint(equalToConstant: 95),
-            activityIndicator.centerXAnchor.constraint(equalTo: alert.view.centerXAnchor),
-            activityIndicator.centerYAnchor.constraint(equalTo: alert.view.centerYAnchor)
-        ])
-        
-        return alert
-    }
-    
-    func someFunction() {
-        let someView = UIView()
-        someView.translatesAutoresizingMaskIntoConstraints = false
-
-        NSLayoutConstraint.activate([
-            someView.widthAnchor.constraint(equalToConstant: 100),
-            someView.heightAnchor.constraint(equalToConstant: 50),
-            someView.centerXAnchor.constraint(equalTo: self.view.centerXAnchor),
-            someView.centerYAnchor.constraint(equalTo: self.view.centerYAnchor)
-        ])
-    }
 }
 
 extension LibraryViewController {
@@ -267,12 +266,10 @@ extension LibraryViewController {
                 })
             return headerWithButton
         case 1:
-            
             let headerWithButton = GroupedSectionHeader(
                 title: String.localized("LIBRARY_VIEW_CONTROLLER_SECTION_DOWNLOADED_APPS"),
                 subtitle: String.localized("LIBRARY_VIEW_CONTROLLER_SECTION_TITLE_DOWNLOADED_APPS_TOTAL", arguments: String(downloadedApps?.count ?? 0))
             )
-            
             return headerWithButton
         default:
             return nil
@@ -458,232 +455,234 @@ extension LibraryViewController {
                         
                         let confirmAction = UIAlertAction(title: String.localized("INSTALL"), style: .default) { _ in
                             self.startInstallProcess(meow: source!, filePath: filePath?.path ?? "")
+                            
                         }
                         
                         let cancelAction = UIAlertAction(title: String.localized("CANCEL"), style: .cancel, handler: nil)
                         
                         alertController.addAction(confirmAction)
-                        alertController.addAction(cancelAction)
+                                                alertController.addAction(cancelAction)
                         
                         self.present(alertController, animated: true, completion: nil)
-    }
-}
-
-popupVC.configureButtons([button1, button2])
-
-let detent2: UISheetPresentationController.Detent = ._detent(withIdentifier: "Test2", constant: 150.0)
-if let presentationController = popupVC.presentationController as? UISheetPresentationController {
-    presentationController.detents = [
-        detent2,
-        .medium()
-    ]
-    presentationController.prefersGrabberVisible = true
-}
-
-self.present(popupVC, animated: true)
-} else {
-    Debug.shared.log(message: "The file has been deleted for this entry, please remove it manually.", type: .critical)
-}
-default:
-    break
-}
-
-tableView.deselectRow(at: indexPath, animated: true)
-}
-
-@objc func startSigning(meow: NSManagedObject) {
-    if FileManager.default.fileExists(atPath: CoreDataManager.shared.getFilesForDownloadedApps(for: meow as! DownloadedApps).path) {
-        let signingDataWrapper = SigningDataWrapper(signingOptions: UserDefaults.standard.signingOptions)
-        let ap = SigningsViewController(signingDataWrapper: signingDataWrapper, application: meow, appsViewController: self)
-        let navigationController = UINavigationController(rootViewController: ap)
-        navigationController.shouldPresentFullScreen()
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-            self.present(navigationController, animated: true, completion: nil)
-        }
-    }
-}
-
-override func tableView(_ tableView: UITableView, trailingSwipeActionsConfigurationForRowAt indexPath: IndexPath) -> UISwipeActionsConfiguration? {
-    let source = getApplication(row: indexPath.row, section: indexPath.section)
-    
-    let deleteAction = UIContextualAction(style: .destructive, title: String.localized("DELETE")) { (action, view, completionHandler) in
-        switch indexPath.section {
-        case 0:
-            CoreDataManager.shared.deleteAllSignedAppContent(for: source! as! SignedApps)
-            self.signedApps?.remove(at: indexPath.row)
-            self.tableView.reloadSections(IndexSet(integer: 0), with: .automatic)
-        case 1:
-            CoreDataManager.shared.deleteAllDownloadedAppContent(for: source! as! DownloadedApps)
-            self.downloadedApps?.remove(at: indexPath.row)
-            self.tableView.reloadSections(IndexSet(integer: 1), with: .automatic)
+                    }
+                }
+                
+                popupVC.configureButtons([button1, button2])
+                
+                let detent2: UISheetPresentationController.Detent = ._detent(withIdentifier: "Test2", constant: 150.0)
+                if let presentationController = popupVC.presentationController as? UISheetPresentationController {
+                    presentationController.detents = [
+                        detent2,
+                        .medium()
+                    ]
+                    presentationController.prefersGrabberVisible = true
+                }
+                
+                self.present(popupVC, animated: true)
+            } else {
+                Debug.shared.log(message: "The file has been deleted for this entry, please remove it manually.", type: .critical)
+            }
         default:
             break
         }
-        completionHandler(true)
+        
+        tableView.deselectRow(at: indexPath, animated: true)
     }
     
-    deleteAction.backgroundColor = UIColor.red
-    let configuration = UISwipeActionsConfiguration(actions: [deleteAction])
-    configuration.performsFirstActionWithFullSwipe = true
-
-    return configuration
-}
-
-override func tableView(_ tableView: UITableView, contextMenuConfigurationForRowAt indexPath: IndexPath, point: CGPoint) -> UIContextMenuConfiguration? {
-    let source = getApplication(row: indexPath.row, section: indexPath.section)
-    let filePath = getApplicationFilePath(with: source!, row: indexPath.row, section: indexPath.section)
+    @objc func startSigning(meow: NSManagedObject) {
+        if FileManager.default.fileExists(atPath: CoreDataManager.shared.getFilesForDownloadedApps(for: meow as! DownloadedApps).path) {
+            let signingDataWrapper = SigningDataWrapper(signingOptions: UserDefaults.standard.signingOptions)
+            let ap = SigningsViewController(signingDataWrapper: signingDataWrapper, application: meow, appsViewController: self)
+            let navigationController = UINavigationController(rootViewController: ap)
+            navigationController.shouldPresentFullScreen()
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                self.present(navigationController, animated: true, completion: nil)
+            }
+        }
+    }
     
-    let configuration = UIContextMenuConfiguration(identifier: nil, actionProvider: { _ in
-        return UIMenu(title: "", image: nil, identifier: nil, options: [], children: [
-            UIAction(title: String.localized("LIBRARY_VIEW_CONTROLLER_SIGN_ACTION_VIEW_DETAILS"), image: UIImage(systemName: "info.circle"), handler: { _ in
-                let viewController = AppsInformationViewController()
-                viewController.source = source
-                viewController.filePath = filePath
-                let navigationController = UINavigationController(rootViewController: viewController)
-                
-                if #available(iOS 15.0, *) {
-                    if let presentationController = navigationController.presentationController as? UISheetPresentationController {
-                        presentationController.detents = [.medium(), .large()]
+    override func tableView(_ tableView: UITableView, trailingSwipeActionsConfigurationForRowAt indexPath: IndexPath) -> UISwipeActionsConfiguration? {
+        let source = getApplication(row: indexPath.row, section: indexPath.section)
+        
+        let deleteAction = UIContextualAction(style: .destructive, title: String.localized("DELETE")) { (action, view, completionHandler) in
+            switch indexPath.section {
+            case 0:
+                CoreDataManager.shared.deleteAllSignedAppContent(for: source! as! SignedApps)
+                self.signedApps?.remove(at: indexPath.row)
+                self.tableView.reloadSections(IndexSet(integer: 0), with: .automatic)
+            case 1:
+                CoreDataManager.shared.deleteAllDownloadedAppContent(for: source! as! DownloadedApps)
+                self.downloadedApps?.remove(at: indexPath.row)
+                self.tableView.reloadSections(IndexSet(integer: 1), with: .automatic)
+            default:
+                break
+            }
+            completionHandler(true)
+        }
+        
+        deleteAction.backgroundColor = UIColor.red
+        let configuration = UISwipeActionsConfiguration(actions: [deleteAction])
+        configuration.performsFirstActionWithFullSwipe = true
+
+        return configuration
+    }
+    
+    override func tableView(_ tableView: UITableView, contextMenuConfigurationForRowAt indexPath: IndexPath, point: CGPoint) -> UIContextMenuConfiguration? {
+        let source = getApplication(row: indexPath.row, section: indexPath.section)
+        let filePath = getApplicationFilePath(with: source!, row: indexPath.row, section: indexPath.section)
+        
+        let configuration = UIContextMenuConfiguration(identifier: nil, actionProvider: { _ in
+            return UIMenu(title: "", image: nil, identifier: nil, options: [], children: [
+                UIAction(title: String.localized("LIBRARY_VIEW_CONTROLLER_SIGN_ACTION_VIEW_DETAILS"), image: UIImage(systemName: "info.circle"), handler: { _ in
+                    let viewController = AppsInformationViewController()
+                    viewController.source = source
+                    viewController.filePath = filePath
+                    let navigationController = UINavigationController(rootViewController: viewController)
+                    
+                    if #available(iOS 15.0, *) {
+                        if let presentationController = navigationController.presentationController as? UISheetPresentationController {
+                            presentationController.detents = [.medium(), .large()]
+                        }
                     }
-                }
+                    
+                    self.present(navigationController, animated: true)
+                }),
                 
-                self.present(navigationController, animated: true)
-            }),
-            
-            UIAction(title: String.localized("LIBRARY_VIEW_CONTROLLER_SIGN_ACTION_OPEN_IN_FILES"), image: UIImage(systemName: "folder"), handler: { _ in
-                let path = filePath?.deletingLastPathComponent()
-                let path2 = path?.absoluteString.replacingOccurrences(of: "file://", with: "shareddocuments://")
-                
-                UIApplication.shared.open(URL(string: path2 ?? "")!, options: [:]) { success in
-                    if success {
-                        Debug.shared.log(message: "File opened successfully.")
-                    } else {
-                        Debug.shared.log(message: "Failed to open file.")
+                UIAction(title: String.localized("LIBRARY_VIEW_CONTROLLER_SIGN_ACTION_OPEN_IN_FILES"), image: UIImage(systemName: "folder"), handler: { _ in
+                    let path = filePath?.deletingLastPathComponent()
+                    let path2 = path?.absoluteString.replacingOccurrences(of: "file://", with: "shareddocuments://")
+                    
+                    UIApplication.shared.open(URL(string: path2 ?? "")!, options: [:]) { success in
+                        if success {
+                            Debug.shared.log(message: "File opened successfully.")
+                        } else {
+                            Debug.shared.log(message: "Failed to open file.")
+                        }
                     }
-                }
-            })
-        ])
-    })
-    return configuration
-}
+                })
+            ])
+        })
+        return configuration
+    }
 }
 
 extension LibraryViewController {
-@objc func afetch() { self.fetchSources() }
-
-func fetchSources() {
-    signedApps = CoreDataManager.shared.getDatedSignedApps()
-    downloadedApps = CoreDataManager.shared.getDatedDownloadedApps()
+    @objc func afetch() { self.fetchSources() }
     
-    DispatchQueue.main.async {
-        UIView.animate(withDuration: 0.1) {
-            self.tableView.reloadData()
+    func fetchSources() {
+        signedApps = CoreDataManager.shared.getDatedSignedApps()
+        downloadedApps = CoreDataManager.shared.getDatedDownloadedApps()
+        
+        DispatchQueue.main.async {
+            UIView.animate(withDuration: 0.1) {
+                self.tableView.reloadData()
+            }
         }
-    }
-}
-
-func getApplicationFilePath(with app: NSManagedObject, row: Int, section: Int, getuuidonly: Bool = false) -> URL? {
-    if section == 0 {
-        guard let source = getApplication(row: row, section: section) as? SignedApps else {
-            return URL(string: "")!
-        }
-        return CoreDataManager.shared.getFilesForSignedApps(for: source, getuuidonly: getuuidonly)
     }
     
-    if section == 1 {
-        guard let source = getApplication(row: row, section: section) as? DownloadedApps else {
-            return URL(string: "")!
-        }
-        return CoreDataManager.shared.getFilesForDownloadedApps(for: source, getuuidonly: getuuidonly)
-    }
-    return nil
-}
-
-func getApplication(row: Int, section: Int) -> NSManagedObject? {
-    if isFiltering {
+    func getApplicationFilePath(with app: NSManagedObject, row: Int, section: Int, getuuidonly: Bool = false) -> URL? {
         if section == 0 {
-            if row < filteredSignedApps.count {
-                return filteredSignedApps[row]
+            guard let source = getApplication(row: row, section: section) as? SignedApps else {
+                return URL(string: "")!
             }
-        } else if section == 1 {
-            if row < filteredDownloadedApps.count {
-                return filteredDownloadedApps[row]
-            }
+            return CoreDataManager.shared.getFilesForSignedApps(for: source, getuuidonly: getuuidonly)
         }
-    } else {
-        if section == 0 {
-            if row < signedApps?.count ?? 0 {
-                return signedApps?[row]
+        
+        if section == 1 {
+            guard let source = getApplication(row: row, section: section) as? DownloadedApps else {
+                return URL(string: "")!
             }
-        } else if section == 1 {
-            if row < downloadedApps?.count ?? 0 {
-                return downloadedApps?[row]
-            }
+            return CoreDataManager.shared.getFilesForDownloadedApps(for: source, getuuidonly: getuuidonly)
         }
+        return nil
     }
-    return nil
-}
+    
+    func getApplication(row: Int, section: Int) -> NSManagedObject? {
+        if isFiltering {
+            if section == 0 {
+                if row < filteredSignedApps.count {
+                    return filteredSignedApps[row]
+                }
+            } else if section == 1 {
+                if row < filteredDownloadedApps.count {
+                    return filteredDownloadedApps[row]
+                }
+            }
+        } else {
+            if section == 0 {
+                if row < signedApps?.count ?? 0 {
+                    return signedApps?[row]
+                }
+            } else if section == 1 {
+                if row < downloadedApps?.count ?? 0 {
+                    return downloadedApps?[row]
+                }
+            }
+        }
+        return nil
+    }
 }
 
 extension LibraryViewController: UISearchResultsUpdating {
-func updateSearchResults(for searchController: UISearchController) {
-    let searchText = searchController.searchBar.text ?? ""
-    filterContentForSearchText(searchText)
-    tableView.reloadData()
-}
+    func updateSearchResults(for searchController: UISearchController) {
+        let searchText = searchController.searchBar.text ?? ""
+        filterContentForSearchText(searchText)
+        tableView.reloadData()
+    }
+    
+    private func filterContentForSearchText(_ searchText: String) {
+        let lowercasedSearchText = searchText.lowercased()
 
-private func filterContentForSearchText(_ searchText: String) {
-    let lowercasedSearchText = searchText.lowercased()
+        filteredSignedApps = signedApps?.filter { app in
+            let name = (app.value(forKey: "name") as? String ?? "").lowercased()
+            return name.contains(lowercasedSearchText)
+        } ?? []
 
-    filteredSignedApps = signedApps?.filter { app in
-        let name = (app.value(forKey: "name") as? String ?? "").lowercased()
-        return name.contains(lowercasedSearchText)
-    } ?? []
-
-    filteredDownloadedApps = downloadedApps?.filter { app in
-        let name = (app.value(forKey: "name") as? String ?? "").lowercased()
-        return name.contains(lowercasedSearchText)
-    } ?? []
-}
+        filteredDownloadedApps = downloadedApps?.filter { app in
+            let name = (app.value(forKey: "name") as? String ?? "").lowercased()
+            return name.contains(lowercasedSearchText)
+        } ?? []
+    }
 }
 
 extension LibraryViewController: UISearchControllerDelegate, UISearchBarDelegate {
-func setupSearchController() {
-    searchController = UISearchController(searchResultsController: nil)
-    searchController.obscuresBackgroundDuringPresentation = false
-    searchController.hidesNavigationBarDuringPresentation = true
-    searchController.searchResultsUpdater = self
-    searchController.delegate = self
-    searchController.searchBar.placeholder = String.localized("SETTINGS_VIEW_CONTROLLER_SEARCH_PLACEHOLDER")
-    navigationItem.searchController = searchController
-    definesPresentationContext = true
-    navigationItem.hidesSearchBarWhenScrolling = false
+    func setupSearchController() {
+        searchController = UISearchController(searchResultsController: nil)
+        searchController.obscuresBackgroundDuringPresentation = false
+        searchController.hidesNavigationBarDuringPresentation = true
+        searchController.searchResultsUpdater = self
+        searchController.delegate = self
+        searchController.searchBar.placeholder = String.localized("SETTINGS_VIEW_CONTROLLER_SEARCH_PLACEHOLDER")
+        navigationItem.searchController = searchController
+        definesPresentationContext = true
+        navigationItem.hidesSearchBarWhenScrolling = false
+    }
+    
+    var isFiltering: Bool {
+        return searchController.isActive && !searchBarIsEmpty
+    }
+
+    var searchBarIsEmpty: Bool {
+        return searchController.searchBar.text?.isEmpty ?? true
+    }
 }
 
-var isFiltering: Bool {
-    return searchController.isActive && !searchBarIsEmpty
-}
-
-var searchBarIsEmpty: Bool {
-    return searchController.searchBar.text?.isEmpty ?? true
-}
-}
-
+/// https://stackoverflow.com/a/75310581
 func presentLoader() -> UIAlertController {
-let alert = UIAlertController(title: nil, message: "", preferredStyle: .alert)
-let activityIndicator = UIActivityIndicatorView(style: .large)
-activityIndicator.translatesAutoresizingMaskIntoConstraints = false
-activityIndicator.isUserInteractionEnabled = false
-activityIndicator.startAnimating()
+    let alert = UIAlertController(title: nil, message: "", preferredStyle: .alert)
+    let activityIndicator = UIActivityIndicatorView(style: .large)
+    activityIndicator.translatesAutoresizingMaskIntoConstraints = false
+    activityIndicator.isUserInteractionEnabled = false
+    activityIndicator.startAnimating()
 
-alert.view.addSubview(activityIndicator)
-
-NSLayoutConstraint.activate([
-    alert.view.heightAnchor.constraint(equalToConstant: 95),
-    alert.view.widthAnchor.constraint(equalToConstant(95)),
-    activityIndicator.centerXAnchor.constraint(equalTo: alert.view.centerXAnchor),
-    activityIndicator.centerYAnchor.constraint(equalTo: alert.view.centerYAnchor)
-])
-
-return alert
+    alert.view.addSubview(activityIndicator)
+    
+    NSLayoutConstraint.activate([
+        alert.view.heightAnchor.constraint(equalToConstant: 95),
+        alert.view.widthAnchor.constraint(equalToConstant: 95),
+        activityIndicator.centerXAnchor.constraint(equalTo: alert.view.centerXAnchor),
+        activityIndicator.centerYAnchor.constraint(equalTo: alert.view.centerYAnchor)
+    ])
+    
+    return alert
 }
