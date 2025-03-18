@@ -98,12 +98,14 @@ class TweakHandler {
             
             // Perform path adjustments if needed
             // This is a placeholder for the removed Process command
-            // Adjust the paths using native APIs or other logic
             
             // inject if there's a valid app main executable
             if let exe = try TweakHandler.findExecutable(at: app) {
-                // Adjust the paths using native APIs or other logic
-                // This is a placeholder for the removed Process command
+                _ = injectDylib(
+                    filePath: exe.path,
+                    dylibPath: "@executable_path/Frameworks/\(url.lastPathComponent)",
+                    weakInject: true
+                )
             }
         } catch {
             throw error
@@ -120,17 +122,19 @@ class TweakHandler {
                 
                 // inject if there's a valid app main executable
                 if let appexe = try TweakHandler.findExecutable(at: app) {
-                    // Adjust the paths using native APIs or other logic
-                    // This is a placeholder for the removed Process command
+                    _ = injectDylib(
+                        filePath: appexe.path,
+                        dylibPath: "@executable_path/Frameworks/\(framework.lastPathComponent)/\(fexe.lastPathComponent)",
+                        weakInject: true
+                    )
                 }
             }
-            
         } catch {
             throw error
         }
     }
     
-    // Extracy imported deb file
+    // Extract imported deb file
     private func handleDeb(at url: URL, baseTmpDir: URL) throws {
         let uniqueSubDir = baseTmpDir.appendingPathComponent(UUID().uuidString)
         try TweakHandler.createDirectoryIfNeeded(at: uniqueSubDir)
@@ -158,7 +162,7 @@ class TweakHandler {
         }
     }
     
-    // Read extracted deb file, locate all neccessary contents to copy over to the .app
+    // Read extracted deb file, locate all necessary contents to copy over to the .app
     private func handleDirectories(at urls: [URL]) throws {
         let directoriesToCheck = [
             "Library/Frameworks/", "var/jb/Library/Frameworks/",
