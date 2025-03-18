@@ -1,4 +1,5 @@
 import UIKit
+import CoreData
 
 class LibraryViewController: UITableViewController {
     var signedApps: [SignedApps]?
