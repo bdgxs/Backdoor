@@ -101,13 +101,12 @@ class HomeViewFileHandlers {
         viewController.activityIndicator.startAnimating()
         let workItem = DispatchWorkItem {
             do {
-                try self.fileManager.unzipItem(at: fileURL, to: destinationURL, progress: { progress in
-                    if let progressHandler = progressHandler {
-                        let progressValue = Double(progress.completedUnitCount) / Double(progress.totalUnitCount)
-                        print("Progress: \(progressValue)")
-                        progressHandler(progressValue)
-                    }
-                })
+                let progress = Progress(totalUnitCount: 100)
+                progress.cancellationHandler = {
+                    print("Unzip cancelled")
+                }
+                try self.fileManager.unzipItem(at: fileURL, to: destinationURL, progress: progress)
+                progressHandler?(1.0)
                 DispatchQueue.main.async {
                     viewController.activityIndicator.stopAnimating()
                     viewController.loadFiles()
