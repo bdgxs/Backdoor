@@ -18,6 +18,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
+        with:
+          token: ${{ secrets.WORKFLOW_SECRET }}
 
       - name: Create Framework
         run: |
@@ -39,6 +41,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
+        with:
+          token: ${{ secrets.WORKFLOW_SECRET }}
 
       - name: Create Framework
         run: |
@@ -54,6 +58,8 @@ jobs:
           xcodebuild -create-xcframework -framework cpux_lib.framework -output cpux_lib.xcframework
 
       - name: Create Release and Set Tag
+        env:
+          GITHUB_TOKEN: ${{ secrets.WORKFLOW_SECRET }}
         run: |
           git tag Dylib
           git push origin Dylib
