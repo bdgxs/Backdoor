@@ -17,26 +17,23 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Install Xcode Command Line Tools
-        run: xcode-select --install
-
-      - name: Create Framework Project
-        run: |
-          mkdir iOSFramework
-          cd iOSFramework
-          xcodebuild -create-xcframework -framework cpux_lib.framework -output cpux_lib.xcframework
+        run: sudo xcode-select --install
 
       - name: Create Framework
         run: |
-          mkdir cpux_lib.framework
-          mkdir cpux_lib.framework/Headers
+          mkdir -p cpux_lib.framework/Headers
           cp cpux_lib.h cpux_lib.framework/Headers/
           clang -target arm64-apple-ios14.0 -isysroot $(xcrun --sdk iphoneos --show-sdk-path) -fPIC -c cpux_lib.c -o cpux_lib.o
           libtool -static cpux_lib.o -o cpux_lib.framework/cpux_lib
           mkdir cpux_lib.framework/Modules
           echo 'framework module cpux_lib { header "cpux_lib.h" export * }' > cpux_lib.framework/Modules/module.modulemap
 
+      - name: Create XCFramework
+        run: |
+          xcodebuild -create-xcframework -framework cpux_lib.framework -output cpux_lib.xcframework
+
       - name: Upload Framework Artifact
         uses: actions/upload-artifact@v3
         with:
           name: cpux_lib_framework
-          path: iOSFramework/cpux_lib.xcframework
+          path: cpux_lib.xcframework
