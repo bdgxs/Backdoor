@@ -30,23 +30,38 @@ jobs:
         run: |
           xcodebuild -create-xcframework -framework cpux_lib.framework -output cpux_lib.xcframework
 
-      - name: Create Release
-        id: create_release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.WORKFLOW_SECRET }}
+      - name: Set Release Tag
+        id: set_release_tag
+        run: echo "RELEASE_TAG=v1.0.0" >> $GITHUB_ENV
+
+      - name: Update Release
+        id: update_release
+        uses: actions/github-script@v6
         with:
-          tag_name: v1.0.0
-          release_name: Release v1.0.0
-          draft: false
-          prerelease: false
+          github-token: ${{ secrets.WORKFLOW_SECRET }}
+          script: |
+            const { data: release } = await github.repos.getReleaseByTag({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              tag: process.env.RELEASE_TAG,
+            });
+
+            await github.repos.updateRelease({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              release_id: release.id,
+              tag_name: process.env.RELEASE_TAG,
+              name: `Release ${process.env.RELEASE_TAG}`,
+              draft: false,
+              prerelease: false,
+            });
 
       - name: Upload Framework to Release
         uses: actions/upload-release-asset@v1
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.WORKFLOW_SECRET }}
         with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          upload_url: ${{ steps.update_release.outputs.upload_url }}
           asset_path: cpux_lib.xcframework
           asset_name: cpux_lib.xcframework
           asset_content_type: application/zip
