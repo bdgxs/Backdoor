@@ -101,7 +101,9 @@ class HomeViewFileHandlers {
             do {
                 try self.fileManager.unzipItem(at: fileURL, to: destinationURL, progress: { progress in
                     if let progressHandler = progressHandler {
-                        progressHandler(Double(progress.completedUnitCount) / Double(progress.totalUnitCount))
+                        let progressValue = Double(progress.completedUnitCount) / Double(progress.totalUnitCount)
+                        print("Progress: \(progressValue)")
+                        progressHandler(progressValue)
                     }
                 })
                 DispatchQueue.main.async {
