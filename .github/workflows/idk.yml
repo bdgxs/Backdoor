@@ -26,7 +26,7 @@ jobs:
           cp cpux_lib.h cpux_lib.framework/Headers/
           clang -target arm64-apple-ios14.0 -isysroot $(xcrun --sdk iphoneos --show-sdk-path) -fPIC -c cpux_lib.c -o cpux_lib.o
           libtool -static cpux_lib.o -o cpux_lib.framework/cpux_lib
-          mkdir cpux_lib.framework/Modules
+          mkdir -p cpux_lib.framework/Modules
           echo 'framework module cpux_lib { header "cpux_lib.h" export * }' > cpux_lib.framework/Modules/module.modulemap
 
       - name: Create XCFramework
