@@ -57,6 +57,13 @@ jobs:
         run: |
           xcodebuild -create-xcframework -framework cpux_lib.framework -output cpux_lib.xcframework
 
+      - name: Delete Existing Release and Tag
+        env:
+          GITHUB_TOKEN: ${{ secrets.WORKFLOW_SECRET }}
+        run: |
+          gh release delete Dylib -y
+          git push --delete origin Dylib || true
+
       - name: Create Release and Set Tag
         env:
           GITHUB_TOKEN: ${{ secrets.WORKFLOW_SECRET }}
