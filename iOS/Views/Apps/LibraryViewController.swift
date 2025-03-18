@@ -1,6 +1,5 @@
 import UIKit
 import CoreData
-import UniformTypeIdentifiers
 
 class LibraryViewController: UITableViewController {
     var signedApps: [SignedApps]?
@@ -299,8 +298,8 @@ extension LibraryViewController {
                     // Update available menu
                     let updateButton = PopupViewControllerButton(
                         title: String.localized("LIBRARY_VIEW_CONTROLLER_SIGN_ACTION_UPDATE", arguments: appName),
-                        color: .tintColor.withAlphaComponent(0.9),
-                        titleColor: .white
+                        color: UIColor.tintColor.withAlphaComponent(0.9),
+                        titleColor: UIColor.white
                     )
                     updateButton.onTap = { [weak self] in
                         guard let self = self else { return }
@@ -311,8 +310,8 @@ extension LibraryViewController {
                     
                     let clearButton = PopupViewControllerButton(
                         title: String.localized("LIBRARY_VIEW_CONTROLLER_SIGN_ACTION_CLEAR_UPDATE"),
-                        color: .quaternarySystemFill,
-                        titleColor: .tintColor
+                        color: UIColor.quaternarySystemFill,
+                        titleColor: UIColor.tintColor
                     )
                     clearButton.onTap = { [weak self] in
                         guard let self = self else { return }
@@ -326,7 +325,7 @@ extension LibraryViewController {
                     // Regular menu
                     let button1 = PopupViewControllerButton(
                         title: String.localized("LIBRARY_VIEW_CONTROLLER_SIGN_ACTION_INSTALL", arguments: appName),
-                        color: .tintColor.withAlphaComponent(0.9)
+                        color: UIColor.tintColor.withAlphaComponent(0.9)
                     )
                     button1.onTap = { [weak self] in
                         guard let self = self else { return }
@@ -336,8 +335,8 @@ extension LibraryViewController {
                     
                     let button4 = PopupViewControllerButton(
                         title: String.localized("LIBRARY_VIEW_CONTROLLER_SIGN_ACTION_OPEN", arguments: appName),
-                        color: .quaternarySystemFill,
-                        titleColor: .tintColor
+                        color: UIColor.quaternarySystemFill,
+                        titleColor: UIColor.tintColor
                     )
                     button4.onTap = { [weak self] in
                         guard let self = self else { return }
@@ -352,8 +351,8 @@ extension LibraryViewController {
                     
                     let button3 = PopupViewControllerButton(
                         title: String.localized("LIBRARY_VIEW_CONTROLLER_SIGN_ACTION_RESIGN", arguments: appName),
-                        color: .quaternarySystemFill,
-                        titleColor: .tintColor
+                        color: UIColor.quaternarySystemFill,
+                        titleColor: UIColor.tintColor
                     )
                     button3.onTap = { [weak self] in
                         guard let self = self else { return }
@@ -386,8 +385,8 @@ extension LibraryViewController {
                     
                     let button2 = PopupViewControllerButton(
                         title: String.localized("LIBRARY_VIEW_CONTROLLER_SIGN_ACTION_SHARE", arguments: appName),
-                        color: .quaternarySystemFill,
-                        titleColor: .tintColor
+                        color: UIColor.quaternarySystemFill,
+                        titleColor: UIColor.tintColor
                     )
                     button2.onTap = { [weak self] in
                         guard let self = self else { return }
@@ -420,14 +419,14 @@ extension LibraryViewController {
                     title: singingData.signingOptions.installAfterSigned
                     ? String.localized("LIBRARY_VIEW_CONTROLLER_SIGN_ACTION_SIGN_INSTALL", arguments: appName)
                     : String.localized("LIBRARY_VIEW_CONTROLLER_SIGN_ACTION_SIGN", arguments: appName),
-                    color: .tintColor.withAlphaComponent(0.9))
+                    color: UIColor.tintColor.withAlphaComponent(0.9))
                 button1.onTap = { [weak self] in
                     guard let self = self else { return }
                     self.popupVC.dismiss(animated: true)
                     self.startSigning(meow: source!)
                 }
                 
-                let button2 = PopupViewControllerButton(title: String.localized("LIBRARY_VIEW_CONTROLLER_SIGN_ACTION_INSTALL", arguments: appName), color: .quaternarySystemFill, titleColor: .tintColor)
+                let button2 = PopupViewControllerButton(title: String.localized("LIBRARY_VIEW_CONTROLLER_SIGN_ACTION_INSTALL", arguments: appName), color: UIColor.quaternarySystemFill, titleColor: UIColor.tintColor)
                 button2.onTap = { [weak self] in
                     guard let self = self else { return }
                     self.popupVC.dismiss(animated: true) {
@@ -463,6 +462,61 @@ extension LibraryViewController {
                     presentationController.prefersGrabberVisible = true
                 }
                 
+                                self.present(popupVC, animated: true)
+            } else {
+                Debug.shared.log(message: "The file has been deleted for this entry, please remove it manually.", type: .critical)
+            }
+        case 1:
+            if FileManager.default.fileExists(atPath: filePath2!.path) {
+                popupVC = PopupViewController()
+                popupVC.modalPresentationStyle = .pageSheet
+                
+                let signingData = SigningDataWrapper(signingOptions: UserDefaults.standard.signingOptions)
+                let button1 = PopupViewControllerButton(
+                    title: signingData.signingOptions.installAfterSigned
+                    ? String.localized("LIBRARY_VIEW_CONTROLLER_SIGN_ACTION_SIGN_INSTALL", arguments: appName)
+                    : String.localized("LIBRARY_VIEW_CONTROLLER_SIGN_ACTION_SIGN", arguments: appName),
+                    color: UIColor.tintColor.withAlphaComponent(0.9))
+                button1.onTap = { [weak self] in
+                    guard let self = self else { return }
+                    self.popupVC.dismiss(animated: true)
+                    self.startSigning(meow: source!)
+                }
+                
+                let button2 = PopupViewControllerButton(title: String.localized("LIBRARY_VIEW_CONTROLLER_SIGN_ACTION_INSTALL", arguments: appName), color: UIColor.quaternarySystemFill, titleColor: UIColor.tintColor)
+                button2.onTap = { [weak self] in
+                    guard let self = self else { return }
+                    self.popupVC.dismiss(animated: true) {
+                        let alertController = UIAlertController(
+                            title: String.localized("LIBRARY_VIEW_CONTROLLER_SIGN_ACTION_INSTALL_CONFIRM"),
+                            message: String.localized("LIBRARY_VIEW_CONTROLLER_SIGN_ACTION_INSTALL_CONFIRM_DESCRIPTION"),
+                            preferredStyle: .alert
+                        )
+                        
+                        let confirmAction = UIAlertAction(title: String.localized("INSTALL"), style: .default) { _ in
+                            self.startInstallProcess(meow: source!, filePath: filePath?.path ?? "")
+                        }
+                        
+                        let cancelAction = UIAlertAction(title: String.localized("CANCEL"), style: .cancel, handler: nil)
+                        
+                        alertController.addAction(confirmAction)
+                        alertController.addAction(cancelAction)
+                        
+                        self.present(alertController, animated: true, completion: nil)
+                    }
+                }
+                
+                popupVC.configureButtons([button1, button2])
+                
+                let detent2: UISheetPresentationController.Detent = ._detent(withIdentifier: "Test2", constant: 150.0)
+                if let presentationController = popupVC.presentationController as? UISheetPresentationController {
+                    presentationController.detents = [
+                        detent2,
+                        .medium()
+                    ]
+                    presentationController.prefersGrabberVisible = true
+                }
+                
                 self.present(popupVC, animated: true)
             } else {
                 Debug.shared.log(message: "The file has been deleted for this entry, please remove it manually.", type: .critical)
@@ -471,7 +525,7 @@ extension LibraryViewController {
             break
         }
         
-                tableView.deselectRow(at: indexPath, animated: true)
+        tableView.deselectRow(at: indexPath, animated: true)
     }
     
     @objc func startSigning(meow: NSManagedObject) {
@@ -518,7 +572,7 @@ extension LibraryViewController {
         
         let configuration = UIContextMenuConfiguration(identifier: nil, actionProvider: { _ in
             return UIMenu(title: "", image: nil, identifier: nil, options: [], children: [
-                UIAction(title: String.localized("LIBRARY_VIEW_CONTROLLER_SIGN_ACTION_VIEW_DATEILS"), image: UIImage(systemName: "info.circle"), handler: { _ in
+                UIAction(title: String.localized("LIBRARY_VIEW_CONTROLLER_SIGN_ACTION_VIEW_DETAILS"), image: UIImage(systemName: "info.circle"), handler: { _ in
                     let viewController = AppsInformationViewController()
                     viewController.source = source
                     viewController.filePath = filePath
@@ -533,7 +587,7 @@ extension LibraryViewController {
                     self.present(navigationController, animated: true)
                 }),
                 
-                UIAction(title: String.localized("LIBRARY_VIEW_CONTROLLER_SIGN_ACTION_OPEN_LN_FILES"), image: UIImage(systemName: "folder"), handler: { _ in
+                UIAction(title: String.localized("LIBRARY_VIEW_CONTROLLER_SIGN_ACTION_OPEN_IN_FILES"), image: UIImage(systemName: "folder"), handler: { _ in
                     let path = filePath?.deletingLastPathComponent()
                     let path2 = path?.absoluteString.replacingOccurrences(of: "file://", with: "shareddocuments://")
                     
@@ -664,10 +718,10 @@ func presentLoader() -> UIAlertController {
     
     NSLayoutConstraint.activate([
         alert.view.heightAnchor.constraint(equalToConstant: 95),
-        alert.view.widthAnchor.constraint(equalToConstant: 95),
+        alert.view.widthAnchor.constraint(equalToConstant(95),
         activityIndicator.centerXAnchor.constraint(equalTo: alert.view.centerXAnchor),
         activityIndicator.centerYAnchor.constraint(equalTo: alert.view.centerYAnchor)
     ])
     
     return alert
-}
+}        
