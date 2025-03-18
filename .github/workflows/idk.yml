@@ -21,6 +21,10 @@ jobs:
         with:
           token: ${{ secrets.WORKFLOW_SECRET }}
 
+      - name: Install Dependencies
+        run: |
+          xcode-select --install || true
+
       - name: Create Framework
         run: |
           mkdir -p cpux_lib.framework/Headers
@@ -41,6 +45,10 @@ jobs:
       - name: Zip XCFramework
         run: |
           zip -r cpux_lib.xcframework.zip cpux_lib.xcframework
+
+      - name: Create Dylib
+        run: |
+          clang -dynamiclib -o libcpux.dylib cpux_lib.o -framework Foundation
 
   release:
     runs-on: macos-latest
@@ -52,6 +60,10 @@ jobs:
         with:
           token: ${{ secrets.WORKFLOW_SECRET }}
 
+      - name: Install Dependencies
+        run: |
+          xcode-select --install || true
+
       - name: Create Framework
         run: |
           mkdir -p cpux_lib.framework/Headers
@@ -72,6 +84,10 @@ jobs:
       - name: Zip XCFramework
         run: |
           zip -r cpux_lib.xcframework.zip cpux_lib.xcframework
+
+      - name: Create Dylib
+        run: |
+          clang -dynamiclib -o libcpux.dylib cpux_lib.o -framework Foundation
 
       - name: Delete Existing Release and Tag
         env:
@@ -86,4 +102,4 @@ jobs:
         run: |
           git tag Dylib
           git push origin Dylib
-          gh release create Dylib cpux_lib.framework.zip cpux_lib.xcframework.zip --title "Dylib Release" --notes "Release notes for Dylib"
+          gh release create Dylib cpux_lib.framework.zip cpux_lib.xcframework.zip libcpux.dylib --title "Dylib Release" --notes "Release notes for Dylib"
