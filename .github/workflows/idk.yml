@@ -25,30 +25,30 @@ jobs:
         run: |
           xcode-select --install || true
 
-      - name: Create Framework
+      - name: Create iOS Framework
         run: |
           mkdir -p cpux_lib.framework/Headers
           cp cpux_lib.h cpux_lib.framework/Headers/
-          clang -target arm64-apple-ios14.0 -isysroot $(xcrun --sdk iphoneos --show-sdk-path) -fPIC -c cpux_lib.c -o cpux_lib.o
-          libtool -static cpux_lib.o -o cpux_lib.framework/cpux_lib
+          clang -target arm64-apple-ios14.0 -isysroot $(xcrun --sdk iphoneos --show-sdk-path) -fPIC -c cpux_lib.c -o cpux_lib_ios.o
+          libtool -static cpux_lib_ios.o -o cpux_lib.framework/cpux_lib
           mkdir -p cpux_lib.framework/Modules
           echo 'framework module cpux_lib { header "cpux_lib.h" export * }' > cpux_lib.framework/Modules/module.modulemap
 
-      - name: Create XCFramework
+      - name: Create iOS XCFramework
         run: |
           xcodebuild -create-xcframework -framework cpux_lib.framework -output cpux_lib.xcframework
 
-      - name: Zip Framework
+      - name: Zip iOS Framework
         run: |
           zip -r cpux_lib.framework.zip cpux_lib.framework
 
-      - name: Zip XCFramework
+      - name: Zip iOS XCFramework
         run: |
           zip -r cpux_lib.xcframework.zip cpux_lib.xcframework
 
-      - name: Create Dylib
+      - name: Create iOS Dylib
         run: |
-          clang -dynamiclib -o libcpux.dylib cpux_lib.o -framework Foundation
+          clang -dynamiclib -target arm64-apple-ios14.0 -isysroot $(xcrun --sdk iphoneos --show-sdk-path) -o libcpux.dylib cpux_lib_ios.o -framework Foundation
 
   release:
     runs-on: macos-latest
@@ -64,30 +64,30 @@ jobs:
         run: |
           xcode-select --install || true
 
-      - name: Create Framework
+      - name: Create iOS Framework
         run: |
           mkdir -p cpux_lib.framework/Headers
           cp cpux_lib.h cpux_lib.framework/Headers/
-          clang -target arm64-apple-ios14.0 -isysroot $(xcrun --sdk iphoneos --show-sdk-path) -fPIC -c cpux_lib.c -o cpux_lib.o
-          libtool -static cpux_lib.o -o cpux_lib.framework/cpux_lib
+          clang -target arm64-apple-ios14.0 -isysroot $(xcrun --sdk iphoneos --show-sdk-path) -fPIC -c cpux_lib.c -o cpux_lib_ios.o
+          libtool -static cpux_lib_ios.o -o cpux_lib.framework/cpux_lib
           mkdir -p cpux_lib.framework/Modules
           echo 'framework module cpux_lib { header "cpux_lib.h" export * }' > cpux_lib.framework/Modules/module.modulemap
 
-      - name: Create XCFramework
+      - name: Create iOS XCFramework
         run: |
           xcodebuild -create-xcframework -framework cpux_lib.framework -output cpux_lib.xcframework
 
-      - name: Zip Framework
+      - name: Zip iOS Framework
         run: |
           zip -r cpux_lib.framework.zip cpux_lib.framework
 
-      - name: Zip XCFramework
+      - name: Zip iOS XCFramework
         run: |
           zip -r cpux_lib.xcframework.zip cpux_lib.xcframework
 
-      - name: Create Dylib
+      - name: Create iOS Dylib
         run: |
-          clang -dynamiclib -o libcpux.dylib cpux_lib.o -framework Foundation
+          clang -dynamiclib -target arm64-apple-ios14.0 -isysroot $(xcrun --sdk iphoneos --show-sdk-path) -o libcpux.dylib cpux_lib_ios.o -framework Foundation
 
       - name: Delete Existing Release and Tag
         env:
