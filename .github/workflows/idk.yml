@@ -40,7 +40,7 @@ jobs:
         with:
           route: GET /repos/${{ github.repository }}/releases/tags/${{ env.RELEASE_TAG }}
         env:
-          WORKFLOW_SECRET: ${{ secrets.WORKFLOW_SECRET }}
+          GITHUB_TOKEN: ${{ secrets.WORKFLOW_SECRET }}
 
       - name: Update Release
         id: update_release
@@ -53,7 +53,7 @@ jobs:
           draft: false
           prerelease: false
         env:
-          WORKFLOW_SECRET: ${{ secrets.WORKFLOW_SECRET }}
+          GITHUB_TOKEN: ${{ secrets.WORKFLOW_SECRET }}
 
       - name: Upload Framework to Release
         uses: actions/upload-release-asset@v1
