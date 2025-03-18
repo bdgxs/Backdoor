@@ -11,12 +11,14 @@ extern "C" {
 
 typedef struct {
     char model[256];
+    char cpuBrand[256];
     uint32_t coreCount;
     uint32_t threadCount;
 } CPUInfo;
 
 typedef struct {
     uint64_t totalMemory;
+    uint64_t freeMemory;
 } MemoryInfo;
 
 CPUInfo* getCPUInfo();
