@@ -29,3 +29,9 @@ jobs:
       - name: Create XCFramework
         run: |
           xcodebuild -create-xcframework -framework cpux_lib.framework -output cpux_lib.xcframework
+
+      - name: Upload Framework Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: cpux_lib_framework
+          path: cpux_lib.xcframework
