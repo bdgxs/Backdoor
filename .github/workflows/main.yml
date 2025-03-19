@@ -1,7 +1,6 @@
 name: Create New Release
 
 on:
-
   workflow_dispatch:
 
 jobs:
@@ -10,6 +9,9 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v3
+
+      - name: Setup tmate session
+        uses: mxschmitt/action-tmate@v2
 
       - name: Install dependencies (packages)
         run: |
