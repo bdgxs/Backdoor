@@ -1,10 +1,9 @@
 import SwiftUI
 
 struct TabbarView: View {
-    @State private var selectedTab: Tab = Tab(rawValue: UserDefaults.standard.string(forKey: "selectedTab") ?? "home") ?? .home
+    @State private var selectedTab: Tab = Tab(rawValue: UserDefaults.standard.string(forKey: "selectedTab") ?? "sources") ?? .sources
     
     enum Tab: String {
-        case home
         case sources
         case library
         case settings
@@ -12,7 +11,6 @@ struct TabbarView: View {
 
     var body: some View {
         TabView(selection: $selectedTab) {
-            tab(for: .home)
             tab(for: .sources)
             tab(for: .library)
             tab(for: .settings)
@@ -30,13 +28,6 @@ struct TabbarView: View {
     @ViewBuilder
     func tab(for tab: Tab) -> some View {
         switch tab {
-        case .home:
-            NavigationViewController(HomeViewController.self, title: String.localized("TAB_HOME"))
-                .edgesIgnoringSafeArea(.all)
-                .tabItem { 
-                    Label(String.localized("TAB_HOME"), systemImage: "house.fill") 
-                }
-                .tag(Tab.home)
         case .sources:
             NavigationViewController(SourcesViewController.self, title: String.localized("TAB_SOURCES"))
                 .edgesIgnoringSafeArea(.all)
