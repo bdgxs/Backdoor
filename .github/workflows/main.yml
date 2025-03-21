@@ -10,9 +10,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
 
-      - name: Setup tmate session
-        uses: mxschmitt/action-tmate@v3.19
-
       - name: Install dependencies (packages)
         run: |
           curl -LO https://github.com/ProcursusTeam/ldid/releases/download/v2.1.5-procursus7/ldid_macosx_x86_64
