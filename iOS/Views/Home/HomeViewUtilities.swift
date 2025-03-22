@@ -74,73 +74,74 @@ class HomeViewUtilities {
                 logger.error("Unknown error: \(underlyingError.localizedDescription)")
             default:
                 message = error.localizedDescription
+            }
+        } else {
+            message = error.localizedDescription
+            logger.error("Unexpected error: \(error.localizedDescription)")
         }
-    } else {
-        message = error.localizedDescription
-        logger.error("Unexpected error: \(error.localizedDescription)")
-    }
 
-    // Present alert on main thread
-    DispatchQueue.main.async {
-        let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
-        alert.addAction(UIAlertAction(title: "OK", style: .default, handler: nil))
-        viewController.present(alert, animated: true, completion: nil)
+        // Present alert on main thread
+        DispatchQueue.main.async {
+            let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
+            alert.addAction(UIAlertAction(title: "OK", style: .default, handler: nil))
+            viewController.present(alert, animated: true, completion: nil)
+        }
     }
 }
 
-    // MARK: - Alert Presentation
+// MARK: - Alert Presentation
 
-    extension UIViewController {
-        /// Presents a UIAlertController with the given configuration.
-        ///
-        /// - Parameter config: The configuration for the alert.
-        func presentAlert(config: AlertConfig) {
-            let alert = UIAlertController(title: config.title, message: config.message, style: config.style)
+extension UIViewController {
+    /// Presents a UIAlertController with the given configuration.
+    ///
+    /// - Parameter config: The configuration for the alert.
+    func presentAlert(config: AlertConfig) {
+        let alert = UIAlertController(title: config.title, message: config.message, preferredStyle: config.style)
 
-            if let preferredActionIndex = config.preferredAction, preferredActionIndex < config.actions.count {
-                alert.preferredAction = alert.actions[preferredActionIndex]
+        if let preferredActionIndex = config.preferredAction, preferredActionIndex < config.actions.count {
+            alert.preferredAction = alert.actions[preferredActionIndex]
+        }
+
+        for actionConfig in config.actions {
+            let action = UIAlertAction(title: actionConfig.title, style: actionConfig.style) { _ in
+                actionConfig.handler?()
             }
+            alert.addAction(action)
+        }
 
-            for actionConfig in config.actions {
-                let action = UIAlertAction(title: actionConfig.title, style: actionConfig.style) { _ in
-                    actionConfig.handler?()
-                }
-                alert.addAction(action)
-            }
-
-            DispatchQueue.main.async {
-                self.present(alert, animated: true, completion: config.completionHandler)
-            }
+        DispatchQueue.main.async {
+            self.present(alert, animated: true, completion: config.completionHandler)
         }
     }
+}
 
-    // MARK: - Haptic Feedback
+// MARK: - Haptic Feedback
 
-    /// Haptic feedback utility class.
-    class HapticFeedbackGenerator {
-        
-        /// Generates haptic feedback using UIImpactFeedbackGenerator.
-        ///
-        /// - Parameter style: The style of the impact feedback.
-        static func generateHapticFeedback(style: UIImpactFeedbackGenerator.FeedbackStyle) {
-            let generator = UIImpactFeedbackGenerator(style: style)
-            generator.prepare()
-            generator.impactOccurred()
-        }
-        
-        /// Generates haptic feedback using UINotificationFeedbackGenerator.
-        ///
-        /// - Parameter type: The type of the notification feedback.
-        static func generateNotificationFeedback(type: UINotificationFeedbackGenerator.FeedbackType) {
-            let generator = UINotificationFeedbackGenerator()
-            generator.prepare()
-            generator.notificationOccurred(type)
-        }
-        
-        /// Generates haptic feedback using UISelectionFeedbackGenerator.
-        static func generateSelectionFeedback() {
-            let generator = UISelectionFeedbackGenerator()
-            generator.prepare()
-            generator.selectionChanged()
-        }
+/// Haptic feedback utility class.
+class HapticFeedbackGenerator {
+    
+    /// Generates haptic feedback using UIImpactFeedbackGenerator.
+    ///
+    /// - Parameter style: The style of the impact feedback.
+    static func generateHapticFeedback(style: UIImpactFeedbackGenerator.FeedbackStyle) {
+        let generator = UIImpactFeedbackGenerator(style: style)
+        generator.prepare()
+        generator.impactOccurred()
     }
+    
+    /// Generates haptic feedback using UINotificationFeedbackGenerator.
+    ///
+    /// - Parameter type: The type of the notification feedback.
+    static func generateNotificationFeedback(type: UINotificationFeedbackGenerator.FeedbackType) {
+        let generator = UINotificationFeedbackGenerator()
+        generator.prepare()
+        generator.notificationOccurred(type)
+    }
+    
+    /// Generates haptic feedback using UISelectionFeedbackGenerator.
+    static func generateSelectionFeedback() {
+        let generator = UISelectionFeedbackGenerator()
+        generator.prepare()
+        generator.selectionChanged()
+    }
+}
