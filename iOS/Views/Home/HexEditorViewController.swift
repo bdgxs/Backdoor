@@ -57,10 +57,9 @@ class HexEditorViewController: UIViewController, UITextViewDelegate {
         // Setup constraints
         NSLayoutConstraint.activate([
             textView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
-            textView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-            textView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            textView.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor),
+            textView.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor),
             textView.bottomAnchor.constraint(equalTo: toolbar.topAnchor),
-
             toolbar.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             toolbar.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             toolbar.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor)
@@ -68,7 +67,8 @@ class HexEditorViewController: UIViewController, UITextViewDelegate {
     }
 
     private func loadFileContent() {
-        DispatchQueue.global(qos: .userInitiated).async {
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+            guard let self = self else { return }
             do {
                 let data = try Data(contentsOf: self.fileURL)
                 let hexString = data.map { String(format: "%02x", $0) }.joined(separator: " ")
@@ -84,35 +84,47 @@ class HexEditorViewController: UIViewController, UITextViewDelegate {
     }
 
     @objc private func saveChanges() {
-        guard let hexString = textView.text else { return }
-        let hexValues = hexString.split(separator: " ").map(String.init)
-        var data = Data()
-        for hex in hexValues {
-            if let byte = UInt8(hex, radix: 16) {
-                data.append(byte)
-            } else {
-                presentAlert(title: "Error", message: "Invalid hex value: \(hex)")
-                return
-            }
+        guard let text = textView.text else {
+            return
         }
-        DispatchQueue.global(qos: .userInitiated).async {
-            do {
-                try data.write(to: self.fileURL)
-                self.hasUnsavedChanges = false
-                DispatchQueue.main.async {
-                    self.presentAlert(title: "Success", message: "File saved successfully.")
-                }
-            } catch {
-                DispatchQueue.main.async {
-                    self.presentAlert(title: "Error", message: "Failed to save file: \(error.localizedDescription)")
-                }
-            }
+        let hexValues = text.components(separatedBy: " ").compactMap { UInt8($0, radix: 16) }
+        let data = Data(hexValues)
+        do {
+            try data.write(to: fileURL)
+            hasUnsavedChanges = false
+            print("File saved successfully.")
+        } catch {
+            print("Error saving file: \(error)")
+            presentAlert(title: "Error", message: "Could not save file.")
         }
     }
 
     @objc private func copyContent() {
         UIPasteboard.general.string = textView.text
-        presentAlert(title: "Copied", message: "Content copied to clipboard.")
+        HapticFeedbackGenerator.generateNotificationFeedback(type: .success)
+        print("Content copied to clipboard.")
+    }
+
+    @objc private func promptFindReplace() {
+        let alert = UIAlertController(title: "Find and Replace", message: nil, preferredStyle: .alert)
+        alert.addTextField { textField in
+            textField.placeholder = "Find"
+        }
+        alert.addTextField { textField in
+            textField.placeholder = "Replace"
+        }
+        alert.addAction(UIAlertAction(title: "Replace", style: .default, handler: { [weak self] _ in
+            guard let findText = alert.textFields?[0].text,
+                  let replaceText = alert.textFields?[1].text else {
+                return
+            }
+            if let currentText = self?.textView.text {
+                self?.textView.text = currentText.replacingOccurrences(of: findText, with: replaceText)
+                self?.hasUnsavedChanges = true
+            }
+        }))
+        alert.addAction(UIAlertAction(title: "Cancel", style: .cancel, handler: nil))
+        present(alert, animated: true, completion: nil)
     }
 
     @objc private func undoAction() {
@@ -121,55 +133,6 @@ class HexEditorViewController: UIViewController, UITextViewDelegate {
 
     @objc private func redoAction() {
         textView.undoManager?.redo()
-    }
-
-    @objc private func promptFindReplace() {
-        let alert = UIAlertController(title: "Find and Replace", message: "Enter text to find and replace:", preferredStyle: .alert)
-        alert.addTextField { textField in
-            textField.placeholder = "Find"
-        }
-        alert.addTextField { textField in
-            textField.placeholder = "Replace"
-        }
-        alert.addAction(UIAlertAction(title: "Replace", style: .default, handler: { [weak self] _ in
-            guard let findText = alert.textFields?[0].text, let replaceText = alert.textFields?[1].text else { return }
-            self?.findAndReplace(findText: findText, replaceText: replaceText)
-        }))
-        alert.addAction(UIAlertAction(title: "Cancel", style: .cancel, handler: nil))
-        present(alert, animated: true, completion: nil)
-    }
-
-    private func findAndReplace(findText: String, replaceText: String) {
-        textView.text = textView.text.replacingOccurrences(of: findText, with: replaceText)
-        hasUnsavedChanges = true
-    }
-
-    private func promptSaveChanges() {
-        let alert = UIAlertController(title: "Unsaved Changes", message: "You have unsaved changes. Do you want to save them before leaving?", preferredStyle: .alert)
-        alert.addAction(UIAlertAction(title: "Save", style: .default, handler: { [weak self] _ in
-            self?.saveChanges()
-            self?.navigationController?.popViewController(animated: true)
-        }))
-        alert.addAction(UIAlertAction(title: "Discard", style: .destructive, handler: { [weak self] _ in
-            self?.navigationController?.popViewController(animated: true)
-        }))
-        alert.addAction(UIAlertAction(title: "Cancel", style: .cancel, handler: nil))
-        present(alert, animated: true, completion: nil)
-    }
-
-    private func startAutoSaveTimer() {
-        autoSaveTimer = Timer.scheduledTimer(timeInterval: 60, target: self, selector: #selector(autoSaveChanges), userInfo: nil, repeats: true)
-    }
-
-    private func stopAutoSaveTimer() {
-        autoSaveTimer?.invalidate()
-        autoSaveTimer = nil
-    }
-
-    @objc private func autoSaveChanges() {
-        if hasUnsavedChanges {
-            saveChanges()
-        }
     }
 
     func textViewDidChange(_ textView: UITextView) {
