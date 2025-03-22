@@ -15,14 +15,14 @@ class HomeViewFileHandlers {
     private let utilities = HomeViewUtilities()
 
     func uploadFile(viewController: FileHandlingDelegate) {
-        let documentPicker = UIDocumentPickerViewController(forOpeningContentTypes: [.data], asCopy: true)
+        let documentPicker = UIDocumentPickerViewController(forOpeningContentTypes: [.data]) // Removed ", asCopy: true"
         documentPicker.delegate = viewController as? UIDocumentPickerDelegate
         documentPicker.modalPresentationStyle = .formSheet
         viewController.present(documentPicker, animated: true, completion: nil)
     }
 
     func importFile(viewController: FileHandlingDelegate) {
-        let documentPicker = UIDocumentPickerViewController(forOpeningContentTypes: [.data], asCopy: true)
+        let documentPicker = UIDocumentPickerViewController(forOpeningContentTypes: [.data]) // Removed ", asCopy: true"
         documentPicker.delegate = viewController as? UIDocumentPickerDelegate
         documentPicker.modalPresentationStyle = .formSheet
         viewController.present(documentPicker, animated: true, completion: nil)
@@ -58,7 +58,7 @@ class HomeViewFileHandlers {
                 progress.cancellationHandler = {
                     print("Unzip cancelled")
                 }
-                try self.fileManager.unzipItem(at: fileURL, to: destinationURL, progress: progress)
+                try fileManager.unzipItem(at: fileURL, to: destinationURL, progress: progress)
                 progressHandler?(1.0)
                 DispatchQueue.main.async {
                     viewController.activityIndicator.stopAnimating()
