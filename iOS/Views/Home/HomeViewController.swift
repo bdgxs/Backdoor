@@ -5,13 +5,13 @@ import Foundation
 class HomeViewController: UIViewController, UISearchResultsUpdating, UITableViewDragDelegate, UITableViewDropDelegate, UITableViewDelegate, UITableViewDataSource {
 
     // MARK: - Properties
-    private var fileList: [File] =// Changed to [File]
-    private var filteredFileList: [File] =// Changed to [File]
+    private var fileList: [String] =
+    private var filteredFileList: [String] =
     private let fileManager = FileManager.default
     private let searchController = UISearchController(searchResultsController: nil)
     private var sortOrder: SortOrder = .name
     let fileHandlers = HomeViewFileHandlers()
-    let utilities = HomeViewUtilities(logger: Logger(subsystem: "com.example.FileApp", category: "HomeViewController")) // Initialize logger
+    let utilities = HomeViewUtilities()
 
     var documentsDirectory: URL {
         let directory = fileManager.urls(for: .documentDirectory, in: .userDomainMask).first!.appendingPathComponent("files")
@@ -77,7 +77,7 @@ class HomeViewController: UIViewController, UISearchResultsUpdating, UITableView
         fileListTableView.dataSource = self
         fileListTableView.dragDelegate = self
         fileListTableView.dropDelegate = self
-        fileListTableView.register(UITableViewCell.self, forCellReuseIdentifier: "FileCell")
+        fileListTableView.register(UITableViewCell.self, forCellReuseIdentifier: "fileCell")
     }
 
     private func createFilesDirectoryIfNeeded(at directory: URL) {
@@ -85,7 +85,7 @@ class HomeViewController: UIViewController, UISearchResultsUpdating, UITableView
             do {
                 try fileManager.createDirectory(at: directory, withIntermediateDirectories: true, attributes: nil)
             } catch {
-                utilities.logger.error("Error creating directory: \(error.localizedDescription)")
+                print("Error creating directory: \(error)")
             }
         }
     }
@@ -96,20 +96,17 @@ class HomeViewController: UIViewController, UISearchResultsUpdating, UITableView
         DispatchQueue.global().async { [weak self] in
             guard let self = self else { return }
             do {
-                let fileURLs = try self.fileManager.contentsOfDirectory(at: self.documentsDirectory, includingPropertiesForKeys: nil)
-                self.utilities.logger.info("Loaded \(fileURLs.count) files")
-
-                let files = fileURLs.map { File(url: $0) } // Create File objects
+                let files = try self?.fileManager.contentsOfDirectory(atPath: self?.documentsDirectory.path ?? "")
                 DispatchQueue.main.async {
-                    self.fileList = files
-                    self.sortFiles()
-                    self.fileListTableView.reloadData()
-                    self.activityIndicator.stopAnimating()
+                    self?.fileList = files ??
+                    self?.sortFiles()
+                    self?.fileListTableView.reloadData()
+                    self?.activityIndicator.stopAnimating()
                 }
             } catch {
-                self.utilities.logger.error("Error loading files: \(error.localizedDescription)")
+                print("Error loading files: \(error)")
                 DispatchQueue.main.async {
-                    self.activityIndicator.stopAnimating()
+                    self?.activityIndicator.stopAnimating()
                 }
             }
         }
@@ -124,104 +121,261 @@ class HomeViewController: UIViewController, UISearchResultsUpdating, UITableView
 
     func handleImportedFile(url: URL) {
         let destinationURL = documentsDirectory.appendingPathComponent(url.lastPathComponent)
-
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
             guard let self = self else { return }
-
             do {
                 if url.startAccessingSecurityScopedResource() {
                     if url.pathExtension == "zip" {
                         let progressHandler: Progress? = nil // Adjust to match expected type
-                        try self.fileManager.unzipItem(at: url, to: destinationURL, progress: progressHandler)
+                        try self?.fileManager.unzipItem(at: url, to: destinationURL, progress: progressHandler)
                     } else {
-                        try self.fileManager.copyItem(at: url, to: destinationURL)
+                        try self?.fileManager.copyItem(at: url, to: destinationURL)
                     }
                     url.stopAccessingSecurityScopedResource()
-
                     DispatchQueue.main.async {
-                        self.loadFiles()
+                        self?.loadFiles()
                     }
                 }
             } catch {
-                self.utilities.logger.error("Error handling imported file: \(error.localizedDescription)")
+                print("Error handling file: \(error)")
             }
         }
     }
 
-    func deleteFile(at index: Int) {
-        let fileToDelete = fileList[index]
-        do {
-            try fileManager.removeItem(at: fileToDelete.url)
-            fileList.remove(at: index)
-            fileListTableView.deleteRows(at: [IndexPath(row: index, section: 0)], with: .fade)
-        } catch {
-            utilities.logger.error("Error deleting file: \(error.localizedDescription)")
-        }
-    }
-
-    func sortFiles() {
-        switch sortOrder {
-        case .name:
-            fileList.sort { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
-        case .date:
-            fileList.sort { $0.date < $1.date }
-        case .size:
-            fileList.sort { $0.size < $1.size }
-        }
-    }
-
-    // MARK: - UI Actions
     @objc private func showMenu() {
+        let alertController = UIAlertController(title: nil, message: nil, preferredStyle: .actionSheet)
+        
+        let sortAction = UIAlertAction(title: "Sort", style: .default) { [weak self] _ in
+            self?.showSortOptions()
+        }
+        alertController.addAction(sortAction)
+        
+        let newFolderAction = UIAlertAction(title: "New Folder", style: .default) { [weak self] _ in
+            self?.addDirectory()
+        }
+        alertController.addAction(newFolderAction)
+        
+        let newFileAction = UIAlertAction(title: "New File", style: .default) { [weak self] _ in
+            self?.addFile()
+        }
+        alertController.addAction(newFileAction)
+        
+        let cancelAction = UIAlertAction(title: "Cancel", style: .cancel, handler: nil)
+        alertController.addAction(cancelAction)
+        
+        present(alertController, animated: true, completion: nil)
+    }
+
+    func showFileOptions(for url: URL) {
+        let alertController = UIAlertController(title: url.lastPathComponent, message: nil, preferredStyle: .actionSheet)
+
+        let openAction = UIAlertAction(title: "Open", style: .default) { [weak self] _ in
+            self?.openFile(at: url)
+        }
+        alertController.addAction(openAction)
+
+        let renameAction = UIAlertAction(title: "Rename", style: .default) { [weak self] _ in
+            self?.renameFile(at: url)
+        }
+        alertController.addAction(renameAction)
+
+        let deleteAction = UIAlertAction(title: "Delete", style: .destructive) { [weak self] _ in
+            self?.deleteFile(at: url)
+        }
+        alertController.addAction(deleteAction)
+
+        let shareAction = UIAlertAction(title: "Share", style: .default) { [weak self] _ in
+            self?.fileHandlers.shareFile(viewController: self!, fileURL: url)
+        }
+        alertController.addAction(shareAction)
+
+        let cancelAction = UIAlertAction(title: "Cancel", style: .cancel, handler: nil)
+        alertController.addAction(cancelAction)
+
+        present(alertController, animated: true, completion: nil)
+    }
+
+    func openFile(at url: URL) {
+        let fileExtension = url.pathExtension
+        
+        switch fileExtension.lowercased() {
+        case "txt", "swift", "html", "css", "js", "c", "cpp", "py":
+            let textEditorVC = TextEditorViewController(fileURL: url)
+            navigationController?.pushViewController(textEditorVC, animated: true)
+        case "hex":
+            FileOperations.hexEditFile(at: url, in: self)
+        case "plist":
+            let plistEditorVC = PlistEditorViewController(fileURL: url)
+            navigationController?.pushViewController(plistEditorVC, animated: true)
+        default:
+            let alert = UIAlertController(title: "Cannot Open File", message: "No viewer available for this file type.", preferredStyle: .alert)
+            alert.addAction(UIAlertAction(title: "OK", style: .cancel, handler: nil))
+            present(alert, animated: true, completion: nil)
+        }
+    }
+
+    func renameFile(at url: URL) {
+        let alertController = UIAlertController(title: "Rename File", message: "Enter new file name", preferredStyle: .alert)
+        alertController.addTextField { textField in
+            textField.text = url.lastPathComponent
+        }
+        
+        let renameAction = UIAlertAction(title: "Rename", style: .default) { [weak self, weak alertController] _ in
+            guard let newName = alertController?.textFields?.first?.text else { return }
+            
+            let newURL = url.deletingLastPathComponent().appendingPathComponent(newName)
+            
+            do {
+                try self?.fileManager.moveItem(at: url, to: newURL)
+                self?.loadFiles()
+            } catch {
+                print("Error renaming file: \(error)")
+            }
+        }
+        alertController.addAction(renameAction)
+        
+        let cancelAction = UIAlertAction(title: "Cancel", style: .cancel, handler: nil)
+        alertController.addAction(cancelAction)
+        
+        present(alertController, animated: true, completion: nil)
+    }
+
+    func deleteFile(at url: URL) {
+        let alertController = UIAlertController(title: "Delete File", message: "Are you sure you want to delete this file?", preferredStyle: .alert)
+        
+        let deleteAction = UIAlertAction(title: "Delete", style: .destructive) { [weak self] _ in
+            do {
+                try self?.fileManager.removeItem(at: url)
+                self?.loadFiles()
+            } catch {
+                print("Error deleting file: \(error)")
+            }
+        }
+        alertController.addAction(deleteAction)
+        
+        let cancelAction = UIAlertAction(title: "Cancel", style: .cancel, handler: nil)
+        alertController.addAction(cancelAction)
+        
+        present(alertController, animated: true, completion: nil)
+    }
+
+    func addFile() {
+        let alertController = UIAlertController(title: "New File", message: "Enter file name", preferredStyle: .alert)
+        alertController.addTextField { textField in
+            textField.placeholder = "File name"
+        }
+        
+        let createAction = UIAlertAction(title: "Create", style: .default) { [weak self, weak alertController] _ in
+            guard let fileName = alertController?.textFields?.first?.text else { return }
+            
+            self?.fileHandlers.createNewFile(viewController: self!, fileName: fileName) { result in
+                switch result {
+                case .success(_):
+                    self?.loadFiles()
+                case .failure(let error):
+                    print("Error creating file: \(error)")
+                }
+            }
+        }
+        alertController.addAction(createAction)
+        
+        let cancelAction = UIAlertAction(title: "Cancel", style: .cancel, handler: nil)
+        alertController.addAction(cancelAction)
+        
+        present(alertController, animated: true, completion: nil)
+    }
+
+    @objc func addDirectory() {
+        let alertController = UIAlertController(title: "New Folder", message: "Enter folder name", preferredStyle: .alert)
+        alertController.addTextField { textField in
+            textField.placeholder = "Folder name"
+        }
+        
+        let createAction = UIAlertAction(title: "Create", style: .default) { [weak self, weak alertController] _ in
+            guard let directoryName = alertController?.textFields?.first?.text else { return }
+            
+            self?.fileHandlers.createNewFolder(viewController: self!, folderName: directoryName) { result in
+                switch result {
+                case .success(_):
+                    self?.loadFiles()
+                case .failure(let error):
+                    print("Error creating directory: \(error)")
+                }
+            }
+        }
+        alertController.addAction(createAction)
+        
+        let cancelAction = UIAlertAction(title: "Cancel", style: .cancel, handler: nil)
+        alertController.addAction(cancelAction)
+        
+        present(alertController, animated: true, completion: nil)
+    }
+
+    func showSortOptions() {
         let alertController = UIAlertController(title: "Sort By", message: nil, preferredStyle: .actionSheet)
+        
         let sortByNameAction = UIAlertAction(title: "Name", style: .default) { [weak self] _ in
             self?.sortOrder = .name
             self?.sortFiles()
             self?.fileListTableView.reloadData()
         }
         alertController.addAction(sortByNameAction)
+        
         let sortByDateAction = UIAlertAction(title: "Date", style: .default) { [weak self] _ in
             self?.sortOrder = .date
             self?.sortFiles()
             self?.fileListTableView.reloadData()
         }
         alertController.addAction(sortByDateAction)
-
+        
         let sortBySizeAction = UIAlertAction(title: "Size", style: .default) { [weak self] _ in
             self?.sortOrder = .size
             self?.sortFiles()
             self?.fileListTableView.reloadData()
         }
         alertController.addAction(sortBySizeAction)
-
-        alertController.addAction(UIAlertAction(title: "Cancel", style: .cancel, handler: nil))
+        
+        let cancelAction = UIAlertAction(title: "Cancel", style: .cancel, handler: nil)
+        alertController.addAction(cancelAction)
+        
         present(alertController, animated: true, completion: nil)
     }
 
-    @objc private func addDirectory() {
-        let alertController = UIAlertController(title: "New Directory", message: "Enter directory name:", preferredStyle: .alert)
-        alertController.addTextField { textField in
-            textField.placeholder = "Directory name"
-        }
-
-        let createAction = UIAlertAction(title: "Create", style: .default) { [weak self, weak alertController] _ in
-            guard let directoryName = alertController?.textFields?.first?.text,
-                  !directoryName.isEmpty else { return }
-
-            let newDirectoryURL = self?.documentsDirectory.appendingPathComponent(directoryName)
-
-            do {
-                try self?.fileManager.createDirectory(at: newDirectoryURL!, withIntermediateDirectories: false, attributes: nil)
-                self?.loadFiles()
-            } catch {
-                self?.utilities.logger.error("Error creating directory: \(error.localizedDescription)")
+    func sortFiles() {
+        switch sortOrder {
+        case .name:
+            fileList.sort { $0.localizedCaseInsensitiveCompare($1) == ComparisonResult.orderedAscending }
+        case .date:
+            fileList.sort {
+                let url1 = documentsDirectory.appendingPathComponent($0)
+                let url2 = documentsDirectory.appendingPathComponent($1)
+                
+                let date1 = FileManager.default.creationDate(at: url1.path) ?? Date.distantPast
+                let date2 = FileManager.default.creationDate(at: url2.path) ?? Date.distantPast
+                
+                return date1 < date2
+            }
+        case .size:
+            fileList.sort {
+                let url1 = documentsDirectory.appendingPathComponent($0)
+                let url2 = documentsDirectory.appendingPathComponent($1)
+                
+                let size1 = FileManager.default.fileSize(at: url1.path) ?? 0
+                let size2 = FileManager.default.fileSize(at: url2.path) ?? 0
+                
+                return size1 < size2
             }
         }
-        alertController.addAction(createAction)
+    }
 
-        let cancelAction = UIAlertAction(title: "Cancel", style: .cancel, handler: nil)
-        alertController.addAction(cancelAction)
-
-        present(alertController, animated: true, completion: nil)
+    // MARK: - UISearchResultsUpdating
+    func updateSearchResults(for searchController: UISearchController) {
+        if let searchText = searchController.searchBar.text, !searchText.isEmpty {
+            filteredFileList = fileList.filter { $0.localizedCaseInsensitiveContains(searchText) }
+        } else {
+            filteredFileList = fileList
+        }
+        fileListTableView.reloadData()
     }
 }
 
@@ -231,53 +385,64 @@ extension HomeViewController: UIDocumentPickerDelegate {
         guard let selectedFileURL = urls.first else {
             return
         }
-
+        
         handleImportedFile(url: selectedFileURL)
     }
 }
 
-extension HomeViewController {
+extension FileManager {
+    func fileSize(at path: String) -> UInt64? {
+        do {
+            let attr = try attributesOfItem(atPath: path)
+            return attr[.size] as? UInt64
+        } catch {
+            return nil
+        }
+    }
+    
+    func creationDate(at path: String) -> Date? {
+        do {
+            let attr = try attributesOfItem(atPath: path)
+            return attr[.creationDate] as? Date
+        } catch {
+            return nil
+        }
+    }
+}
+
+extension HomeViewController: UITableViewDelegate, UITableViewDataSource {
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         return searchController.isActive ? filteredFileList.count : fileList.count
     }
 
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell = tableView.dequeueReusableCell(withIdentifier: "FileCell", for: indexPath) as! FileTableViewCell
-        let file = searchController.isActive ? filteredFileList[indexPath.row] : fileList[indexPath.row]
+        let cell = tableView.dequeueReusableCell(withIdentifier: "fileCell", for: indexPath) as! FileTableViewCell
+        let fileName = searchController.isActive ? filteredFileList[indexPath.row] : fileList[indexPath.row]
+        let fileURL = documentsDirectory.appendingPathComponent(fileName)
+        let file = File(url: fileURL)
         cell.configure(with: file)
         return cell
     }
 
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        let file = searchController.isActive ? filteredFileList[indexPath.row] : fileList[indexPath.row]
-        showFileOptions(for: file.url)
+        let fileName = searchController.isActive ? filteredFileList[indexPath.row] : fileList[indexPath.row]
+        let fileURL = documentsDirectory.appendingPathComponent(fileName)
+        showFileOptions(for: fileURL)
     }
-}
 
-extension HomeViewController: UITableViewDragDelegate {
+    // MARK: - UITableViewDragDelegate
+
     func tableView(_ tableView: UITableView, itemsForBeginning session: UIDragSession, at indexPath: IndexPath) -> [UIDragItem] {
-        let file = fileList[indexPath.row]
-        let itemProvider = NSItemProvider(contentsOf: file.url)
+        let fileName = searchController.isActive ? filteredFileList[indexPath.row] : fileList[indexPath.row]
+        let fileURL = documentsDirectory.appendingPathComponent(fileName)
+        let itemProvider = NSItemProvider(contentsOf: fileURL)
         let dragItem = UIDragItem(itemProvider: itemProvider)
-        dragItem.localObject = file
+        dragItem.localObject = fileName
         return [dragItem]
     }
 
-    func tableView(_ tableView: UITableView, dragSessionDidEnd session: UIDragSession) {
-        self.loadFiles()
-    }
-}
-
-extension HomeViewController: UITableViewDropDelegate {
     func tableView(_ tableView: UITableView, canHandle session: UIDropSession) -> Bool {
         return session.canLoadObjects(ofClass: URL.self)
-    }
-
-    func tableView(_ tableView: UITableView, dropSessionDidEnter session: UIDropSession) {
-    }
-
-    func tableView(_ tableView: UITableView, dropSessionDidUpdate session: UIDropSession, withDestinationIndexPath destinationIndexPath: IndexPath?) -> UITableViewDropProposal {
-        return UITableViewDropProposal(operation: .copy)
     }
 
     func tableView(_ tableView: UITableView, performDropWith coordinator: UITableViewDropCoordinator) {
@@ -286,47 +451,28 @@ extension HomeViewController: UITableViewDropDelegate {
         if let indexPath = coordinator.destinationIndexPath {
             destinationIndexPath = indexPath
         } else {
-            let newRow = tableView.numberOfRows(inSection: 0)
-            destinationIndexPath = IndexPath(row: newRow, section: 0)
+            let section = tableView.numberOfSections - 1
+            let row = tableView.numberOfRows(inSection: section)
+            destinationIndexPath = IndexPath(row: row, section: section)
         }
 
-        coordinator.items.forEach {  drop.loadObjects(ofClass: URL.self) { [weak self] droppedItems in
-            guard let self = self else { return }
+        coordinator.items.forEach { dropItem in
+            dropItem.itemProvider.loadObject(ofClass: URL.self) { [weak self] (object, error) in
+                if let url = object as? URL {
+                    let destinationURL = self?.documentsDirectory.appendingPathComponent(url.lastPathComponent)
 
-            DispatchQueue.main.async {
-                for item in droppedItems {
-                    if let url = item as? URL {
-                        let destinationURL = self.documentsDirectory.appendingPathComponent(url.lastPathComponent)
-                        do {
-                            try self.fileManager.copyItem(at: url, to: destinationURL)
-                        } catch {
-                            self.utilities.logger.error("Error dropping file: \(error.localizedDescription)")
-                        }
+                    do {
+                        try self?.fileManager.moveItem(at: url, to: destinationURL!)
+                    } catch {
+                        print("Error dropping file: \(error)")
+                    }
+
+                    DispatchQueue.main.async {
+                        self?.loadFiles()
                     }
                 }
-                self.loadFiles()
             }
         }
     }
-
-    func tableView(_ tableView: UITableView, commit editingStyle: UITableViewCell.EditingStyle, forRowAt indexPath: IndexPath) {
-        if editingStyle == .delete {
-            deleteFile(at: indexPath.row)
-        }
-    }
-
-    func tableView(_ tableView: UITableView, canEditRowAt indexPath: IndexPath) -> Bool {
-        return true
-    }
 }
 
-extension HomeViewController: UISearchResultsUpdating {
-    func updateSearchResults(for searchController: UISearchController) {
-        if let searchText = searchController.searchBar.text, !searchText.isEmpty {
-            filteredFileList = fileList.filter { $0.name.localizedCaseInsensitiveContains(searchText) }
-        } else {
-            filteredFileList = fileList
-        }
-        fileListTableView.reloadData()
-    }
-}
