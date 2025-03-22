@@ -47,104 +47,49 @@ class TextEditorViewController: UIViewController, UITextViewDelegate {
         toolbar = UIToolbar()
         toolbar.translatesAutoresizingMaskIntoConstraints = false
         let saveButton = UIBarButtonItem(barButtonSystemItem: .save, target: self, action: #selector(saveChanges))
-        let copyButton = UIBarButtonItem(barButtonSystemItem: .action, target: self, action: #selector(copyContent))
-        let findReplaceButton = UIBarButtonItem(title: "Find/Replace", style: .plain, target: self, action: #selector(promptFindReplace))
-        let undoButton = UIBarButtonItem(barButtonSystemItem: .undo, target: self, action: #selector(undoAction))
-        let redoButton = UIBarButtonItem(barButtonSystemItem: .redo, target: self, action: #selector(redoAction))
-        toolbar.items = [saveButton, copyButton, findReplaceButton, undoButton, redoButton, UIBarButtonItem.flexibleSpace()]
+        let flexibleSpace = UIBarButtonItem(barButtonSystemItem: .flexibleSpace, target: nil, action: nil)
+        toolbar.items = [flexibleSpace, saveButton] // Arrange buttons properly
         view.addSubview(toolbar)
 
-        // Setup constraints
+        // Constraints for text view
         NSLayoutConstraint.activate([
             textView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
-            textView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-            textView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            textView.bottomAnchor.constraint(equalTo: toolbar.topAnchor),
+            textView.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor),
+            textView.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor),
+            textView.bottomAnchor.constraint(equalTo: toolbar.topAnchor) // Position text view above toolbar
+        ])
 
+        // Constraints for toolbar
+        NSLayoutConstraint.activate([
             toolbar.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             toolbar.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            toolbar.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor)
+            toolbar.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor),
+            toolbar.heightAnchor.constraint(equalToConstant: 44)
         ])
     }
 
     private func loadFileContent() {
-        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
-            guard let self = self else { return }
-            do {
-                let fileContent = try FileOperations.readTextFile(at: self.fileURL)
-                DispatchQueue.main.async {
-                    self.textView.text = fileContent
-                }
-            } catch {
-                DispatchQueue.main.async {
-                    self.presentAlert(title: "Error", message: "Failed to load file content: \(error.localizedDescription)")
-                }
-            }
+        do {
+            let content = try String(contentsOf: fileURL, encoding: .utf8)
+            textView.text = content
+        } catch {
+            print("Error loading file content: \(error)")
+            presentAlert(title: "Error", message: "Could not load file content.")
         }
     }
 
     @objc private func saveChanges() {
-        guard let newText = textView.text else {
+        guard let text = textView.text else {
             return
         }
-        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
-            guard let self = self else { return }
-            do {
-                try FileOperations.writeTextFile(content: newText, to: self.fileURL)
-                self.hasUnsavedChanges = false
-                DispatchQueue.main.async {
-                    self.presentAlert(title: "Success", message: "File saved successfully.")
-                }
-            } catch {
-                DispatchQueue.main.async {
-                    self.presentAlert(title: "Error", message: "Failed to save file: \(error.localizedDescription)")
-                }
-            }
+        do {
+            try text.write(to: fileURL, atomically: true, encoding: .utf8)
+            hasUnsavedChanges = false
+            print("File saved successfully.")
+        } catch {
+            print("Error saving file: \(error)")
+            presentAlert(title: "Error", message: "Could not save file.")
         }
-    }
-
-    @objc private func copyContent() {
-        UIPasteboard.general.string = textView.text
-        generateHapticFeedback(style: .medium)
-    }
-
-    @objc private func promptFindReplace() {
-        let alert = UIAlertController(title: "Find and Replace", message: nil, preferredStyle: .alert)
-
-        alert.addTextField { textField in
-            textField.placeholder = "Find"
-        }
-        alert.addTextField { textField in
-            textField.placeholder = "Replace"
-        }
-
-        let findReplaceAction = UIAlertAction(title: "Find and Replace", style: .default) { [weak self, weak alert] _ in
-            guard let findText = alert?.textFields?[0].text,
-                  let replaceText = alert?.textFields?[1].text else {
-                return
-            }
-
-            if let currentText = self?.textView.text {
-                let newText = currentText.replacingOccurrences(of: findText, with: replaceText)
-                self?.textView.text = newText
-                self?.hasUnsavedChanges = true
-            }
-        }
-
-        let cancelAction = UIAlertAction(title: "Cancel", style: .cancel, handler: nil)
-
-        alert.addAction(findReplaceAction)
-        alert.addAction(cancelAction)
-
-        present(alert, animated: true, completion: nil)
-    }
-
-    @objc private func undoAction() {
-        textView.undoManager?.undo()
-    }
-
-    @objc private func redoAction() {
-        textView.undoManager?.redo()
     }
 
     private func promptSaveChanges() {
@@ -156,7 +101,7 @@ class TextEditorViewController: UIViewController, UITextViewDelegate {
         alert.addAction(UIAlertAction(title: "Discard", style: .destructive, handler: { [weak self] _ in
             self?.navigationController?.popViewController(animated: true)
         }))
-        alert.addAction(UIAlertAction(title: "Cancel", style: .cancel, handler: nil)
+        alert.addAction(UIAlertAction(title: "Cancel", style: .cancel, handler: nil))
         present(alert, animated: true, completion: nil)
     }
 
@@ -175,13 +120,13 @@ class TextEditorViewController: UIViewController, UITextViewDelegate {
         }
     }
 
+    func textViewDidChange(_ textView: UITextView) {
+        hasUnsavedChanges = true
+    }
+
     private func presentAlert(title: String, message: String) {
         let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
         alert.addAction(UIAlertAction(title: "OK", style: .default, handler: nil))
         present(alert, animated: true, completion: nil)
-    }
-
-    func textViewDidChange(_ textView: UITextView) {
-        hasUnsavedChanges = true
     }
 }
