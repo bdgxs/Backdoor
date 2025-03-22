@@ -51,18 +51,31 @@ class FileTableViewCell: UITableViewCell {
         // Configure the cell with file data
         fileNameLabel.text = file.name
         fileSizeLabel.text = "\(file.size) bytes"
-        fileDateLabel.text = "\(file.date)"
-
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateStyle = .medium
+        dateFormatter.timeStyle = .short
+        fileDateLabel.text = dateFormatter.string(from: file.date)
         // Set an appropriate icon for the file type
-        if file.type == "txt" {
-            fileIconImageView.image = UIImage(systemName: "doc.text")
-        } else if file.type == "zip" {
-            fileIconImageView.image = UIImage(systemName: "archivebox")
-        } else if file.type == "" {
-            fileIconImageView.image = UIImage(systemName: "folder")
-        }
-         else {
-            fileIconImageView.image = UIImage(systemName: "doc")
-        }
+        fileIconImageView.image = UIImage(systemName: "doc.text")
+    }
+}
+
+// File model class to hold file information
+class File {
+    let url: URL
+    var name: String {
+        return url.lastPathComponent
+    }
+    var size: UInt64 {
+        let attributes = try? FileManager.default.attributesOfItem(atPath: url.path)
+        return attributes?[.size] as? UInt64 ?? 0
+    }
+    var date: Date {
+        let attributes = try? FileManager.default.attributesOfItem(atPath: url.path)
+        return attributes?[.modificationDate] as? Date ?? Date.distantPast
+    }
+
+    init(url: URL) {
+        self.url = url
     }
 }
