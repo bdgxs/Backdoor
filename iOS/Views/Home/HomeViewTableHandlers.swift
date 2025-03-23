@@ -58,10 +58,10 @@ extension HomeViewController: UITableViewDropDelegate {
         }
 
         coordinator.items.forEach { dropItem in
-            // Explicitly type dropItem as UITableViewDropItem to ensure itemProvider is recognized
-            guard let dropItem = dropItem as? UITableViewDropItem else { return }
-            dropItem.itemProvider.loadObject(ofClass: URL.self) { [weak self] (object: URL?, error: Error?) in
-                guard let self = self else { return }
+            // Explicitly use dropItem as UITableViewDropItem (iOS 11+, unchanged in iOS 15)
+            let itemProvider = dropItem.itemProvider // Direct access since items is [UITableViewDropItem]
+            itemProvider.loadObject(ofClass: URL.self) { [weak self] (object: URL?, error: Error?) in
+                guard let self else { return }
                 
                 if let url = object {
                     let destinationURL = self.documentsDirectory.appendingPathComponent(url.lastPathComponent)
