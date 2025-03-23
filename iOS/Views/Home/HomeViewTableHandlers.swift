@@ -57,9 +57,8 @@ extension HomeViewController: UITableViewDropDelegate {
             destinationIndexPath = IndexPath(row: row, section: section)
         }
 
-        coordinator.items.forEach { dropItem in
-            // Explicitly use dropItem as UITableViewDropItem (iOS 11+, unchanged in iOS 15)
-            let itemProvider = dropItem.itemProvider // Direct access since items is [UITableViewDropItem]
+        coordinator.items.forEach { (dropItem: UITableViewDropItem) in
+            let itemProvider: NSItemProvider = dropItem.itemProvider
             itemProvider.loadObject(ofClass: URL.self) { [weak self] (object: URL?, error: Error?) in
                 guard let self else { return }
                 
