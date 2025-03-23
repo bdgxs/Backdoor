@@ -12,8 +12,8 @@ jobs:
 
       - name: Select Xcode Version
         run: |
-          sudo xcode-select -s /Applications/Xcode_16.0.app # Swift 5.10, iOS 18 SDK
-          swift --version # Verify Swift version for debugging
+          sudo xcode-select -s /Applications/Xcode_16.0.app
+          swift --version
 
       - name: Install dependencies (packages)
         run: |
@@ -23,19 +23,13 @@ jobs:
 
       - name: Clean Build Environment
         run: |
-          # Clean Xcode build cache
-          xcodebuild -scheme "feather (Release)" -sdk iphoneos clean
-          # Clean Swift Package Manager cache (if applicable)
-          if [ -f Package.swift ]; then
-            swift package clean
-          fi
-          # Remove any existing derived data for a fresh start
+          swift package clean
+          xcodebuild -project feather.xcodeproj -scheme "feather (Release)" -sdk iphoneos clean
           rm -rf ~/Library/Developer/Xcode/DerivedData
 
-      - name: Compile
+      - name: Compile and Package
         run: | 
           mkdir upload
-          xcodebuild -scheme "feather (Release)" -sdk iphoneos -configuration Release SWIFT_VERSION=5.10 IPHONEOS_DEPLOYMENT_TARGET=15.0 build
           make package SCHEME="'feather (Release)'" SWIFT_VERSION=5.10 IPHONEOS_DEPLOYMENT_TARGET=15.0
           mv packages/* upload/
 
