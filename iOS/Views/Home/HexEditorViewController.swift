@@ -114,8 +114,7 @@ class HexEditorViewController: UIViewController, UITextViewDelegate {
             textField.placeholder = "Replace"
         }
         alert.addAction(UIAlertAction(title: "Replace", style: .default, handler: { [weak self] _ in
-            guard let findText = alert.textFields?[0].text,
-                  let replaceText = alert.textFields?[1].text else {
+            guard let findText = alert.textFields?[0].text, let replaceText = alert.textFields?[1].text else {
                 return
             }
             if let currentText = self?.textView.text {
@@ -142,6 +141,33 @@ class HexEditorViewController: UIViewController, UITextViewDelegate {
     private func presentAlert(title: String, message: String) {
         let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
         alert.addAction(UIAlertAction(title: "OK", style: .default, handler: nil))
+        present(alert, animated: true, completion: nil)
+    }
+
+    private func startAutoSaveTimer() {
+        autoSaveTimer = Timer.scheduledTimer(timeInterval: 60.0, target: self, selector: #selector(autoSave), userInfo: nil, repeats: true)
+    }
+
+    private func stopAutoSaveTimer() {
+        autoSaveTimer?.invalidate()
+        autoSaveTimer = nil
+    }
+
+    @objc private func autoSave() {
+        if hasUnsavedChanges {
+            saveChanges()
+        }
+    }
+
+    private func promptSaveChanges() {
+        let alert = UIAlertController(title: "Unsaved Changes", message: "You have unsaved changes. Do you want to save them?", preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: "Save", style: .default, handler: { _ in
+            self.saveChanges()
+        }))
+        alert.addAction(UIAlertAction(title: "Discard", style: .destructive, handler: { _ in
+            self.navigationController?.popViewController(animated: true)
+        }))
+        alert.addAction(UIAlertAction(title: "Cancel", style: .cancel, handler: nil))
         present(alert, animated: true, completion: nil)
     }
 }
