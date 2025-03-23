@@ -10,16 +10,20 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
 
+      - name: Select Xcode Version
+        run: |
+          sudo xcode-select -s /Applications/Xcode_16.0.app # Swift 5.10, iOS 18 SDK (supports iOS 15+)
+
       - name: Install dependencies (packages)
         run: |
           curl -LO https://github.com/ProcursusTeam/ldid/releases/download/v2.1.5-procursus7/ldid_macosx_x86_64
           sudo install -m755 ldid_macosx_x86_64 /usr/local/bin/ldid
           brew install 7zip gnu-sed
 
-      - name: Compile f
+      - name: Compile
         run: | 
           mkdir upload
-          make package SCHEME="'feather (Release)'"
+          make package SCHEME="'feather (Release)'" SWIFT_VERSION=5.10 IPHONEOS_DEPLOYMENT_TARGET=15.0
           mv packages/* upload/
 
       - name: Get Version Number
@@ -30,8 +34,8 @@ jobs:
 
       - name: Setup
         run: |
-          mv upload/feather.ipa upload/feather_v${VERSION}.ipa
-          cp upload/feather_v${VERSION}.ipa upload/feather_v${VERSION}.tipa
+          mv upload/feather.ipa upload/feather_v${{ env.VERSION }}.ipa
+          cp upload/feather_v${{ env.VERSION }}.ipa upload/feather_v${{ env.VERSION }}.tipa
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
@@ -44,4 +48,4 @@ jobs:
           fail_on_unmatched_files: true
           draft: true
         env:
-          GITHUB_TOKEN: ${{ env.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ env.GITHUB_TOKEN }} # Use secrets, not env, for security
