@@ -1,8 +1,9 @@
 import UIKit
 import ZIPFoundation
 
-class HomeViewController: UIViewController, UISearchResultsUpdating, UIScrollViewDelegate, UITableViewDataSource, UITableViewDelegate, UITableViewDragDelegate, UITableViewDropDelegate, UIDocumentPickerDelegate, FileHandlingDelegate {
+class HomeViewController: UIViewController, UISearchResultsUpdating, UIDocumentPickerDelegate, FileHandlingDelegate, UITableViewDelegate, UITableViewDataSource, UITableViewDragDelegate, UITableViewDropDelegate {
     
+    // MARK: - Properties
     var fileList: [String] = []
     var filteredFileList: [String] = []
     let fileManager = FileManager.default
@@ -25,6 +26,7 @@ class HomeViewController: UIViewController, UISearchResultsUpdating, UIScrollVie
         return HomeViewUI.activityIndicator
     }
     
+    // MARK: - Lifecycle
     override func viewDidLoad() {
         super.viewDidLoad()
         setupUI()
@@ -33,6 +35,7 @@ class HomeViewController: UIViewController, UISearchResultsUpdating, UIScrollVie
         configureTableView()
     }
     
+    // MARK: - UI Setup
     func setupUI() {
         view.backgroundColor = .systemBackground
         
@@ -91,15 +94,17 @@ class HomeViewController: UIViewController, UISearchResultsUpdating, UIScrollVie
         }
     }
     
+    // MARK: - File Operations
     func loadFiles() {
         activityIndicator.startAnimating()
-        DispatchQueue.global().async {
+        DispatchQueue.global().async { [weak self] in
+            guard let self = self else { return }
             do {
                 let files = try self.fileManager.contentsOfDirectory(at: self.documentsDirectory, includingPropertiesForKeys: nil, options: .skipsHiddenFiles)
                 DispatchQueue.main.async {
                     self.fileList = files.map { $0.lastPathComponent }
                     self.sortFiles()
-                    self.HomeViewUI.fileListTableView.reloadData()
+                    HomeViewUI.fileListTableView.reloadData()
                     self.activityIndicator.stopAnimating()
                 }
             } catch {
@@ -118,11 +123,12 @@ class HomeViewController: UIViewController, UISearchResultsUpdating, UIScrollVie
     
     func handleImportedFile(url: URL) {
         let destinationURL = documentsDirectory.appendingPathComponent(url.lastPathComponent)
-        DispatchQueue.global(qos: .userInitiated).async {
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+            guard let self = self else { return }
             do {
                 if url.startAccessingSecurityScopedResource() {
                     if url.pathExtension == "zip" {
-                        try self.fileManager.unzipItem(at: url, to: destinationURL.deletingLastPathComponent(), progress: nil)
+                        try self.fileManager.unzipItem(at: url, to: destinationURL.deletingLastPathComponent())
                     } else {
                         try self.fileManager.copyItem(at: url, to: destinationURL)
                     }
@@ -178,27 +184,28 @@ class HomeViewController: UIViewController, UISearchResultsUpdating, UIScrollVie
         }
     }
     
+    // MARK: - UI Actions
     @objc func showMenu() {
         let alertController = UIAlertController(title: "Sort By", message: nil, preferredStyle: .actionSheet)
         
         let sortByNameAction = UIAlertAction(title: "Name", style: .default) { _ in
             self.sortOrder = .name
             self.sortFiles()
-            self.HomeViewUI.fileListTableView.reloadData()
+            HomeViewUI.fileListTableView.reloadData()
         }
         alertController.addAction(sortByNameAction)
         
         let sortByDateAction = UIAlertAction(title: "Date", style: .default) { _ in
             self.sortOrder = .date
             self.sortFiles()
-            self.HomeViewUI.fileListTableView.reloadData()
+            HomeViewUI.fileListTableView.reloadData()
         }
         alertController.addAction(sortByDateAction)
         
         let sortBySizeAction = UIAlertAction(title: "Size", style: .default) { _ in
             self.sortOrder = .size
             self.sortFiles()
-            self.HomeViewUI.fileListTableView.reloadData()
+            HomeViewUI.fileListTableView.reloadData()
         }
         alertController.addAction(sortBySizeAction)
         
@@ -272,8 +279,94 @@ class HomeViewController: UIViewController, UISearchResultsUpdating, UIScrollVie
         present(alertController, animated: true, completion: nil)
     }
     
-    func present(_ viewControllerToPresent: UIViewController, animated flag: Bool, completion: (() -> Void)?) {
-        present(viewControllerToPresent, animated: flag, completion: completion)
+    // MARK: - FileHandlingDelegate
+    override func present(_ viewControllerToPresent: UIViewController, animated flag: Bool, completion: (() -> Void)?) {
+        super.present(viewControllerToPresent, animated: flag, completion: completion)
+    }
+    
+    // MARK: - UITableViewDataSource
+    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+        return searchController.isActive ? filteredFileList.count : fileList.count
+    }
+
+    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+        guard let cell = tableView.dequeueReusableCell(withIdentifier: "FileCell", for: indexPath) as? FileTableViewCell else {
+            fatalError("Unable to dequeue FileTableViewCell")
+        }
+        
+        let fileName = searchController.isActive ? filteredFileList[indexPath.row] : fileList[indexPath.row]
+        let fileURL = documentsDirectory.appendingPathComponent(fileName)
+        let file = File(url: fileURL)
+        cell.configure(with: file)
+        return cell
+    }
+
+    // MARK: - UITableViewDelegate
+    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        let fileName = searchController.isActive ? filteredFileList[indexPath.row] : fileList[indexPath.row]
+        let fileURL = documentsDirectory.appendingPathComponent(fileName)
+        showFileOptions(for: fileURL)
+    }
+
+    // MARK: - UITableViewDragDelegate
+    func tableView(_ tableView: UITableView, itemsForBeginning session: UIDragSession, at indexPath: IndexPath) -> [UIDragItem] {
+        let fileName = searchController.isActive ? filteredFileList[indexPath.row] : fileList[indexPath.row]
+        let fileURL = documentsDirectory.appendingPathComponent(fileName)
+        guard let itemProvider = NSItemProvider(contentsOf: fileURL) else {
+            return [] // Return empty array if item provider creation fails
+        }
+        let dragItem = UIDragItem(itemProvider: itemProvider)
+        dragItem.localObject = fileName
+        return [dragItem]
+    }
+
+    func tableView(_ tableView: UITableView, canHandle session: UIDropSession) -> Bool {
+        return session.canLoadObjects(ofClass: URL.self)
+    }
+
+    // MARK: - UITableViewDropDelegate
+    func tableView(_ tableView: UITableView, performDropWith coordinator: UITableViewDropCoordinator) {
+        let destinationIndexPath: IndexPath
+        if let indexPath = coordinator.destinationIndexPath {
+            destinationIndexPath = indexPath
+        } else {
+            let section = tableView.numberOfSections - 1
+            let row = tableView.numberOfRows(inSection: section)
+            destinationIndexPath = IndexPath(row: row, section: section)
+        }
+
+        coordinator.items.forEach { dropItem in
+            dropItem.itemProvider.loadObject(ofClass: URL.self) { [weak self] (object, error) in
+                guard let self = self else { return }
+                if let url = object as? URL {
+                    let destinationURL = self.documentsDirectory.appendingPathComponent(url.lastPathComponent)
+                    do {
+                        try self.fileManager.moveItem(at: url, to: destinationURL)
+                        DispatchQueue.main.async {
+                            self.loadFiles()
+                            HapticFeedbackGenerator.generateNotificationFeedback(type: .success)
+                        }
+                    } catch {
+                        print("Error dropping file: \(error)")
+                        DispatchQueue.main.async {
+                            let alert = UIAlertController(
+                                title: "Error",
+                                message: "Failed to move file: \(error.localizedDescription)",
+                                preferredStyle: .alert
+                            )
+                            alert.addAction(UIAlertAction(title: "OK", style: .default))
+                            self.present(alert, animated: true, completion: nil)
+                        }
+                    }
+                }
+            }
+        }
+    }
+    
+    // MARK: - UIDocumentPickerDelegate
+    func documentPicker(_ controller: UIDocumentPickerViewController, didPickDocumentsAt urls: [URL]) {
+        guard let selectedFileURL = urls.first else { return }
+        handleImportedFile(url: selectedFileURL)
     }
 }
 
