@@ -15,14 +15,12 @@ class FileTableViewCell: UITableViewCell {
         fatalError("init(coder:) has not been implemented")
     }
 
-    private func setupUI() {
-        // Configure and add subviews to contentView
+    func setupUI() {
         contentView.addSubview(fileIconImageView)
         contentView.addSubview(fileNameLabel)
         contentView.addSubview(fileSizeLabel)
         contentView.addSubview(fileDateLabel)
 
-        // Setup layout constraints
         fileIconImageView.translatesAutoresizingMaskIntoConstraints = false
         fileNameLabel.translatesAutoresizingMaskIntoConstraints = false
         fileSizeLabel.translatesAutoresizingMaskIntoConstraints = false
@@ -45,18 +43,26 @@ class FileTableViewCell: UITableViewCell {
             fileDateLabel.topAnchor.constraint(equalTo: fileSizeLabel.bottomAnchor, constant: 4),
             fileDateLabel.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -8)
         ])
+
+        fileIconImageView.isAccessibilityElement = true
+        fileIconImageView.accessibilityLabel = "File Icon"
+        fileNameLabel.isAccessibilityElement = true
+        fileNameLabel.accessibilityLabel = "File Name"
+        fileSizeLabel.isAccessibilityElement = true
+        fileSizeLabel.accessibilityLabel = "File Size"
+        fileDateLabel.isAccessibilityElement = true
+        fileDateLabel.accessibilityLabel = "File Date"
     }
 
     func configure(with file: File) {
-        // Configure the cell with file data
         fileNameLabel.text = file.name
         fileSizeLabel.text = "\(file.size) bytes"
         let dateFormatter = DateFormatter()
         dateFormatter.dateStyle = .medium
         dateFormatter.timeStyle = .short
         fileDateLabel.text = dateFormatter.string(from: file.date)
-        // Set an appropriate icon for the file type
-        fileIconImageView.image = UIImage(systemName: "doc.text")
+        fileIconImageView.image = UIImage(systemName: file.iconName)
+        accessibilityElements = [fileIconImageView, fileNameLabel, fileSizeLabel, fileDateLabel]
     }
 }
 
@@ -73,6 +79,14 @@ class File {
     var date: Date {
         let attributes = try? FileManager.default.attributesOfItem(atPath: url.path)
         return attributes?[.modificationDate] as? Date ?? Date.distantPast
+    }
+    var iconName: String {
+        let extensionString = url.pathExtension.lowercased()
+        switch extensionString {
+        case "txt", "md": return "doc.text"
+        case "zip": return "doc.zipper"
+        default: return "doc"
+        }
     }
 
     init(url: URL) {
