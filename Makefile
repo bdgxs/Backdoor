@@ -1,5 +1,4 @@
 TARGET_CODESIGN = $(shell which ldid)
-
 PLATFORM = iphoneos
 NAME = feather
 SCHEME ?= 'feather (Debug)'
@@ -11,11 +10,11 @@ TARGET_SYSROOT = $(shell xcrun -sdk $(PLATFORM) --show-sdk-path)
 
 APP_TMP         = $(TMPDIR)/$(NAME)
 STAGE_DIR   = $(APP_TMP)/stage
-APP_DIR 	   = $(APP_TMP)/Build/Products/$(RELEASE)/$(NAME).app
+APP_DIR     = $(APP_TMP)/Build/Products/$(RELEASE)/$(NAME).app
 
 all: package
 
-package:
+package: clean-spm
 	@rm -rf $(APP_TMP)
 	
 	@set -o pipefail; \
@@ -48,7 +47,12 @@ else
 	@zip -r9 packages/$(NAME).ipa Payload
 endif
 
-clean:
+clean-spm:
+	@swift package clean
+	@xcodebuild -project '$(NAME).xcodeproj' -scheme $(SCHEME) -sdk $(PLATFORM) clean
+	@rm -rf $(APP_TMP)/Build
+
+clean: clean-spm
 	@rm -rf $(STAGE_DIR)
 	@rm -rf packages
 	@rm -rf out.dmg
@@ -56,4 +60,4 @@ clean:
 	@rm -rf apple-include
 	@rm -rf $(APP_TMP)
 
-.PHONY: apple-include
+.PHONY: apple-include clean clean-spm package
