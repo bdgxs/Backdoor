@@ -1,51 +1,5 @@
 import UIKit
 
-// MARK: - UITableViewDelegate and UITableViewDataSource
-extension HomeViewController: UITableViewDelegate, UITableViewDataSource {
-    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return searchController.isActive ? filteredFileList.count : fileList.count
-    }
-
-    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        guard let cell = tableView.dequeueReusableCell(withIdentifier: "FileCell", for: indexPath) as? FileTableViewCell else {
-            fatalError("Unable to dequeue FileTableViewCell")
-        }
-        
-        let fileName = searchController.isActive ? filteredFileList[indexPath.row] : fileList[indexPath.row]
-        let fileURL = documentsDirectory.appendingPathComponent(fileName)
-        let file = File(url: fileURL)
-        
-        cell.configure(with: file)
-        return cell
-    }
-
-    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        let fileName = searchController.isActive ? filteredFileList[indexPath.row] : fileList[indexPath.row]
-        let fileURL = documentsDirectory.appendingPathComponent(fileName)
-        showFileOptions(for: fileURL)
-    }
-}
-
-// MARK: - UITableViewDragDelegate
-extension HomeViewController: UITableViewDragDelegate {
-    func tableView(_ tableView: UITableView, itemsForBeginning session: UIDragSession, at indexPath: IndexPath) -> [UIDragItem] {
-        let fileName = searchController.isActive ? filteredFileList[indexPath.row] : fileList[indexPath.row]
-        let fileURL = documentsDirectory.appendingPathComponent(fileName)
-        guard let itemProvider = NSItemProvider(contentsOf: fileURL) else {
-            print("Failed to create item provider for file: \(fileName)")
-            return []
-        }
-        let dragItem = UIDragItem(itemProvider: itemProvider)
-        dragItem.localObject = fileName
-        return [dragItem]
-    }
-
-    func tableView(_ tableView: UITableView, canHandle session: UIDropSession) -> Bool {
-        return session.canLoadObjects(ofClass: URL.self)
-    }
-}
-
-// MARK: - UITableViewDropDelegate
 extension HomeViewController: UITableViewDropDelegate {
     func tableView(_ tableView: UITableView, performDropWith coordinator: UITableViewDropCoordinator) {
         let destinationIndexPath: IndexPath
@@ -57,6 +11,7 @@ extension HomeViewController: UITableViewDropDelegate {
             destinationIndexPath = IndexPath(row: row, section: section)
         }
 
+        // Explicitly type dropItem as UITableViewDropItem
         coordinator.items.forEach { (dropItem: UITableViewDropItem) in
             let itemProvider: NSItemProvider = dropItem.itemProvider
             itemProvider.loadObject(ofClass: URL.self) { [weak self] (object: URL?, error: Error?) in
