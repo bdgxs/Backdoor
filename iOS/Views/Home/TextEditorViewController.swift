@@ -1,14 +1,16 @@
 import UIKit
 
 class TextEditorViewController: UIViewController, UITextViewDelegate {
-    private var fileURL: URL
-    private var textView: UITextView!
-    private var toolbar: UIToolbar!
-    private var hasUnsavedChanges = false
-    private var autoSaveTimer: Timer?
+    let fileURL: URL
+    let textView: UITextView
+    let toolbar: UIToolbar
+    var hasUnsavedChanges = false
+    var autoSaveTimer: Timer?
 
     init(fileURL: URL) {
         self.fileURL = fileURL
+        self.textView = UITextView()
+        self.toolbar = UIToolbar()
         super.init(nibName: nil, bundle: nil)
     }
 
@@ -25,96 +27,89 @@ class TextEditorViewController: UIViewController, UITextViewDelegate {
 
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
+        stopAutoSaveTimer()
         if hasUnsavedChanges {
             promptSaveChanges()
         } else {
             navigationController?.popViewController(animated: true)
         }
-        stopAutoSaveTimer()
     }
 
-    private func setupUI() {
+    func setupUI() {
         view.backgroundColor = .systemBackground
 
-        // Setup text view
-        textView = UITextView()
         textView.translatesAutoresizingMaskIntoConstraints = false
         textView.font = UIFont.monospacedSystemFont(ofSize: 14, weight: .regular)
         textView.delegate = self
         view.addSubview(textView)
 
-        // Setup toolbar
-        toolbar = UIToolbar()
         toolbar.translatesAutoresizingMaskIntoConstraints = false
         let saveButton = UIBarButtonItem(barButtonSystemItem: .save, target: self, action: #selector(saveChanges))
         let flexibleSpace = UIBarButtonItem(barButtonSystemItem: .flexibleSpace, target: nil, action: nil)
-        toolbar.items = [flexibleSpace, saveButton] // Arrange buttons properly
+        toolbar.items = [flexibleSpace, saveButton]
         view.addSubview(toolbar)
 
-        // Constraints for text view
         NSLayoutConstraint.activate([
             textView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
             textView.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor),
             textView.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor),
-            textView.bottomAnchor.constraint(equalTo: toolbar.topAnchor) // Position text view above toolbar
-        ])
-
-        // Constraints for toolbar
-        NSLayoutConstraint.activate([
+            textView.bottomAnchor.constraint(equalTo: toolbar.topAnchor),
             toolbar.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             toolbar.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             toolbar.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor),
             toolbar.heightAnchor.constraint(equalToConstant: 44)
         ])
+
+        textView.isAccessibilityElement = true
+        textView.accessibilityLabel = "Text Editor"
+        toolbar.isAccessibilityElement = true
+        toolbar.accessibilityLabel = "Toolbar"
     }
 
-    private func loadFileContent() {
+    func loadFileContent() {
         do {
             let content = try String(contentsOf: fileURL, encoding: .utf8)
             textView.text = content
         } catch {
-            print("Error loading file content: \(error)")
-            presentAlert(title: "Error", message: "Could not load file content.")
+            presentAlert(title: "Error", message: "Could not load file content: \(error.localizedDescription)")
         }
     }
 
-    @objc private func saveChanges() {
-        guard let text = textView.text else {
-            return
-        }
+    @objc func saveChanges() {
+        guard let text = textView.text else { return }
         do {
             try text.write(to: fileURL, atomically: true, encoding: .utf8)
             hasUnsavedChanges = false
+            HapticFeedbackGenerator.generateNotificationFeedback(type: .success)
             print("File saved successfully.")
         } catch {
-            print("Error saving file: \(error)")
-            presentAlert(title: "Error", message: "Could not save file.")
+            presentAlert(title: "Error", message: "Could not save file: \(error.localizedDescription)")
         }
     }
 
-    private func promptSaveChanges() {
+    func promptSaveChanges() {
         let alert = UIAlertController(title: "Unsaved Changes", message: "You have unsaved changes. Do you want to save them before leaving?", preferredStyle: .alert)
-        alert.addAction(UIAlertAction(title: "Save", style: .default, handler: { [weak self] _ in
-            self?.saveChanges()
-            self?.navigationController?.popViewController(animated: true)
+        alert.addAction(UIAlertAction(title: "Save", style: .default, handler: { _ in
+            self.saveChanges()
+            self.navigationController?.popViewController(animated: true)
         }))
-        alert.addAction(UIAlertAction(title: "Discard", style: .destructive, handler: { [weak self] _ in
-            self?.navigationController?.popViewController(animated: true)
+        alert.addAction(UIAlertAction(title: "Discard", style: .destructive, handler: { _ in
+            self.navigationController?.popViewController(animated: true)
         }))
         alert.addAction(UIAlertAction(title: "Cancel", style: .cancel, handler: nil))
         present(alert, animated: true, completion: nil)
     }
 
-    private func startAutoSaveTimer() {
+    func startAutoSaveTimer() {
         autoSaveTimer = Timer.scheduledTimer(timeInterval: 60, target: self, selector: #selector(autoSaveChanges), userInfo: nil, repeats: true)
     }
 
-    private func stopAutoSaveTimer() {
+    func stopAutoSaveTimer() {
         autoSaveTimer?.invalidate()
         autoSaveTimer = nil
     }
 
-    @objc private func autoSaveChanges() {
+    @objc func autoSaveChanges() {
         if hasUnsavedChanges {
             saveChanges()
         }
@@ -124,7 +119,7 @@ class TextEditorViewController: UIViewController, UITextViewDelegate {
         hasUnsavedChanges = true
     }
 
-    private func presentAlert(title: String, message: String) {
+    func presentAlert(title: String, message: String) {
         let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
         alert.addAction(UIAlertAction(title: "OK", style: .default, handler: nil))
         present(alert, animated: true, completion: nil)
