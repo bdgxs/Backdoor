@@ -53,13 +53,20 @@ class HomeViewFileHandlers {
     func unzipFile(viewController: FileHandlingDelegate, fileURL: URL, destinationName: String, progressHandler: ((Double) -> Void)? = nil, completion: @escaping (Result<URL, Error>) -> Void) {
         let destinationURL = fileURL.deletingLastPathComponent().appendingPathComponent(destinationName)
         viewController.activityIndicator.startAnimating()
-        let workItem = DispatchWorkItem {
+        let workItem = DispatchWorkItem { [weak self] in
+            guard let self = self else {
+                DispatchQueue.main.async {
+                    viewController.activityIndicator.stopAnimating()
+                    completion(.failure(NSError(domain: "", code: -1, userInfo: [NSLocalizedDescriptionKey: "Self was deallocated during unzip"])))
+                }
+                return
+            }
             do {
                 let progress = Progress(totalUnitCount: 100)
                 progress.cancellationHandler = {
                     print("Unzip cancelled")
                 }
-                try fileManager.unzipItem(at: fileURL, to: destinationURL, progress: progress)
+                try self.fileManager.unzipItem(at: fileURL, to: destinationURL, progress: progress)
                 progressHandler?(1.0)
                 DispatchQueue.main.async {
                     viewController.activityIndicator.stopAnimating()
@@ -70,7 +77,7 @@ class HomeViewFileHandlers {
             } catch {
                 DispatchQueue.main.async {
                     viewController.activityIndicator.stopAnimating()
-                    utilities.handleError(in: viewController as! UIViewController, error: error, withTitle: "Unzipping File")
+                    self.utilities.handleError(in: viewController as! UIViewController, error: error, withTitle: "Unzipping File")
                     completion(.failure(error))
                 }
             }
