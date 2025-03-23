@@ -2,13 +2,14 @@ import UIKit
 import ZIPFoundation
 import Foundation
 
-class HomeViewController: UIViewController, UISearchResultsUpdating, UIScrollViewDelegate {
+// All protocol conformances declared once in the class definition
+class HomeViewController: UIViewController, UISearchResultsUpdating, UIScrollViewDelegate, UITableViewDataSource, UITableViewDelegate, UITableViewDragDelegate, UITableViewDropDelegate {
     
     // MARK: - Properties
-    var fileList: [String] = [] // Removed 'private' for accessibility
-    var filteredFileList: [String] = [] // Removed 'private' for accessibility
+    var fileList: [String] = [] // Internal access for extensions
+    var filteredFileList: [String] = [] // Internal access for extensions
     let fileManager = FileManager.default
-    let searchController = UISearchController(searchResultsController: nil) // Removed 'private' for accessibility
+    let searchController = UISearchController(searchResultsController: nil) // Internal access for extensions
     private var sortOrder: SortOrder = .name
     let fileHandlers = HomeViewFileHandlers()
     let utilities = HomeViewUtilities()
@@ -200,7 +201,6 @@ class HomeViewController: UIViewController, UISearchResultsUpdating, UIScrollVie
         present(alertController, animated: true, completion: nil)
     }
     
-    // MARK: - UISearchResultsUpdating
     func updateSearchResults(for searchController: UISearchController) {
         guard let searchText = searchController.searchBar.text else { return }
         filteredFileList = fileList.filter { $0.localizedCaseInsensitiveContains(searchText) }
@@ -238,7 +238,7 @@ class HomeViewController: UIViewController, UISearchResultsUpdating, UIScrollVie
     }
     
     // MARK: - File Options
-    private func showFileOptions(for fileURL: URL) {
+    func showFileOptions(for fileURL: URL) {
         let alertController = UIAlertController(title: "File Options", message: fileURL.lastPathComponent, preferredStyle: .actionSheet)
         
         let deleteAction = UIAlertAction(title: "Delete", style: .destructive) { [weak self] _ in
@@ -257,14 +257,8 @@ class HomeViewController: UIViewController, UISearchResultsUpdating, UIScrollVie
 }
 
 // MARK: - Extensions
-extension HomeViewController: UIDocumentPickerDelegate {
-    func documentPicker(_ controller: UIDocumentPickerViewController, didPickDocumentsAt urls: [URL]) {
-        guard let selectedFileURL = urls.first else { return }
-        handleImportedFile(url: selectedFileURL)
-    }
-}
-
-extension HomeViewController: UITableViewDataSource {
+// Single extension for all table view protocols to avoid duplicates
+extension HomeViewController {
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         return searchController.isActive ? filteredFileList.count : fileList.count
     }
@@ -275,21 +269,18 @@ extension HomeViewController: UITableViewDataSource {
         cell.textLabel?.text = fileName
         return cell
     }
-}
-
-extension HomeViewController: UITableViewDelegate {
+    
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         let fileName = searchController.isActive ? filteredFileList[indexPath.row] : fileList[indexPath.row]
         let fileURL = documentsDirectory.appendingPathComponent(fileName)
         showFileOptions(for: fileURL)
         tableView.deselectRow(at: indexPath, animated: true)
     }
-}
-
-extension HomeViewController: UITableViewDropDelegate {
+    
     func tableView(_ tableView: UITableView, performDropWith coordinator: UITableViewDropCoordinator) {
         for dropItem in coordinator.items {
-            dropItem.dragItem.itemProvider.loadObject(ofClass: URL.self) { [weak self] (object: URL?, error: Error?) in
+            guard let itemProvider = dropItem.dragItem.itemProvider else { continue }
+            itemProvider.loadObject(ofClass: URL.self) { [weak self] (object: URL?, error: Error?) in
                 guard let self = self, let url = object else {
                     if let error = error {
                         print("Drop error: \(error)")
@@ -302,11 +293,16 @@ extension HomeViewController: UITableViewDropDelegate {
             }
         }
     }
-}
-
-extension HomeViewController: UITableViewDragDelegate {
+    
     func tableView(_ tableView: UITableView, itemsForBeginning session: UIDragSession, at indexPath: IndexPath) -> [UIDragItem] {
         return [] // Implement drag support if needed
+    }
+}
+
+extension HomeViewController: UIDocumentPickerDelegate {
+    func documentPicker(_ controller: UIDocumentPickerViewController, didPickDocumentsAt urls: [URL]) {
+        guard let selectedFileURL = urls.first else { return }
+        handleImportedFile(url: selectedFileURL)
     }
 }
 
