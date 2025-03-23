@@ -6,6 +6,8 @@ class HomeViewUI {
         navBar.translatesAutoresizingMaskIntoConstraints = false
         navBar.barTintColor = .systemBlue
         navBar.titleTextAttributes = [.foregroundColor: UIColor.white]
+        navBar.isAccessibilityElement = true
+        navBar.accessibilityLabel = "Navigation Bar"
         return navBar
     }()
     
@@ -15,6 +17,8 @@ class HomeViewUI {
         tableView.separatorStyle = .singleLine
         tableView.rowHeight = UITableView.automaticDimension
         tableView.estimatedRowHeight = 44
+        tableView.isAccessibilityElement = true
+        tableView.accessibilityLabel = "File List Table"
         return tableView
     }()
     
@@ -23,6 +27,8 @@ class HomeViewUI {
         indicator.translatesAutoresizingMaskIntoConstraints = false
         indicator.hidesWhenStopped = true
         indicator.color = .systemBlue
+        indicator.isAccessibilityElement = true
+        indicator.accessibilityLabel = "Activity Indicator"
         return indicator
     }()
     
@@ -34,6 +40,8 @@ class HomeViewUI {
         button.backgroundColor = .systemBlue
         button.layer.cornerRadius = 10
         button.clipsToBounds = true
+        button.isAccessibilityElement = true
+        button.accessibilityLabel = "Upload File Button"
         return button
     }()
 }
