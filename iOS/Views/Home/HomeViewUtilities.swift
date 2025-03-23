@@ -61,7 +61,8 @@ class HomeViewUtilities {
             logger.error("Unexpected error: \(error.localizedDescription)")
         }
 
-        DispatchQueue.main.async {
+        DispatchQueue.main.async { [weak self] in
+            guard let self = self else { return }
             let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
             alert.addAction(UIAlertAction(title: "OK", style: .default, handler: nil))
             viewController.present(alert, animated: true, completion: nil)
