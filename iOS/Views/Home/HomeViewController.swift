@@ -207,63 +207,6 @@ class HomeViewController: UIViewController, UISearchResultsUpdating, UIScrollVie
         fileListTableView.reloadData()
     }
 
-    // MARK: - UITableViewDragDelegate
-    func tableView(_ tableView: UITableView, itemsForBeginning session: UIDragSession, at indexPath: IndexPath) -> [UIDragItem] {
-        let item = fileList[indexPath.row]
-        let itemProvider = NSItemProvider(object: item as NSString)
-        let dragItem = UIDragItem(itemProvider: itemProvider)
-        return [dragItem]
-    }
-
-    // MARK: - UITableViewDropDelegate
-    func tableView(_ tableView: UITableView, performDropWith coordinator: UITableViewDropCoordinator) {
-        coordinator.session.loadObjects(ofClass: NSString.self) { items in
-            guard let string = items.first as? String else { return }
-            self.fileList.append(string as String)
-            self.fileListTableView.reloadData()
-        }
-    }
-
-    func tableView(_ tableView: UITableView, canHandle session: UIDropSession) -> Bool {
-        return true
-    }
-
-    // MARK: - UITableViewDelegate, UITableViewDataSource
-    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        if searchController.isActive && searchController.searchBar.text != "" {
-            return filteredFileList.count
-        }
-        return fileList.count
-    }
-
-    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell = tableView.dequeueReusableCell(withIdentifier: "FileCell", for: indexPath) as! FileTableViewCell
-        let fileName: String
-        if searchController.isActive && searchController.searchBar.text != "" {
-            fileName = filteredFileList[indexPath.row]
-        } else {
-            fileName = fileList[indexPath.row]
-        }
-        let fileURL = documentsDirectory.appendingPathComponent(fileName)
-        let file = File(url: fileURL)
-        cell.configure(with: file)
-        return cell
-    }
-
-    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        let fileName: String
-        if searchController.isActive && searchController.searchBar.text != "" {
-            fileName = filteredFileList[indexPath.row]
-        } else {
-            fileName = fileList[indexPath.row]
-        }
-
-        let fileURL = documentsDirectory.appendingPathComponent(fileName)
-
-        let activityViewController = UIActivityViewController(activityItems: [fileURL], applicationActivities: nil)
-        present(activityViewController, animated: true, completion: nil)
-    }
-
     @objc private func addDirectory() {
         let alertController = UIAlertController(title: "Add Directory", message: "Enter the name of the new directory", preferredStyle: .alert)
         alertController.addTextField { (textField) in
