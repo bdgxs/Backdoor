@@ -1,7 +1,6 @@
 import UIKit
 import ZIPFoundation
 import os.log
-import Foundation
 
 protocol FileHandlingDelegate: AnyObject {
     var documentsDirectory: URL { get }
@@ -11,18 +10,18 @@ protocol FileHandlingDelegate: AnyObject {
 }
 
 class HomeViewFileHandlers {
-    private let fileManager = FileManager.default
-    private let utilities = HomeViewUtilities()
+    let fileManager = FileManager.default
+    let utilities = HomeViewUtilities()
 
     func uploadFile(viewController: FileHandlingDelegate) {
-        let documentPicker = UIDocumentPickerViewController(forOpeningContentTypes: [.data]) // Removed ", asCopy: true"
+        let documentPicker = UIDocumentPickerViewController(forOpeningContentTypes: [.data])
         documentPicker.delegate = viewController as? UIDocumentPickerDelegate
         documentPicker.modalPresentationStyle = .formSheet
         viewController.present(documentPicker, animated: true, completion: nil)
     }
 
     func importFile(viewController: FileHandlingDelegate) {
-        let documentPicker = UIDocumentPickerViewController(forOpeningContentTypes: [.data]) // Removed ", asCopy: true"
+        let documentPicker = UIDocumentPickerViewController(forOpeningContentTypes: [.data])
         documentPicker.delegate = viewController as? UIDocumentPickerDelegate
         documentPicker.modalPresentationStyle = .formSheet
         viewController.present(documentPicker, animated: true, completion: nil)
@@ -32,6 +31,7 @@ class HomeViewFileHandlers {
         let folderURL = viewController.documentsDirectory.appendingPathComponent(folderName)
         do {
             try fileManager.createDirectory(at: folderURL, withIntermediateDirectories: false, attributes: nil)
+            HapticFeedbackGenerator.generateNotificationFeedback(type: .success)
             completion(.success(folderURL))
         } catch {
             completion(.failure(error))
@@ -40,9 +40,10 @@ class HomeViewFileHandlers {
 
     func createNewFile(viewController: FileHandlingDelegate, fileName: String, completion: @escaping (Result<URL, Error>) -> Void) {
         let fileURL = viewController.documentsDirectory.appendingPathComponent(fileName)
-        let fileContent = "" // Or any default content you want
+        let fileContent = ""
         do {
             try fileContent.write(to: fileURL, atomically: true, encoding: .utf8)
+            HapticFeedbackGenerator.generateNotificationFeedback(type: .success)
             completion(.success(fileURL))
         } catch {
             completion(.failure(error))
@@ -63,12 +64,13 @@ class HomeViewFileHandlers {
                 DispatchQueue.main.async {
                     viewController.activityIndicator.stopAnimating()
                     viewController.loadFiles()
+                    HapticFeedbackGenerator.generateNotificationFeedback(type: .success)
                     completion(.success(destinationURL))
                 }
             } catch {
                 DispatchQueue.main.async {
                     viewController.activityIndicator.stopAnimating()
-                    self.utilities.handleError(in: viewController as! UIViewController, error: error, withTitle: "Unzipping File")
+                    utilities.handleError(in: viewController as! UIViewController, error: error, withTitle: "Unzipping File")
                     completion(.failure(error))
                 }
             }
