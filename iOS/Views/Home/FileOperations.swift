@@ -142,7 +142,7 @@ class FileOperations {
             throw FileOperationError.fileNotFound("File not found at \(sourceURL.path)")
         }
         do {
-            try Archive.extractAll(from: sourceURL, to: destinationURL)
+            try fileManager.unzipItem(at: sourceURL, to: destinationURL)
             print("File unzipped from \(sourceURL.path) to \(destinationURL.path)")
         } catch {
             throw FileOperationError.unknownError("Failed to unzip file: \(error.localizedDescription)")
