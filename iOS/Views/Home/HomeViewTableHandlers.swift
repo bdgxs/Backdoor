@@ -31,8 +31,11 @@ extension HomeViewController: UITableViewDragDelegate {
     func tableView(_ tableView: UITableView, itemsForBeginning session: UIDragSession, at indexPath: IndexPath) -> [UIDragItem] {
         let fileName = searchController.isActive ? filteredFileList[indexPath.row] : fileList[indexPath.row]
         let fileURL = documentsDirectory.appendingPathComponent(fileName)
-        let itemProvider = NSItemProvider(contentsOf: fileURL)
-        let dragItem = UIDragItem(itemProvider: itemProvider!)
+        guard let itemProvider = NSItemProvider(contentsOf: fileURL) else {
+            print("Failed to create item provider for file: \(fileName)")
+            return []
+        }
+        let dragItem = UIDragItem(itemProvider: itemProvider)
         dragItem.localObject = fileName
         return [dragItem]
     }
