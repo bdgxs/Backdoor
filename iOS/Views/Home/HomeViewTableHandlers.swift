@@ -58,10 +58,12 @@ extension HomeViewController: UITableViewDropDelegate {
         }
 
         coordinator.items.forEach { dropItem in
-            dropItem.itemProvider.loadObject(ofClass: URL.self) { [weak self] (object, error) in
+            // Explicitly type dropItem as UITableViewDropItem to ensure itemProvider is recognized
+            guard let dropItem = dropItem as? UITableViewDropItem else { return }
+            dropItem.itemProvider.loadObject(ofClass: URL.self) { [weak self] (object: URL?, error: Error?) in
                 guard let self = self else { return }
                 
-                if let url = object as? URL {
+                if let url = object {
                     let destinationURL = self.documentsDirectory.appendingPathComponent(url.lastPathComponent)
                     do {
                         try self.fileManager.moveItem(at: url, to: destinationURL)
