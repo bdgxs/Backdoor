@@ -50,7 +50,7 @@ class HomeViewUI {
     }()
 }
 
-extension CALayer {
+extension UIButton {
     func addGradientBackground() {
         let gradient = CAGradientLayer()
         gradient.frame = bounds
@@ -58,6 +58,6 @@ extension CALayer {
         gradient.startPoint = CGPoint(x: 0, y: 0)
         gradient.endPoint = CGPoint(x: 1, y: 1)
         gradient.cornerRadius = 10
-        self.insertSublayer(gradient, at: 0)
+        layer.insertSublayer(gradient, at: 0)
     }
 }
