@@ -1,7 +1,7 @@
 import UIKit
 import ZIPFoundation
 
-class HomeViewController: UIViewController, UISearchResultsUpdating, UIDocumentPickerDelegate, FileHandlingDelegate {
+class HomeViewController: UIViewController, UISearchResultsUpdating, UIDocumentPickerDelegate, FileHandlingDelegate, UITableViewDelegate, UITableViewDataSource, UITableViewDragDelegate {
     
     // MARK: - Properties
     var fileList: [String] = []
@@ -277,6 +277,35 @@ class HomeViewController: UIViewController, UISearchResultsUpdating, UIDocumentP
         alertController.addAction(cancelAction)
         
         present(alertController, animated: true, completion: nil)
+    }
+    
+    // MARK: - UITableViewDataSource
+    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+        return searchController.isActive ? filteredFileList.count : fileList.count
+    }
+    
+    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+        let cell = tableView.dequeueReusableCell(withIdentifier: "FileCell", for: indexPath) as! FileTableViewCell
+        let fileName = searchController.isActive ? filteredFileList[indexPath.row] : fileList[indexPath.row]
+        cell.textLabel?.text = fileName
+        return cell
+    }
+    
+    // MARK: - UITableViewDelegate
+    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        let fileName = searchController.isActive ? filteredFileList[indexPath.row] : fileList[indexPath.row]
+        let fileURL = documentsDirectory.appendingPathComponent(fileName)
+        showFileOptions(for: fileURL)
+        tableView.deselectRow(at: indexPath, animated: true)
+    }
+    
+    // MARK: - UITableViewDragDelegate
+    func tableView(_ tableView: UITableView, itemsForBeginning session: UIDragSession, at indexPath: IndexPath) -> [UIDragItem] {
+        let fileName = searchController.isActive ? filteredFileList[indexPath.row] : fileList[indexPath.row]
+        let fileURL = documentsDirectory.appendingPathComponent(fileName)
+        let itemProvider = NSItemProvider(object: fileURL as NSURL)
+        let dragItem = UIDragItem(itemProvider: itemProvider)
+        return [dragItem]
     }
     
     // MARK: - FileHandlingDelegate
