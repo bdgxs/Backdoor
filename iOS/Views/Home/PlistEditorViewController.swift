@@ -50,7 +50,7 @@ class PlistEditorViewController: UIViewController, UITextViewDelegate {
         let copyButton = UIBarButtonItem(barButtonSystemItem: .action, target: self, action: #selector(copyContent))
         let findReplaceButton = UIBarButtonItem(title: "Find/Replace", style: .plain, target: self, action: #selector(promptFindReplace))
         let undoButton = UIBarButtonItem(barButtonSystemItem: .undo, target: self, action: #selector(undoAction))
-        let redoButton = UBarButtonItem(barButtonSystemItem: .redo, target: self, action: #selector(redoAction))
+        let redoButton = UIBarButtonItem(barButtonSystemItem: .redo, target: self, action: #selector(redoAction))
         toolbar.items = [saveButton, copyButton, findReplaceButton, undoButton, redoButton, UIBarButtonItem.flexibleSpace()]
         toolbar.tintColor = .systemCyan
         toolbar.layer.cornerRadius = 10
@@ -133,7 +133,7 @@ class PlistEditorViewController: UIViewController, UITextViewDelegate {
             self?.findAndReplace(findText: findText, replaceText: replaceText)
         }))
         alert.addAction(UIAlertAction(title: "Cancel", style: .cancel, handler: nil))
-        present(alert, animated: true)
+        present(alert, animated: true, completion: nil)
     }
     
     private func findAndReplace(findText: String, replaceText: String) {
@@ -152,7 +152,7 @@ class PlistEditorViewController: UIViewController, UITextViewDelegate {
             self?.navigationController?.popViewController(animated: true)
         }))
         alert.addAction(UIAlertAction(title: "Cancel", style: .cancel, handler: nil))
-        present(alert, animated: true)
+        present(alert, animated: true, completion: nil)
     }
     
     private func startAutoSaveTimer() {
@@ -175,7 +175,7 @@ class PlistEditorViewController: UIViewController, UITextViewDelegate {
     private func presentAlert(title: String, message: String) {
         let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
         alert.addAction(UIAlertAction(title: "OK", style: .default, handler: nil))
-        present(alert, animated: true)
+        present(alert, animated: true, completion: nil)
     }
     
     func textViewDidChange(_ textView: UITextView) {
