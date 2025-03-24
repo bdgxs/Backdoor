@@ -5,110 +5,112 @@ enum FileOperationError: Error {
     case fileNotFound(String)
     case invalidDestination(String)
     case unknownError(String)
+    case permissionDenied(String)
 }
 
 class FileOperations {
     static let fileManager = FileManager.default
-
+    
     static func copyFile(at sourceURL: URL, to destinationURL: URL) throws {
         guard fileManager.fileExists(atPath: sourceURL.path) else {
             throw FileOperationError.fileNotFound("Source file not found at \(sourceURL.path)")
         }
         do {
             try fileManager.copyItem(at: sourceURL, to: destinationURL)
-            print("File copied from \(sourceURL.path) to \(destinationURL.path)")
         } catch {
             throw FileOperationError.unknownError("Failed to copy file: \(error.localizedDescription)")
         }
     }
-
+    
     static func moveFile(at sourceURL: URL, to destinationURL: URL) throws {
         guard fileManager.fileExists(atPath: sourceURL.path) else {
             throw FileOperationError.fileNotFound("Source file not found at \(sourceURL.path)")
         }
         do {
             try fileManager.moveItem(at: sourceURL, to: destinationURL)
-            print("File moved from \(sourceURL.path) to \(destinationURL.path)")
         } catch {
             throw FileOperationError.unknownError("Failed to move file: \(error.localizedDescription)")
         }
     }
-
+    
     static func deleteFile(at fileURL: URL) throws {
         guard fileManager.fileExists(atPath: fileURL.path) else {
             throw FileOperationError.fileNotFound("File not found at \(fileURL.path)")
         }
         do {
             try fileManager.removeItem(at: fileURL)
-            print("File deleted at \(fileURL.path)")
         } catch {
             throw FileOperationError.unknownError("Failed to delete file: \(error.localizedDescription)")
         }
     }
-
+    
     static func renameFile(at sourceURL: URL, to destinationURL: URL) throws {
         guard fileManager.fileExists(atPath: sourceURL.path) else {
             throw FileOperationError.fileNotFound("File not found at \(sourceURL.path)")
         }
         do {
             try fileManager.moveItem(at: sourceURL, to: destinationURL)
-            print("File renamed from \(sourceURL.path) to \(destinationURL.path)")
         } catch {
             throw FileOperationError.unknownError("Failed to rename file: \(error.localizedDescription)")
         }
     }
-
+    
     static func createDirectory(at directoryURL: URL) throws {
         do {
             try fileManager.createDirectory(at: directoryURL, withIntermediateDirectories: true, attributes: nil)
-            print("Directory created at \(directoryURL.path)")
         } catch {
             throw FileOperationError.unknownError("Failed to create directory: \(error.localizedDescription)")
         }
     }
-
+    
     static func fileExists(at path: String) -> Bool {
         return fileManager.fileExists(atPath: path)
     }
-
+    
     static func fileSize(at fileURL: URL) -> UInt64? {
         do {
             let attributes = try fileManager.attributesOfItem(atPath: fileURL.path)
             return attributes[.size] as? UInt64
         } catch {
-            print("Error getting file size: \(error.localizedDescription)")
             return nil
         }
     }
-
+    
     static func creationDate(at fileURL: URL) -> Date? {
         do {
             let attributes = try fileManager.attributesOfItem(atPath: fileURL.path)
             return attributes[.creationDate] as? Date
         } catch {
-            print("Error getting creation date: \(error.localizedDescription)")
             return nil
         }
     }
-
+    
     static func unzipFile(at sourceURL: URL, to destinationURL: URL) throws {
         guard fileManager.fileExists(atPath: sourceURL.path) else {
             throw FileOperationError.fileNotFound("File not found at \(sourceURL.path)")
         }
         do {
             try fileManager.unzipItem(at: sourceURL, to: destinationURL)
-            print("File unzipped from \(sourceURL.path) to \(destinationURL.path)")
         } catch {
             throw FileOperationError.unknownError("Failed to unzip file: \(error.localizedDescription)")
         }
     }
-
+    
     static func hexEditFile(at fileURL: URL, in viewController: UIViewController) {
         guard fileManager.fileExists(atPath: fileURL.path) else {
             print("File not found at \(fileURL.path)")
             return
         }
-        let hexEditorViewController = HexEditorViewController(fileURL: fileURL)
-        viewController.navigationController?.pushViewController(hexEditorViewController, animated: true)
+        let hexEditor = HexEditorViewController(fileURL: fileURL)
+        viewController.navigationController?.pushViewController(hexEditor, animated: true)
+    }
+    
+    static func openIPA(at fileURL: URL, in viewController: UIViewController) {
+        guard fileManager.fileExists(atPath: fileURL.path) else {
+            print("IPA not found at \(fileURL.path)")
+            return
+        }
+        let ipaEditor = IPAEditorViewController(fileURL: fileURL)
+        viewController.navigationController?.pushViewController(ipaEditor, animated: true)
     }
 }
