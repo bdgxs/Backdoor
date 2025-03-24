@@ -31,7 +31,7 @@ jobs:
 
     - name: Download latest release asset
       run: |
-        curl -L -o certificates/app.ipa https://github.com/bdgxs/Backdoor/releases/download/v0.0.8/feather_v0.0.8.ipa
+        curl -L -o certificates/app.ipa https://github.com/bdgxs/Backdoor/releases/download/v0.0.8/Backdoor.ipa
 
     - name: Run sign script
       env:
