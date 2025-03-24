@@ -4,8 +4,10 @@ class HomeViewUI {
     static let navigationBar: UINavigationBar = {
         let navBar = UINavigationBar()
         navBar.translatesAutoresizingMaskIntoConstraints = false
-        navBar.barTintColor = .systemBlue
-        navBar.titleTextAttributes = [.foregroundColor: UIColor.white]
+        navBar.barTintColor = UIColor.systemCyan.withAlphaComponent(0.8)
+        navBar.titleTextAttributes = [.foregroundColor: UIColor.white, .font: UIFont.boldSystemFont(ofSize: 20)]
+        navBar.layer.cornerRadius = 15
+        navBar.layer.applyFuturisticShadow()
         navBar.isAccessibilityElement = true
         navBar.accessibilityLabel = "Navigation Bar"
         return navBar
@@ -16,7 +18,7 @@ class HomeViewUI {
         tableView.translatesAutoresizingMaskIntoConstraints = false
         tableView.separatorStyle = .singleLine
         tableView.rowHeight = UITableView.automaticDimension
-        tableView.estimatedRowHeight = 44
+        tableView.estimatedRowHeight = 60
         tableView.isAccessibilityElement = true
         tableView.accessibilityLabel = "File List Table"
         return tableView
@@ -26,7 +28,7 @@ class HomeViewUI {
         let indicator = UIActivityIndicatorView(style: .large)
         indicator.translatesAutoresizingMaskIntoConstraints = false
         indicator.hidesWhenStopped = true
-        indicator.color = .systemBlue
+        indicator.color = .systemCyan
         indicator.isAccessibilityElement = true
         indicator.accessibilityLabel = "Activity Indicator"
         return indicator
@@ -37,11 +39,25 @@ class HomeViewUI {
         button.setTitle("Upload File", for: .normal)
         button.translatesAutoresizingMaskIntoConstraints = false
         button.setTitleColor(.white, for: .normal)
-        button.backgroundColor = .systemBlue
+        button.backgroundColor = .systemCyan
         button.layer.cornerRadius = 10
         button.clipsToBounds = true
+        button.titleLabel?.font = .systemFont(ofSize: 16, weight: .bold)
+        button.addGradientBackground()
         button.isAccessibilityElement = true
         button.accessibilityLabel = "Upload File Button"
         return button
     }()
+}
+
+extension CALayer {
+    func addGradientBackground() {
+        let gradient = CAGradientLayer()
+        gradient.frame = bounds
+        gradient.colors = [UIColor.systemBlue.cgColor, UIColor.systemCyan.cgColor]
+        gradient.startPoint = CGPoint(x: 0, y: 0)
+        gradient.endPoint = CGPoint(x: 1, y: 1)
+        gradient.cornerRadius = 10
+        self.insertSublayer(gradient, at: 0)
+    }
 }
