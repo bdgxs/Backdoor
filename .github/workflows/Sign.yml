@@ -58,6 +58,12 @@ jobs:
             console.log('Install Link:', response.data.installLink);
         })
         .catch(error => {
-            console.error('Error:', error.response ? error.response.data : error.message);
+            if (error.response) {
+                console.error('Error Data:', error.response.data);
+                console.error('Error Status:', error.response.status);
+                console.error('Error Headers:', error.response.headers);
+            } else {
+                console.error('Error Message:', error.message);
+            }
         });
         EOF
