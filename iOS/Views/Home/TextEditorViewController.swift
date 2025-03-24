@@ -1,11 +1,11 @@
 import UIKit
 
 class TextEditorViewController: UIViewController, UITextViewDelegate {
-    let fileURL: URL
-    let textView: UITextView
-    let toolbar: UIToolbar
-    var hasUnsavedChanges = false
-    var autoSaveTimer: Timer?
+    private let fileURL: URL
+    private let textView: UITextView
+    private let toolbar: UIToolbar
+    private var hasUnsavedChanges = false
+    private var autoSaveTimer: Timer?
     
     init(fileURL: URL) {
         self.fileURL = fileURL
@@ -93,15 +93,15 @@ class TextEditorViewController: UIViewController, UITextViewDelegate {
     
     func promptSaveChanges() {
         let alert = UIAlertController(title: "Unsaved Changes", message: "Save changes before leaving?", preferredStyle: .alert)
-        alert.addAction(UIAlertAction(title: "Save", style: .default, handler: { _ in
-            self.saveChanges()
-            self.navigationController?.popViewController(animated: true)
+        alert.addAction(UIAlertAction(title: "Save", style: .default, handler: { [weak self] _ in
+            self?.saveChanges()
+            self?.navigationController?.popViewController(animated: true)
         }))
-        alert.addAction(UIAlertAction(title: "Discard", style: .destructive, handler: { _ in
-            self.navigationController?.popViewController(animated: true)
+        alert.addAction(UIAlertAction(title: "Discard", style: .destructive, handler: { [weak self] _ in
+            self?.navigationController?.popViewController(animated: true)
         }))
         alert.addAction(UIAlertAction(title: "Cancel", style: .cancel, handler: nil))
-        present(alert, animated: true)
+        present(alert, animated: true, completion: nil)
     }
     
     func startAutoSaveTimer() {
@@ -128,6 +128,6 @@ class TextEditorViewController: UIViewController, UITextViewDelegate {
     func presentAlert(title: String, message: String) {
         let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
         alert.addAction(UIAlertAction(title: "OK", style: .default, handler: nil))
-        present(alert, animated: true)
+        present(alert, animated: true, completion: nil)
     }
 }
