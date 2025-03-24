@@ -4,14 +4,13 @@ import ZIPFoundation
 class HomeViewController: UIViewController, UISearchResultsUpdating, UIDocumentPickerDelegate, FileHandlingDelegate, UITableViewDelegate, UITableViewDataSource, UITableViewDragDelegate, UITableViewDropDelegate {
     
     // MARK: - Properties
-    private var fileList: [File] = []
+    fileprivate var fileList: [File] = []
     private var filteredFileList: [File] = []
     private let fileManager = FileManager.default
     private let searchController = UISearchController(searchResultsController: nil)
     private var sortOrder: SortOrder = .name
     private let fileHandlers = HomeViewFileHandlers()
     private let utilities = HomeViewUtilities()
-    private var observation: NSKeyValueObservation?
     
     var documentsDirectory: URL {
         let directory = fileManager.urls(for: .documentDirectory, in: .userDomainMask).first!.appendingPathComponent("files")
@@ -19,8 +18,10 @@ class HomeViewController: UIViewController, UISearchResultsUpdating, UIDocumentP
         return directory
     }
     
-    enum SortOrder {
-        case name, date, size
+    enum SortOrder: String, RawRepresentable {
+        case name = "name"
+        case date = "date"
+        case size = "size"
     }
     
     var activityIndicator: UIActivityIndicatorView {
@@ -34,16 +35,11 @@ class HomeViewController: UIViewController, UISearchResultsUpdating, UIDocumentP
         setupActivityIndicator()
         loadFiles()
         configureTableView()
-        observeAppState()
     }
     
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
-        observation?.invalidate()
-    }
-    
-    deinit {
-        observation?.invalidate()
+        saveState()
     }
     
     // MARK: - UI Setup
@@ -111,12 +107,6 @@ class HomeViewController: UIViewController, UISearchResultsUpdating, UIDocumentP
         }
     }
     
-    private func observeAppState() {
-        observation = observe(\.viewWillDisappear, options: [.new]) { [weak self] _, _ in
-            self?.saveState()
-        }
-    }
-    
     private func saveState() {
         UserDefaults.standard.set(sortOrder.rawValue, forKey: "sortOrder")
     }
@@ -127,7 +117,7 @@ class HomeViewController: UIViewController, UISearchResultsUpdating, UIDocumentP
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
             guard let self = self else { return }
             do {
-                let files = try self.fileManager.contentsOfDirectory(at: self.documentsDirectory, includingPropertiesForKeys: [.creationDate, .fileSize], options: .skipsHiddenFiles)
+                let files = try self.fileManager.contentsOfDirectory(at: self.documentsDirectory, includingPropertiesForKeys: [.creationDateKey, .fileSizeKey], options: .skipsHiddenFiles)
                 let fileObjects = files.map { File(url: $0) }
                 DispatchQueue.main.async {
                     self.fileList = fileObjects
@@ -231,7 +221,7 @@ class HomeViewController: UIViewController, UISearchResultsUpdating, UIDocumentP
         if let popover = alertController.popoverPresentationController {
             popover.barButtonItem = navigationItem.rightBarButtonItems?.first
         }
-        present(alertController, animated: true)
+        present(alertController, animated: true, completion: nil)
     }
     
     func updateSearchResults(for searchController: UISearchController) {
@@ -263,7 +253,7 @@ class HomeViewController: UIViewController, UISearchResultsUpdating, UIDocumentP
         }
         alertController.addAction(createAction)
         alertController.addAction(UIAlertAction(title: "Cancel", style: .cancel, handler: nil))
-        present(alertController, animated: true)
+        present(alertController, animated: true, completion: nil)
     }
     
     private func showFileOptions(for file: File) {
@@ -292,7 +282,7 @@ class HomeViewController: UIViewController, UISearchResultsUpdating, UIDocumentP
                 popover.sourceRect = cell.bounds
             }
         }
-        present(alertController, animated: true)
+        present(alertController, animated: true, completion: nil)
     }
     
     private func openFile(_ file: File) {
@@ -338,9 +328,8 @@ class HomeViewController: UIViewController, UISearchResultsUpdating, UIDocumentP
     
     func tableView(_ tableView: UITableView, trailingSwipeActionsConfigurationForRowAt indexPath: IndexPath) -> UISwipeActionsConfiguration? {
         let deleteAction = UIContextualAction(style: .destructive, title: "Delete") { [weak self] (_, _, completion) in
-            if let self = self, let index = self.fileList.firstIndex(of: self.fileList[indexPath.row]) {
-                self.deleteFile(at: index)
-            }
+            guard let self = self else { return }
+            self.deleteFile(at: indexPath.row)
             completion(true)
         }
         deleteAction.backgroundColor = .systemRed
@@ -351,7 +340,7 @@ class HomeViewController: UIViewController, UISearchResultsUpdating, UIDocumentP
     func tableView(_ tableView: UITableView, itemsForBeginning session: UIDragSession, at indexPath: IndexPath) -> [UIDragItem] {
         let file = searchController.isActive ? filteredFileList[indexPath.row] : fileList[indexPath.row]
         let dragItem = UIDragItem(itemProvider: NSItemProvider(object: file.url.path as NSString))
-        session.localContext = file.name
+        session.localContext = file
         return [dragItem]
     }
     
@@ -364,22 +353,20 @@ class HomeViewController: UIViewController, UISearchResultsUpdating, UIDocumentP
             destinationIndexPath = IndexPath(row: fileList.count, section: 0)
         }
         
-        guard let session = coordinator.session as? UIDragSession,
-              let fileName = session.localContext as? String,
-              let sourceIndex = fileList.firstIndex(where: { $0.name == fileName }) else { return }
+        guard let file = coordinator.session.localContext as? File,
+              let sourceIndex = fileList.firstIndex(of: file) else { return }
         
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
             guard let self = self else { return }
             do {
-                let sourceFile = self.fileList[sourceIndex]
-                let sourceURL = sourceFile.url
-                let destinationURL = self.documentsDirectory.appendingPathComponent(fileName)
+                let sourceURL = file.url
+                let destinationURL = self.documentsDirectory.appendingPathComponent(file.name)
                 if sourceURL != destinationURL {
                     try FileOperations.moveFile(at: sourceURL, to: destinationURL)
                 }
                 DispatchQueue.main.async {
                     self.fileList.remove(at: sourceIndex)
-                    self.fileList.insert(sourceFile, at: destinationIndexPath.row)
+                    self.fileList.insert(file, at: destinationIndexPath.row)
                     tableView.moveRow(at: IndexPath(row: sourceIndex, section: 0), to: destinationIndexPath)
                     HapticFeedbackGenerator.generateNotificationFeedback(type: .success)
                     self.loadFiles() // Refresh to ensure consistency
@@ -393,7 +380,7 @@ class HomeViewController: UIViewController, UISearchResultsUpdating, UIDocumentP
     }
     
     // MARK: - FileHandlingDelegate
-    func present(_ viewControllerToPresent: UIViewController, animated flag: Bool, completion: (() -> Void)?) {
+    override func present(_ viewControllerToPresent: UIViewController, animated flag: Bool, completion: (() -> Void)?) {
         super.present(viewControllerToPresent, animated: flag, completion: completion)
     }
     
