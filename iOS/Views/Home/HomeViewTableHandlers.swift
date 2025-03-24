@@ -11,29 +11,27 @@ extension HomeViewController: UITableViewDropDelegate {
             destinationIndexPath = IndexPath(row: row, section: section)
         }
 
-        // Explicitly type dropItem as UITableViewDropItem
-        coordinator.items.forEach { (dropItem: UITableViewDropItem) in
-            let itemProvider: NSItemProvider = dropItem.itemProvider
-            itemProvider.loadObject(ofClass: URL.self) { [weak self] (object: URL?, error: Error?) in
-                guard let self else { return }
-                
-                if let url = object {
+        coordinator.items.forEach { dropItem in
+            let itemProvider = dropItem.itemProvider // No need for explicit typing here
+            itemProvider.loadObject(ofClass: URL.self) { [weak self] (object, error) in
+                guard let self = self else { return }
+                if let url = object as? URL {
                     let destinationURL = self.documentsDirectory.appendingPathComponent(url.lastPathComponent)
-                    do {
-                        try self.fileManager.moveItem(at: url, to: destinationURL)
-                        DispatchQueue.main.async {
-                            self.loadFiles()
-                        }
-                    } catch {
-                        print("Error dropping file: \(error)")
-                        DispatchQueue.main.async {
-                            let alert = UIAlertController(
-                                title: "Error",
-                                message: "Failed to move file: \(error.localizedDescription)",
-                                preferredStyle: .alert
-                            )
-                            alert.addAction(UIAlertAction(title: "OK", style: .default))
-                            self.present(alert, animated: true, completion: nil)
+                    DispatchQueue.global(qos: .userInitiated).async {
+                        do {
+                            if url.startAccessingSecurityScopedResource() {
+                                try self.fileManager.moveItem(at: url, to: destinationURL)
+                                url.stopAccessingSecurityScopedResource()
+                                DispatchQueue.main.async {
+                                    self.loadFiles()
+                                    HapticFeedbackGenerator.generateNotificationFeedback(type: .success)
+                                }
+                            }
+                        } catch {
+                            print("Error dropping file: \(error)")
+                            DispatchQueue.main.async {
+                                self.utilities.handleError(in: self, error: error, withTitle: "File Drop Error")
+                            }
                         }
                     }
                 }
