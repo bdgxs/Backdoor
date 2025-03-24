@@ -15,7 +15,7 @@ jobs:
 
       - name: Fetch and update release info
         run: |
-          release_info=$(curl -s https://api.github.com/repos/bdgxs/Backdoor/releases/latest)
+          release_info=$(curl -s https://api.github.com/repos/bdgxs/Backdoor/releases/tags/0.0.8)
 
           clean_release_info=$(echo "$release_info" | tr -d '\000-\037')
 
