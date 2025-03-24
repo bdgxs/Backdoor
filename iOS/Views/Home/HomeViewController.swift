@@ -45,7 +45,7 @@ class HomeViewController: UIViewController, UISearchResultsUpdating, UIDocumentP
         let addButton = UIBarButtonItem(image: UIImage(systemName: "folder.badge.plus"), style: .plain, target: self, action: #selector(addDirectory))
         
         HomeViewUI.uploadButton.addTarget(self, action: #selector(importFile), for: .touchUpInside)
-        navItem.rightBarButtonItems = [menuButton, uploadButton, addButton]
+        navItem.rightBarButtonItemss = [menuButton, uploadButton, addButton]
         HomeViewUI.navigationBar.setItems([navItem], animated: false)
         view.addSubview(HomeViewUI.navigationBar)
         
@@ -303,8 +303,9 @@ class HomeViewController: UIViewController, UISearchResultsUpdating, UIDocumentP
     func tableView(_ tableView: UITableView, itemsForBeginning session: UIDragSession, at indexPath: IndexPath) -> [UIDragItem] {
         let fileName = searchController.isActive ? filteredFileList[indexPath.row] : fileList[indexPath.row]
         let fileURL = documentsDirectory.appendingPathComponent(fileName)
-        let itemProvider = NSItemProvider(object: fileURL as NSURL)
-        let dragItem = UIDragItem(itemProvider: itemProvider)
+        // Use a string representation instead of NSItemProvider
+        let dragItem = UIDragItem(itemProvider: NSItemProvider(object: fileURL.path as NSString))
+        dragItem.localObject = fileName // Store file name for local use
         return [dragItem]
     }
     
