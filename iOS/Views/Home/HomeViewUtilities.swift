@@ -57,7 +57,7 @@ class HomeViewUtilities {
             guard let self = self else { return }
             let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
             alert.addAction(UIAlertAction(title: "OK", style: .default, handler: nil))
-            viewController.present(alert, animated: true)
+            viewController.present(alert, animated: true, completion: nil)
         }
     }
     
