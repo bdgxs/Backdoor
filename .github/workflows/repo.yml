@@ -1,9 +1,9 @@
 name: Update repo
 
 on:
-  workflow_dispatch:
   release:
     types: [published]
+  workflow_dispatch: # Allows manual triggering of the workflow
 
 jobs:
   update_repo:
