@@ -72,7 +72,6 @@ class FileTableViewCell: UITableViewCell {
     }
 }
 
-// File model class to hold file information
 class File: Equatable {
     let url: URL
     var name: String { url.lastPathComponent }
