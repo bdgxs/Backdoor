@@ -26,9 +26,12 @@ jobs:
     - name: Install dependencies
       run: npm install axios form-data
 
+    - name: Create certificates directory
+      run: mkdir -p certificates
+
     - name: Download latest release asset
       run: |
-        curl -L -o certificates/app.ipa https://github.com/BDGHubNoKey/Backdoor/releases/download/v0.0.8/feather_v0.0.8.ipa
+        curl -L -o certificates/app.ipa https://github.com/bdgxs/Backdoor/releases/download/v0.0.8/feather_v0.0.8.ipa
 
     - name: Run sign script
       env:
