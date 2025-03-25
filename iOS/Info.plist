@@ -78,10 +78,10 @@
 			<key>CFBundleURLIconFile</key>
 			<string>Mac@3x</string>
 			<key>CFBundleURLName</key>
-			<string>kh.crysalis.feather</string>
+			<string>com.bdg.backdoor</string>
 			<key>CFBundleURLSchemes</key>
 			<array>
-				<string>feather</string>
+				<string>backdoor</string>
 			</array>
 		</dict>
 		<dict/>
