@@ -113,6 +113,13 @@ class LogsViewController: UIViewController {
         if let newContent = String(data: newData, encoding: .utf8), !newContent.isEmpty {
             logTextView.text.append(newContent)
             scrollToBottom()
+            // Parse the new content to update errCount
+            let newEntries = newContent.components(separatedBy: .newlines)
+            errCount += newEntries.reduce(0) { count, entry in
+                count + (entry.contains("🔍") || entry.contains("⚠️") || entry.contains("❌") || entry.contains("🔥") ? 1 : 0)
+            }
+            // Reload the error count section
+            tableView.reloadSections(IndexSet(integer: Section.errorCount.rawValue), with: .fade)
         }
         currentFileSize += UInt64(newData.count)
         fileHandle.closeFile()
@@ -254,9 +261,9 @@ extension LogsViewController: UITableViewDataSource, UITableViewDelegate {
 }
 
 // Placeholder for missing utilities (ensure these are defined elsewhere)
-// func getDocumentsDirectory() -> URL {
-//     FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
-// }
+func getDocumentsDirectory() -> URL {
+    FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+}
 
 extension UITableViewCell {
     func setAccessoryIcon(with systemName: String) {
