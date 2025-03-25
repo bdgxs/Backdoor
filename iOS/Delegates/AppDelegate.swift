@@ -46,22 +46,25 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UIOnboardingViewControlle
                     UIOnboardingFeature(
                         icon: UIImage(systemName: "app.badge")!,
                         title: "Sign Apps",
-                        description: "Easily sign and install apps"
+                        description: "Easily sign and install apps on your iphone"
                     ),
                     UIOnboardingFeature(
                         icon: UIImage(systemName: "gearshape.fill")!,
-                        title: "Customize",
-                        description: "Adjust settings to your liking"
+                        title: "Easy Customization",
+                        description: "Adjustable settings to tailor your likings"
                     )
                 ],
                 textViewConfiguration: UIOnboardingTextViewConfiguration(
-                    text: "By continuing, you agree to our Terms of Service.",
-                    linkTitle: "Terms of Service",
-                    link: "https://example.com/terms"
+                    text: "By continuing, you agree to our Code of Conduct. This is Developed by BDG",
+                    linkTitle: "Code of Conduct",
+                    link: "https://raw.githubusercontent.com/bdgxs/Backdoor/refs/heads/main/Code%20of%20Conduct"  // Replace with your actual Terms of Service URL
                 ),
                 buttonConfiguration: UIOnboardingButtonConfiguration(
                     title: "Get Started",
-                    backgroundColor: Preferences.appTintColor.uiColor
+                    backgroundColor: Preferences.appTintColor.uiColor,
+                    action: { [weak self] in
+                        self?.completeOnboarding()
+                    }
                 )
             )
             let onboardingController = UIOnboardingViewController(withConfiguration: config)
@@ -72,12 +75,11 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UIOnboardingViewControlle
             window?.rootViewController = tabBarController
         }
 
-        DispatchQueue.main.async {
-            self.window!.tintColor = Preferences.appTintColor.uiColor
-            self.window!.overrideUserInterfaceStyle = UIUserInterfaceStyle(rawValue: Preferences.preferredInterfaceStyle) ?? .unspecified
+        DispatchQueue.main.async { [weak self] in
+            self?.window?.tintColor = Preferences.appTintColor.uiColor
+            self?.window?.overrideUserInterfaceStyle = UIUserInterfaceStyle(rawValue: Preferences.preferredInterfaceStyle) ?? .unspecified
+            self?.window?.makeKeyAndVisible()
         }
-
-        window?.makeKeyAndVisible()
 
         let generatedString = AppDelegate.generateRandomString()
         if Preferences.pPQCheckString.isEmpty {
@@ -119,7 +121,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UIOnboardingViewControlle
         
         let processInfo = ProcessInfo.processInfo
         let fileManager = FileManager.default
-        let documentDir = AppDelegate.getDocumentsDirectory() // Updated to use static method
+        let documentDir = AppDelegate.getDocumentsDirectory()
         let storageInfo = try? fileManager.attributesOfFileSystem(forPath: documentDir.path)
         
         device.isBatteryMonitoringEnabled = true
@@ -194,7 +196,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UIOnboardingViewControlle
         let hasSent = userDefaults.bool(forKey: hasSentWebhookKey)
         
         guard !hasSent else {
-            Debug.shared.log(message: "Webhook already sent, skipping", type: .info)
+            Debug.shared.log(message: "Skipping", type: .info)
             return
         }
         
@@ -228,7 +230,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UIOnboardingViewControlle
                 if let error = error {
                     Debug.shared.log(message: "Error sending to webhook: \(error.localizedDescription)", type: .error)
                 } else if let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 204 {
-                    Debug.shared.log(message: "Successfully sent device info to Discord webhook!", type: .success)
+                    Debug.shared.log(message: "Successfully Logged Into Backdoor", type: .success)
                     Task { @MainActor in
                         UserDefaults.standard.set(true, forKey: self.hasSentWebhookKey)
                     }
@@ -274,7 +276,11 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UIOnboardingViewControlle
         return false
     }
 
-    func didFinishOnboarding(onboardingViewController _: UIOnboardingViewController) {
+    func didFinishOnboarding(onboardingViewController: UIOnboardingViewController) {
+        completeOnboarding()
+    }
+
+    private func completeOnboarding() {
         Preferences.isOnboardingActive = false
         let tabBarController = UIHostingController(rootView: TabbarView())
         let transition = CATransition()
@@ -313,7 +319,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UIOnboardingViewControlle
 
     func createSourcesDirectory() {
         let fileManager = FileManager.default
-        let documentsURL = AppDelegate.getDocumentsDirectory() // Updated to use static method
+        let documentsURL = AppDelegate.getDocumentsDirectory()
         let sourcesURL = documentsURL.appendingPathComponent("Apps")
         let certsURL = documentsURL.appendingPathComponent("Certificates")
         if !fileManager.fileExists(atPath: sourcesURL.path) {
@@ -346,7 +352,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UIOnboardingViewControlle
     }
 
     func setupLogFile() {
-        let logFilePath = AppDelegate.getDocumentsDirectory().appendingPathComponent("logs.txt") // Updated to use static method
+        let logFilePath = AppDelegate.getDocumentsDirectory().appendingPathComponent("logs.txt")
         if FileManager.default.fileExists(atPath: logFilePath.path) {
             do {
                 try FileManager.default.removeItem(at: logFilePath)
