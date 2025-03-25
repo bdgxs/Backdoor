@@ -252,12 +252,14 @@ extension LibraryViewController {
         case 0:
             app = isFiltering ? filteredSignedApps[indexPath.row] : signedApps?[indexPath.row]
             if let signedApp = app as? SignedApps {
-                cell.configure(withSignedApp: signedApp)
+                let filePath = signedApp.filePath ?? AppDelegate.getDocumentsDirectory().appendingPathComponent("placeholder")
+                cell.configure(with: signedApp, filePath: filePath)
             }
         case 1:
             app = isFiltering ? filteredDownloadedApps[indexPath.row] : downloadedApps?[indexPath.row]
             if let downloadedApp = app as? DownloadedApps {
-                cell.configure(withDownloadedApp: downloadedApp)
+                let filePath = downloadedApp.filePath ?? AppDelegate.getDocumentsDirectory().appendingPathComponent("placeholder")
+                cell.configure(with: downloadedApp, filePath: filePath)
             }
         default:
             break
@@ -343,7 +345,7 @@ extension LibraryViewController {
             return UIContextMenuConfiguration(identifier: nil, previewProvider: nil) { _ in
                 UIMenu(children: [
                     UIAction(title: "Share", image: UIImage(systemName: "square.and.arrow.up")) { [weak self] _ in
-                        self?.shareFile(at: filePath.path) // Convert URL to String
+                        self?.shareFile(at: filePath.path)
                     }
                 ])
             }
@@ -354,7 +356,7 @@ extension LibraryViewController {
             return UIContextMenuConfiguration(identifier: nil, previewProvider: nil) { _ in
                 UIMenu(children: [
                     UIAction(title: "Share", image: UIImage(systemName: "square.and.arrow.up")) { [weak self] _ in
-                        self?.shareFile(at: filePath.path) // Convert URL to String
+                        self?.shareFile(at: filePath.path)
                     }
                 ])
             }
@@ -421,7 +423,7 @@ extension LibraryViewController {
         return alert
     }
     
-    private func shareFile(at filePath: String) { // Changed parameter type to String
+    private func shareFile(at filePath: String) {
         let activityVC = UIActivityViewController(activityItems: [URL(fileURLWithPath: filePath)], applicationActivities: nil)
         present(activityVC, animated: true)
     }
@@ -430,12 +432,5 @@ extension LibraryViewController {
         var isDebug = false
         assert({ isDebug = true; return true }())
         return isDebug
-    }
-}
-
-// Assuming these are defined elsewhere
-extension UINavigationController {
-    func shouldPresentFullScreen() {
-        self.modalPresentationStyle = .fullScreen
     }
 }
