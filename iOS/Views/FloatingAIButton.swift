@@ -4,11 +4,20 @@ import UIKit
 final class FloatingAIButton: UIView {
     private let button: UIButton = {
         let btn = UIButton(type: .custom)
-        btn.backgroundColor = .systemBlue
-        btn.layer.cornerRadius = 28
-        btn.setImage(UIImage(systemName: "brain"), for: .normal)
+        btn.layer.cornerRadius = 30
+        btn.setImage(UIImage(systemName: "sparkles", withConfiguration: UIImage.SymbolConfiguration(pointSize: 24, weight: .medium)), for: .normal)
         btn.tintColor = .white
         btn.accessibilityLabel = "AI Assistant"
+        
+        // Gradient background
+        let gradient = CAGradientLayer()
+        gradient.frame = CGRect(x: 0, y: 0, width: 60, height: 60)
+        gradient.colors = [UIColor.systemBlue.cgColor, UIColor.systemPurple.cgColor]
+        gradient.startPoint = CGPoint(x: 0, y: 0)
+        gradient.endPoint = CGPoint(x: 1, y: 1)
+        gradient.cornerRadius = 30
+        btn.layer.insertSublayer(gradient, at: 0)
+        
         return btn
     }()
     
@@ -17,6 +26,7 @@ final class FloatingAIButton: UIView {
     override init(frame: CGRect) {
         super.init(frame: frame)
         setupView()
+        startPulseAnimation()
     }
     
     required init?(coder: NSCoder) {
@@ -33,17 +43,29 @@ final class FloatingAIButton: UIView {
             button.bottomAnchor.constraint(equalTo: bottomAnchor)
         ])
         
-        frame = CGRect(x: 0, y: 0, width: 56, height: 56)
+        frame = CGRect(x: 0, y: 0, width: 60, height: 60)
         
         layer.shadowColor = UIColor.black.cgColor
-        layer.shadowOpacity = 0.3
-        layer.shadowOffset = CGSize(width: 0, height: 2)
-        layer.shadowRadius = 4
+        layer.shadowOpacity = 0.4
+        layer.shadowOffset = CGSize(width: 0, height: 4)
+        layer.shadowRadius = 6
         
         let panGesture = UIPanGestureRecognizer(target: self, action: #selector(handlePan))
         addGestureRecognizer(panGesture)
         
         button.addTarget(self, action: #selector(buttonTapped), for: .touchUpInside)
+    }
+    
+    private func startPulseAnimation() {
+        let pulse = CASpringAnimation(keyPath: "transform.scale")
+        pulse.duration = 0.6
+        pulse.fromValue = 1.0
+        pulse.toValue = 1.1
+        pulse.autoreverses = true
+        pulse.repeatCount = .infinity
+        pulse.initialVelocity = 0.5
+        pulse.damping = 1.0
+        layer.add(pulse, forKey: "pulse")
     }
     
     @objc private func handlePan(_ gesture: UIPanGestureRecognizer) {
