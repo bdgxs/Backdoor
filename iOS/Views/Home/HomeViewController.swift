@@ -11,7 +11,7 @@ class HomeViewController: UIViewController, UISearchResultsUpdating, UIDocumentP
     private var sortOrder: SortOrder = .name
     private let fileHandlers = HomeViewFileHandlers()
     private let utilities = HomeViewUtilities()
-    private let tableHandlers = HomeViewTableHandlers() // New handler instance
+    private let tableHandlers = HomeViewTableHandlers(utilities: HomeViewUtilities()) // Initialize with utilities
     
     var documentsDirectory: URL {
         let directory = fileManager.urls(for: .documentDirectory, in: .userDomainMask).first!.appendingPathComponent("files")
@@ -348,7 +348,7 @@ class HomeViewController: UIViewController, UISearchResultsUpdating, UIDocumentP
     
     // MARK: - UITableViewDropDelegate
     func tableView(_ tableView: UITableView, performDropWith coordinator: UITableViewDropCoordinator) {
-        tableHandlers.tableView(tableView, performDropWith: coordinator, fileList: &fileList)
+        tableHandlers.tableView(tableView, performDropWith: coordinator, fileList: &fileList, documentsDirectory: documentsDirectory, loadFiles: loadFiles)
     }
     
     // MARK: - FileHandlingDelegate
