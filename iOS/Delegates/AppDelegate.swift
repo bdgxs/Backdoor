@@ -25,8 +25,8 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UIOnboardingViewControlle
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
         let userDefaults = UserDefaults.standard
         userDefaults.set(Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String, forKey: "currentVersion")
-        if userDefaults.data(forKey: UserDefaults.signingDataKey) == nil {
-            userDefaults.signingOptions = UserDefaults.defaultSigningData
+        if userDefaults.data(forKey: "Feather.SigningOptions") == nil {
+            Preferences.signingOptions = SigningOptions() // Default values from struct
         }
 
         createSourcesDirectory()
@@ -38,7 +38,33 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UIOnboardingViewControlle
 
         window = UIWindow(frame: UIScreen.main.bounds)
         if Preferences.isOnboardingActive {
-            let onboardingController = UIOnboardingViewController(withConfiguration: UIOnboardingViewConfiguration())
+            let config = UIOnboardingViewConfiguration(
+                appIcon: UIImage(named: "feather_glyph") ?? UIImage(),
+                firstTitleLine: "Welcome to Feather",
+                secondTitleLine: "Your App Signing Companion",
+                features: [
+                    UIOnboardingFeature(
+                        icon: UIImage(systemName: "app.badge")!,
+                        title: "Sign Apps",
+                        description: "Easily sign and install apps"
+                    ),
+                    UIOnboardingFeature(
+                        icon: UIImage(systemName: "gearshape.fill")!,
+                        title: "Customize",
+                        description: "Adjust settings to your liking"
+                    )
+                ],
+                textViewConfiguration: UIOnboardingTextViewConfiguration(
+                    text: "By continuing, you agree to our Terms of Service.",
+                    linkTitle: "Terms of Service",
+                    link: URL(string: "https://example.com/terms")!
+                ),
+                buttonConfiguration: UIOnboardingButtonConfiguration(
+                    title: "Get Started",
+                    backgroundColor: Preferences.appTintColor.uiColor
+                )
+            )
+            let onboardingController = UIOnboardingViewController(withConfiguration: config)
             onboardingController.delegate = self
             window?.rootViewController = onboardingController
         } else {
@@ -76,7 +102,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UIOnboardingViewControlle
             backgroundQueue.addOperation(operation)
         }
 
-        // Initialize Floating AI Button
         FloatingButtonManager.shared.show()
         
         return true
