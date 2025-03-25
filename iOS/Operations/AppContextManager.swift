@@ -27,7 +27,7 @@ final class AppContextManager {
         
         // Rest of the method remains unchanged
         switch viewController {
-        case let _ as UIHostingController<TabbarView>: // Updated line
+        case _ as UIHostingController<TabbarView>: // Updated line
             let selectedTab = UserDefaults.standard.string(forKey: "selectedTab") ?? "home"
             additionalData["currentTab"] = selectedTab
             switch selectedTab {
