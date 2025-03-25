@@ -31,7 +31,7 @@ class LogsViewController: UIViewController {
     
     private func setupNavigation() {
         navigationItem.largeTitleDisplayMode = .never
-        title = String.localized("LOGS_VIEW_TITLE") // "Backdoor Logs"
+        title = String.localized("LOGS_VIEW_TITLE")
     }
     
     private func setupViews() {
@@ -69,7 +69,7 @@ class LogsViewController: UIViewController {
     }
     
     private func loadInitialLogContents() {
-        let logFilePath = AppDelegate.getDocumentsDirectory().appendingPathComponent("logs.txt")
+        let logFilePath = getDocumentsDirectory().appendingPathComponent("logs.txt")
         do {
             let data = try Data(contentsOf: logFilePath)
             logTextView.text = String(data: data, encoding: .utf8) ?? String.localized("LOGS_FAILED_TO_LOAD")
@@ -81,7 +81,7 @@ class LogsViewController: UIViewController {
     }
     
     private func startObservingLogFile() {
-        let logFilePath = AppDelegate.getDocumentsDirectory().appendingPathComponent("logs.txt").path
+        let logFilePath = getDocumentsDirectory().appendingPathComponent("logs.txt").path
         let fileDescriptor = open(logFilePath, O_EVTONLY)
         
         guard fileDescriptor != -1 else {
@@ -102,7 +102,7 @@ class LogsViewController: UIViewController {
     }
     
     private func loadNewLogContents() {
-        let logFilePath = AppDelegate.getDocumentsDirectory().appendingPathComponent("logs.txt")
+        let logFilePath = getDocumentsDirectory().appendingPathComponent("logs.txt")
         guard let fileHandle = try? FileHandle(forReadingFrom: logFilePath) else {
             logTextView.text.append("\n" + String.localized("LOGS_READ_FAILED"))
             return
@@ -113,13 +113,6 @@ class LogsViewController: UIViewController {
         if let newContent = String(data: newData, encoding: .utf8), !newContent.isEmpty {
             logTextView.text.append(newContent)
             scrollToBottom()
-            // Parse the new content to update errCount
-            let newEntries = newContent.components(separatedBy: .newlines)
-            errCount += newEntries.reduce(0) { count, entry in
-                count + (entry.contains("🔍") || entry.contains("⚠️") || entry.contains("❌") || entry.contains("🔥") ? 1 : 0)
-            }
-            // Reload the error count section
-            tableView.reloadSections(IndexSet(integer: Section.errorCount.rawValue), with: .fade)
         }
         currentFileSize += UInt64(newData.count)
         fileHandle.closeFile()
@@ -131,7 +124,7 @@ class LogsViewController: UIViewController {
     }
     
     private func parseLogFile() {
-        let logFilePath = AppDelegate.getDocumentsDirectory().appendingPathComponent("logs.txt")
+        let logFilePath = getDocumentsDirectory().appendingPathComponent("logs.txt")
         do {
             let logContents = try String(contentsOf: logFilePath)
             let logEntries = logContents.components(separatedBy: .newlines)
@@ -178,7 +171,7 @@ extension LogsViewController: UITableViewDataSource, UITableViewDelegate {
         
         switch Section(rawValue: indexPath.section) {
         case .errorCount:
-            cell.textLabel?.text = String.localized("LOGS_VIEW_SECTION_TITLE_ERROR", arguments: ["\(errCount)"]) // e.g., "5 Critical Errors."
+            cell.textLabel?.text = String.localized("LOGS_VIEW_SECTION_TITLE_ERROR", arguments: ["\(errCount)"])
             cell.textLabel?.textColor = .white
             cell.textLabel?.font = .boldSystemFont(ofSize: 14)
             cell.backgroundColor = .systemRed
@@ -200,7 +193,7 @@ extension LogsViewController: UITableViewDataSource, UITableViewDelegate {
 
         switch actionRow {
         case .share:
-            cell.textLabel?.text = String.localized("LOGS_VIEW_SECTION_TITLE_SHARE") // "Share Logs"
+            cell.textLabel?.text = String.localized("LOGS_VIEW_SECTION_TITLE_SHARE")
             cell.textLabel?.textColor = .tintColor
             cell.selectionStyle = .default
             cell.setAccessoryIcon(with: "square.and.arrow.up")
@@ -208,7 +201,7 @@ extension LogsViewController: UITableViewDataSource, UITableViewDelegate {
             cell.accessibilityHint = String.localized("LOGS_SHARE_ACCESSIBILITY_HINT")
             
         case .copy:
-            cell.textLabel?.text = String.localized("LOGS_VIEW_SECTION_TITLE_COPY") // "Copy Logs"
+            cell.textLabel?.text = String.localized("LOGS_VIEW_SECTION_TITLE_COPY")
             cell.textLabel?.textColor = .tintColor
             cell.selectionStyle = .default
             cell.setAccessoryIcon(with: "arrow.up.right")
@@ -231,7 +224,7 @@ extension LogsViewController: UITableViewDataSource, UITableViewDelegate {
     }
     
     private func shareLogs() {
-        let logFilePath = AppDelegate.getDocumentsDirectory().appendingPathComponent("logs.txt")
+        let logFilePath = getDocumentsDirectory().appendingPathComponent("logs.txt")
         let activityVC = UIActivityViewController(activityItems: [logFilePath], applicationActivities: nil)
         
         if let sheet = activityVC.sheetPresentationController {
@@ -243,13 +236,13 @@ extension LogsViewController: UITableViewDataSource, UITableViewDelegate {
     }
     
     private func copyLogs() {
-        let logFilePath = AppDelegate.getDocumentsDirectory().appendingPathComponent("logs.txt")
+        let logFilePath = getDocumentsDirectory().appendingPathComponent("logs.txt")
         do {
             let logContents = try String(contentsOf: logFilePath, encoding: .utf8)
             UIPasteboard.general.string = logContents
-            showAlert(title: String.localized("ALERT_COPIED"), message: String.localized("LOGS_VIEW_SUCCESS_DESCRIPTION")) // "Log contents have been copied to clipboard."
+            showAlert(title: String.localized("ALERT_COPIED"), message: String.localized("LOGS_VIEW_SUCCESS_DESCRIPTION"))
         } catch {
-            showAlert(title: String.localized("ALERT_ERROR"), message: String.localized("LOGS_VIEW_FAIL_DESCRIPTION")) // "Failed to copy log contents."
+            showAlert(title: String.localized("ALERT_ERROR"), message: String.localized("LOGS_VIEW_ERROR_DESCRIPTION", arguments: [error.localizedDescription]))
         }
     }
     
@@ -261,9 +254,9 @@ extension LogsViewController: UITableViewDataSource, UITableViewDelegate {
 }
 
 // Placeholder for missing utilities (ensure these are defined elsewhere)
-func AppDelegate.getDocumentsDirectory() -> URL {
-    FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
-}
+// func getDocumentsDirectory() -> URL {
+//     FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+// }
 
 extension UITableViewCell {
     func setAccessoryIcon(with systemName: String) {
