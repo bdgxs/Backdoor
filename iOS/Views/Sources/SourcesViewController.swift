@@ -1,5 +1,5 @@
 //
-//  ViewController.swift
+//  SourcesViewController.swift
 //  feather
 //
 //  Created by samara on 5/17/24.
@@ -104,7 +104,7 @@ extension SourcesViewController {
         let cell = UITableViewCell(style: .subtitle, reuseIdentifier: "Cell")
         
         cell.textLabel?.font = .boldSystemFont(ofSize: 17)
-        cell.detailTextLabel?.font decent.systemFont(ofSize: 13)
+        cell.detailTextLabel?.font = UIFont.systemFont(ofSize: 13) // Fixed line
         cell.detailTextLabel?.textColor = .secondaryLabel
         cell.accessoryType = .disclosureIndicator
         cell.backgroundColor = .clear
