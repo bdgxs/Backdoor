@@ -1,11 +1,3 @@
-//
-//  SourcesViewController.swift
-//  feather
-//
-//  Created by samara on 5/17/24.
-//  Copyright (c) 2024 Samara M (khcrysalis)
-//
-
 import UIKit
 import Nuke
 import CoreData
@@ -15,7 +7,7 @@ class SourcesViewController: UITableViewController {
     var sources: [Source] = []
     public var searchController: UISearchController!
     let searchResultsTableViewController = SearchResultsTableViewController()
-    private lazy var refreshControl: UIRefreshControl = {
+    public lazy var refreshControl: UIRefreshControl = { // Changed to public
         let control = UIRefreshControl()
         control.addTarget(self, action: #selector(fetch), for: .valueChanged)
         return control
@@ -58,9 +50,8 @@ class SourcesViewController: UITableViewController {
         self.title = String.localized("TAB_SOURCES")
     }
 
-    // Explicitly override supportedInterfaceOrientations to fix accessibility error
     public override var supportedInterfaceOrientations: UIInterfaceOrientationMask {
-        return .portrait // Adjust as needed for your app's requirements
+        return .portrait
     }
 }
 
@@ -109,7 +100,7 @@ extension SourcesViewController {
         let cell = UITableViewCell(style: .subtitle, reuseIdentifier: "Cell")
         
         cell.textLabel?.font = .boldSystemFont(ofSize: 17)
-        cell.detailTextLabel?.font = UIFont.systemFont(ofSize: 13) // Fixed line
+        cell.detailTextLabel?.font = UIFont.systemFont(ofSize: 13)
         cell.detailTextLabel?.textColor = .secondaryLabel
         cell.accessoryType = .disclosureIndicator
         cell.backgroundColor = .clear
