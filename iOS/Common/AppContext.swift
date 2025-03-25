@@ -32,42 +32,44 @@ final class AppContextManager {
         // Add screen-specific context
         switch viewController {
         case let vc as UIHostingController<TabbarView>:
-            additionalData["currentTab"] = "MainTabBar"
-            // Try to determine the selected tab (this might need adjustment based on TabbarView implementation)
-            if let tabBarController = vc.rootView as? UITabBarController {
-                switch tabBarController.selectedIndex {
-                case 0: // Assuming Sources is the first tab
-                    additionalData["currentTab"] = "Sources"
-                case 1: // Assuming Store/Hub is the second tab
-                    additionalData["currentTab"] = "Store"
-                case 2: // Assuming Library/Apps is the third tab
-                    additionalData["currentTab"] = "Library"
-                case 3: // Assuming Signing is the fourth tab
-                    additionalData["currentTab"] = "Signing"
-                case 4: // Assuming Settings is the fifth tab
-                    additionalData["currentTab"] = "Settings"
-                default:
-                    additionalData["currentTab"] = "Home"
-                }
-            }
+            // Determine the current tab from UserDefaults
+            let selectedTab = UserDefaults.standard.string(forKey: "selectedTab") ?? "home"
+            additionalData["currentTab"] = selectedTab
             
-        // Add cases for other view controllers if they are presented modally or pushed
-        default:
-            // If a specific view controller is presented, we can add more context
-            let screenName = String(describing: type(of: viewController))
-            if screenName.contains("Sources") {
+            // Add tab-specific context
+            switch selectedTab {
+            case "home":
+                additionalData["currentScreen"] = "Home"
+                // Add more specific context if needed (e.g., featured apps)
+            case "sources":
                 additionalData["currentScreen"] = "Sources"
                 // Add more specific context if needed (e.g., selected source)
-            } else if screenName.contains("Hub") || screenName.contains("Store") {
-                additionalData["currentScreen"] = "Store"
-            } else if screenName.contains("Apps") || screenName.contains("Library") {
+            case "library":
                 additionalData["currentScreen"] = "Library"
-            } else if screenName.contains("Signing") {
-                additionalData["currentScreen"] = "Signing"
+                // Add more specific context if needed (e.g., selected app)
+            case "settings":
+                additionalData["currentScreen"] = "Settings"
+                // Add more specific context if needed (e.g., current settings)
+            case "bdgHub":
+                additionalData["currentScreen"] = "BDG Hub"
+                // Add more specific context if needed (e.g., current URL in WebView)
+            default:
+                additionalData["currentScreen"] = "Unknown"
+            }
+            
+        // Handle other view controllers (e.g., if a modal or pushed view is presented)
+        default:
+            let screenName = String(describing: type(of: viewController))
+            if screenName.contains("Home") {
+                additionalData["currentScreen"] = "Home"
+            } else if screenName.contains("Sources") {
+                additionalData["currentScreen"] = "Sources"
+            } else if screenName.contains("Library") {
+                additionalData["currentScreen"] = "Library"
             } else if screenName.contains("Settings") {
                 additionalData["currentScreen"] = "Settings"
-            } else if screenName.contains("Home") {
-                additionalData["currentScreen"] = "Home"
+            } else if screenName.contains("WebView") || screenName.contains("BDGHub") {
+                additionalData["currentScreen"] = "BDG Hub"
             }
         }
         
