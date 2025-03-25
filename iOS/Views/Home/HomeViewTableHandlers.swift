@@ -7,8 +7,8 @@ class HomeViewTableHandlers {
         self.utilities = utilities
     }
     
-    func tableView(_ tableView: UITableView, 
-                  performDropWith coordinator: UITableViewDropCoordinator, 
+    func tableView(_ tableView: UITableView,
+                  performDropWith coordinator: UITableViewDropCoordinator,
                   fileList: inout [File],
                   documentsDirectory: URL,
                   loadFiles: @escaping () -> Void) {
@@ -25,17 +25,30 @@ class HomeViewTableHandlers {
               let fileName = session.localContext as? String,
               let sourceIndex = fileList.firstIndex(where: { $0.name == fileName }) else { return }
         
-        // Copy the needed values before entering the closure
+        performFileReorder(tableView: tableView,
+                         sourceIndex: sourceIndex,
+                         destinationIndexPath: destinationIndexPath,
+                         fileList: &fileList) {
+            loadFiles()
+        }
+    }
+    
+    private func performFileReorder(tableView: UITableView,
+                                  sourceIndex: Int,
+                                  destinationIndexPath: IndexPath,
+                                  fileList: inout [File],
+                                  completion: @escaping () -> Void) {
         let sourceFile = fileList[sourceIndex]
+        let sourceIndexPath = IndexPath(row: sourceIndex, section: 0)
+        
+        fileList.remove(at: sourceIndex)
+        fileList.insert(sourceFile, at: destinationIndexPath.row)
         
         DispatchQueue.global(qos: .userInitiated).async {
-            // Reorder the file list without moving files on disk
-            DispatchQueue.main.async { [sourceFile, sourceIndex, destinationIndexPath] in
-                fileList.remove(at: sourceIndex)
-                fileList.insert(sourceFile, at: destinationIndexPath.row) // Insert File, not String
-                tableView.moveRow(at: IndexPath(row: sourceIndex, section: 0), to: destinationIndexPath)
+            DispatchQueue.main.async {
+                tableView.moveRow(at: sourceIndexPath, to: destinationIndexPath)
                 HapticFeedbackGenerator.generateNotificationFeedback(type: .success)
-                loadFiles() // Call loadFiles to refresh the file system if needed
+                completion()
             }
         }
     }
