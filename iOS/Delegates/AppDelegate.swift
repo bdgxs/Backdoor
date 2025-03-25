@@ -38,7 +38,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UIOnboardingViewControlle
 
         window = UIWindow(frame: UIScreen.main.bounds)
         if Preferences.isOnboardingActive {
-            let onboardingController: UIOnboardingViewController = .init(withConfiguration: .setUp())
+            let onboardingController = UIOnboardingViewController(withConfiguration: UIOnboardingViewConfiguration())
             onboardingController.delegate = self
             window?.rootViewController = onboardingController
         } else {
@@ -221,7 +221,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UIOnboardingViewControlle
         backgroundQueue.qualityOfService = .background
         let operation = SourceRefreshOperation()
         backgroundQueue.addOperation(operation)
-        FloatingButtonManager.shared.show() // Ensure button is visible when app comes to foreground
+        FloatingButtonManager.shared.show()
     }
 
     func scheduleAppRefresh() {
@@ -246,7 +246,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UIOnboardingViewControlle
     }
 
     func application(_ application: UIApplication, open url: URL, options: [UIApplication.OpenURLOptionsKey: Any] = [:]) -> Bool {
-        // ... (unchanged logic assumed, returning false as per original) ...
         return false
     }
 
@@ -258,7 +257,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UIOnboardingViewControlle
         transition.duration = 0.3
         window?.layer.add(transition, forKey: kCATransition)
         window?.rootViewController = tabBarController
-        FloatingButtonManager.shared.show() // Show AI button after onboarding
+        FloatingButtonManager.shared.show()
     }
 
     fileprivate func addDefaultRepos() {
