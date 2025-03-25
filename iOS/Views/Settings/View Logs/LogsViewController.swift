@@ -31,7 +31,7 @@ class LogsViewController: UIViewController {
     
     private func setupNavigation() {
         navigationItem.largeTitleDisplayMode = .never
-        title = String.localized("LOGS_VIEW_TITLE")
+        title = String.localized("LOGS_VIEW_TITLE") // "Backdoor Logs"
     }
     
     private func setupViews() {
@@ -178,7 +178,7 @@ extension LogsViewController: UITableViewDataSource, UITableViewDelegate {
         
         switch Section(rawValue: indexPath.section) {
         case .errorCount:
-            cell.textLabel?.text = String.localized("LOGS_VIEW_SECTION_TITLE_ERROR", arguments: ["\(errCount)"])
+            cell.textLabel?.text = String.localized("LOGS_VIEW_SECTION_TITLE_ERROR", arguments: ["\(errCount)"]) // e.g., "5 Critical Errors."
             cell.textLabel?.textColor = .white
             cell.textLabel?.font = .boldSystemFont(ofSize: 14)
             cell.backgroundColor = .systemRed
@@ -200,7 +200,7 @@ extension LogsViewController: UITableViewDataSource, UITableViewDelegate {
 
         switch actionRow {
         case .share:
-            cell.textLabel?.text = String.localized("LOGS_VIEW_SECTION_TITLE_SHARE")
+            cell.textLabel?.text = String.localized("LOGS_VIEW_SECTION_TITLE_SHARE") // "Share Logs"
             cell.textLabel?.textColor = .tintColor
             cell.selectionStyle = .default
             cell.setAccessoryIcon(with: "square.and.arrow.up")
@@ -208,7 +208,7 @@ extension LogsViewController: UITableViewDataSource, UITableViewDelegate {
             cell.accessibilityHint = String.localized("LOGS_SHARE_ACCESSIBILITY_HINT")
             
         case .copy:
-            cell.textLabel?.text = String.localized("LOGS_VIEW_SECTION_TITLE_COPY")
+            cell.textLabel?.text = String.localized("LOGS_VIEW_SECTION_TITLE_COPY") // "Copy Logs"
             cell.textLabel?.textColor = .tintColor
             cell.selectionStyle = .default
             cell.setAccessoryIcon(with: "arrow.up.right")
@@ -247,9 +247,9 @@ extension LogsViewController: UITableViewDataSource, UITableViewDelegate {
         do {
             let logContents = try String(contentsOf: logFilePath, encoding: .utf8)
             UIPasteboard.general.string = logContents
-            showAlert(title: String.localized("ALERT_COPIED"), message: String.localized("LOGS_VIEW_SUCCESS_DESCRIPTION"))
+            showAlert(title: String.localized("ALERT_COPIED"), message: String.localized("LOGS_VIEW_SUCCESS_DESCRIPTION")) // "Log contents have been copied to clipboard."
         } catch {
-            showAlert(title: String.localized("ALERT_ERROR"), message: String.localized("LOGS_VIEW_ERROR_DESCRIPTION", arguments: [error.localizedDescription]))
+            showAlert(title: String.localized("ALERT_ERROR"), message: String.localized("LOGS_VIEW_FAIL_DESCRIPTION")) // "Failed to copy log contents."
         }
     }
     
