@@ -143,12 +143,14 @@ class HomeViewController: UIViewController, UISearchResultsUpdating, UIDocumentP
             guard let self = self else { return }
             do {
                 if url.startAccessingSecurityScopedResource() {
+                    defer { url.stopAccessingSecurityScopedResource() }
+                    
                     if url.pathExtension.lowercased() == "zip" {
                         try self.fileManager.unzipItem(at: url, to: destinationURL.deletingLastPathComponent())
                     } else {
                         try self.fileManager.copyItem(at: url, to: destinationURL)
                     }
-                    url.stopAccessingSecurityScopedResource()
+                    
                     DispatchQueue.main.async {
                         self.loadFiles()
                         HapticFeedbackGenerator.generateNotificationFeedback(type: .success)
