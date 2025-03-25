@@ -19,8 +19,11 @@ struct SigningOptions: Codable, CustomStringConvertible {
     var removeWatchPlaceHolder: Bool = false
     var bundleIdConfig: [String: String] = [:]
     var displayNameConfig: [String: String] = [:]
+    var forceMinimumVersion: String = "Automatic" // Added from SigningOptions.swift
+    var forceLightDarkAppearence: String = "Automatic" // Added from SigningOptions.swift
+    var certificate: Certificate? // Added from SigningOptions.swift
 
-    var description: String { // Fixed to use correct property name
+    var description: String { // Keep existing description
         """
         PPQ Check: \(ppqCheckProtection), Dynamic: \(dynamicProtection), Install After Signed: \(installAfterSigned),
         Immediately Install: \(immediatelyInstallFromSource), Remove Plugins: \(removePlugins),
@@ -127,7 +130,6 @@ struct CodableColor: Codable {
     }
 }
 
-// Moved SortOption here temporarily; ideally in SourceAppViewController.swift
 enum SortOption: String, Codable {
     case `default`
     case name
