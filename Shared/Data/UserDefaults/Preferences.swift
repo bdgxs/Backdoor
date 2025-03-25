@@ -1,6 +1,7 @@
 import Foundation
 import UIKit
 
+// Unambiguous struct for signing options
 struct SigningOptions: Codable, CustomStringConvertible {
     var ppqCheckProtection: Bool = false
     var dynamicProtection: Bool = false
@@ -20,7 +21,7 @@ struct SigningOptions: Codable, CustomStringConvertible {
     var bundleIdConfig: [String: String] = [:]
     var displayNameConfig: [String: String] = [:]
 
-    var description: String {
+    var descrição: String {
         return """
         PPQ Check: \(ppqCheckProtection), Dynamic: \(dynamicProtection), Install After Signed: \(installAfterSigned),
         Immediately Install: \(immediatelyInstallFromSource), Remove Plugins: \(removePlugins),
@@ -37,58 +38,59 @@ enum Preferences {
     static var installPathChangedCallback: ((String?) -> Void)?
     static let defaultInstallPath: String = "https://api.palera.in"
 
-    @Storage(key: "Feather.UserSpecifiedOnlinePath", defaultValue: defaultInstallPath)
+    // Using UserDefaultsStorage from Storage.swift
+    @UserDefaultsStorage(key: "Feather.UserSpecifiedOnlinePath", defaultValue: defaultInstallPath)
     static var onlinePath: String? { didSet { installPathChangedCallback?(onlinePath) } }
 
-    @Storage(key: "Feather.UserSelectedServer", defaultValue: false)
+    @UserDefaultsStorage(key: "Feather.UserSelectedServer", defaultValue: false)
     static var userSelectedServer: Bool
 
-    @Storage(key: "Feather.DefaultRepos", defaultValue: true)
+    @UserDefaultsStorage(key: "Feather.DefaultRepos", defaultValue: true)
     static var defaultRepos: Bool
 
-    @Storage(key: "Feather.AppUpdates", defaultValue: true)
+    @UserDefaultsStorage(key: "Feather.AppUpdates", defaultValue: true)
     static var appUpdates: Bool
 
-    @Storage(key: "Feather.GotSSLCerts", defaultValue: false)
+    @UserDefaultsStorage(key: "Feather.GotSSLCerts", defaultValue: false)
     static var gotSSLCerts: Bool
 
-    @Storage(key: "Feather.BDefaultRepos", defaultValue: false)
+    @UserDefaultsStorage(key: "Feather.BDefaultRepos", defaultValue: false)
     static var bDefaultRepos: Bool
 
-    @Storage(key: "Feather.PreferredInterfaceStyle", defaultValue: UIUserInterfaceStyle.unspecified.rawValue)
+    @UserDefaultsStorage(key: "Feather.PreferredInterfaceStyle", defaultValue: UIUserInterfaceStyle.unspecified.rawValue)
     static var preferredInterfaceStyle: Int
 
-    @Storage(key: "Feather.AppTintColor", defaultValue: CodableColor(.systemBlue))
+    @UserDefaultsStorage(key: "Feather.AppTintColor", defaultValue: CodableColor(.systemBlue))
     static var appTintColor: CodableColor
 
-    @Storage(key: "Feather.IsOnboardingActive", defaultValue: true)
+    @UserDefaultsStorage(key: "Feather.IsOnboardingActive", defaultValue: true)
     static var isOnboardingActive: Bool
 
-    @Storage(key: "Feather.SelectedCert", defaultValue: 0)
+    @UserDefaultsStorage(key: "Feather.SelectedCert", defaultValue: 0)
     static var selectedCert: Int
 
-    @Storage(key: "Feather.PPQCheckString", defaultValue: "")
+    @UserDefaultsStorage(key: "Feather.PPQCheckString", defaultValue: "")
     static var pPQCheckString: String
 
-    @Storage(key: "Feather.CertificateTitleAppIDtoTeamID", defaultValue: false)
+    @UserDefaultsStorage(key: "Feather.CertificateTitleAppIDtoTeamID", defaultValue: false)
     static var certificateTitleAppIDtoTeamID: Bool
 
-    @Storage(key: "Feather.AppDescriptionAppearence", defaultValue: 0)
+    @UserDefaultsStorage(key: "Feather.AppDescriptionAppearence", defaultValue: 0)
     static var appDescriptionAppearence: Int
 
-    @Storage(key: "UserPreferredLanguageCode", defaultValue: nil, callback: preferredLangChangedCallback)
+    @UserDefaultsStorage(key: "UserPreferredLanguageCode", defaultValue: nil, callback: preferredLangChangedCallback)
     static var preferredLanguageCode: String?
 
-    @Storage(key: "Feather.Beta", defaultValue: false)
+    @UserDefaultsStorage(key: "Feather.Beta", defaultValue: false)
     static var beta: Bool
 
-    @CodableStorage(key: "Feather.SigningOptions", defaultValue: SigningOptions())
+    @CodableUserDefaultsStorage(key: "Feather.SigningOptions", defaultValue: SigningOptions())
     static var signingOptions: SigningOptions
 
-    @CodableStorage(key: "SortOption", defaultValue: SortOption.default)
+    @CodableUserDefaultsStorage(key: "SortOption", defaultValue: SortOption.default)
     static var currentSortOption: SortOption
 
-    @Storage(key: "SortOptionAscending", defaultValue: true)
+    @UserDefaultsStorage(key: "SortOptionAscending", defaultValue: true)
     static var currentSortOptionAscending: Bool
 }
 
@@ -96,55 +98,6 @@ enum Preferences {
 fileprivate extension Preferences {
     static func preferredLangChangedCallback(newValue: String?) {
         Bundle.preferredLocalizationBundle = .makeLocalizationBundle(preferredLanguageCode: newValue)
-    }
-}
-
-// Storage Property Wrapper
-@propertyWrapper
-struct Storage<T> {
-    private let key: String
-    private let defaultValue: T
-    private let callback: ((T) -> Void)?
-
-    init(key: String, defaultValue: T, callback: ((T) -> Void)? = nil) {
-        self.key = key
-        self.defaultValue = defaultValue
-        self.callback = callback
-    }
-
-    var wrappedValue: T {
-        get { UserDefaults.standard.object(forKey: key) as? T ?? defaultValue }
-        set {
-            UserDefaults.standard.set(newValue, forKey: key)
-            callback?(newValue)
-        }
-    }
-}
-
-// Codable Storage Property Wrapper
-@propertyWrapper
-struct CodableStorage<T: Codable> {
-    private let key: String
-    private let defaultValue: T
-
-    init(key: String, defaultValue: T) {
-        self.key = key
-        self.defaultValue = defaultValue
-    }
-
-    var wrappedValue: T {
-        get {
-            guard let data = UserDefaults.standard.data(forKey: key),
-                  let value = try? JSONDecoder().decode(T.self, from: data) else {
-                return defaultValue
-            }
-            return value
-        }
-        set {
-            if let data = try? JSONEncoder().encode(newValue) {
-                UserDefaults.standard.set(data, forKey: key)
-            }
-        }
     }
 }
 
@@ -179,7 +132,8 @@ struct CodableColor: Codable {
     }
 }
 
-// Assuming SortOption is defined elsewhere; if not, here’s a placeholder
-enum SortOption: Codable {
-    case `default` // Adjust based on your actual SortOption definition
+// Define SortOption explicitly to avoid ambiguity
+enum SortOption: String, Codable {
+    case `default`
+    // Add other cases as needed based on your application's requirements
 }
