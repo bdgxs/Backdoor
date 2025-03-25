@@ -25,11 +25,12 @@ class HomeViewTableHandlers {
               let fileName = session.localContext as? String,
               let sourceIndex = fileList.firstIndex(where: { $0.name == fileName }) else { return }
         
+        // Copy the needed values before entering the closure
+        let sourceFile = fileList[sourceIndex]
+        
         DispatchQueue.global(qos: .userInitiated).async {
-            let sourceFile = fileList[sourceIndex] // Get the File object
-            
             // Reorder the file list without moving files on disk
-            DispatchQueue.main.async {
+            DispatchQueue.main.async { [sourceFile, sourceIndex, destinationIndexPath] in
                 fileList.remove(at: sourceIndex)
                 fileList.insert(sourceFile, at: destinationIndexPath.row) // Insert File, not String
                 tableView.moveRow(at: IndexPath(row: sourceIndex, section: 0), to: destinationIndexPath)
