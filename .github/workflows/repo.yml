@@ -15,9 +15,9 @@ jobs:
 
       - name: Fetch and update release info
         run: |
-          release_info=$(curl -s https://api.github.com/repos/bdgxs/Backdoor/releases/tags/0.0.8)
+          latest_release=$(curl -s https://api.github.com/repos/bdgxs/Backdoor/releases/latest)
 
-          clean_release_info=$(echo "$release_info" | tr -d '\000-\037')
+          clean_release_info=$(echo "$latest_release" | tr -d '\000-\037')
 
           updated_at=$(echo "$clean_release_info" | jq -r '.created_at // empty')
           size=$(echo "$clean_release_info" | jq -r '.assets[]? | select(.name | endswith(".ipa")) | .size // empty')
