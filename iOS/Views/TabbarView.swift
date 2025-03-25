@@ -11,6 +11,17 @@ struct TabbarView: View {
         case bdgHub // Add new tab case
     }
 
+    // Initialize with notification observer for tab changes
+    init() {
+        // Register for tab change notifications from the AI assistant
+        NotificationCenter.default.addObserver(forName: .changeTab, object: nil, queue: .main) { notification in
+            if let newTab = notification.userInfo?["tab"] as? String,
+               let tab = Tab(rawValue: newTab) {
+                self.selectedTab = tab
+            }
+        }
+    }
+
     var body: some View {
         TabView(selection: $selectedTab) {
             tab(for: .home)
@@ -91,7 +102,3 @@ struct NavigationViewController<Content: UIViewController>: UIViewControllerRepr
     
     func updateUIViewController(_ uiViewController: UINavigationController, context: Context) {}
 }
-
-// Assuming HubViewController is in the hub folder and project
-// Make sure it’s properly imported if needed, e.g.:
-// import hub
