@@ -76,6 +76,9 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UIOnboardingViewControlle
             backgroundQueue.addOperation(operation)
         }
 
+        // Initialize Floating AI Button
+        FloatingButtonManager.shared.show()
+        
         return true
     }
 
@@ -218,6 +221,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UIOnboardingViewControlle
         backgroundQueue.qualityOfService = .background
         let operation = SourceRefreshOperation()
         backgroundQueue.addOperation(operation)
+        FloatingButtonManager.shared.show() // Ensure button is visible when app comes to foreground
     }
 
     func scheduleAppRefresh() {
@@ -254,6 +258,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UIOnboardingViewControlle
         transition.duration = 0.3
         window?.layer.add(transition, forKey: kCATransition)
         window?.rootViewController = tabBarController
+        FloatingButtonManager.shared.show() // Show AI button after onboarding
     }
 
     fileprivate func addDefaultRepos() {
@@ -370,69 +375,5 @@ extension UIColor {
         getRed(&r, green: &g, blue: &b, alpha: &a)
         let rgb: Int = (Int)(r*255)<<16 | (Int)(g*255)<<8 | (Int)(b*255)<<0
         return String(format: "#%06x", rgb)
-    }
-}
-
-class ExampleViewController: UIViewController {
-    override func viewDidLoad() {
-        super.viewDidLoad()
-        ProcessUtility.shared.executeShellCommand("echo Hello, World!") { output in
-            print(output ?? "No output")
-        }
-    }
-}
-
-extension UIOnboardingViewConfiguration {
-    static func setUp() -> Self {
-        let welcomeToLine = NSMutableAttributedString(string: String.localized("ONBOARDING_WELCOMETITLE_1"))
-        let featherLine = NSMutableAttributedString(string: "Backdoor", attributes: [
-            .foregroundColor: UIColor.tintColor,
-        ])
-
-        let featureStyle = UIOnboardingFeatureStyle(
-            titleFontName: "",
-            titleFontSize: 17,
-            descriptionFontName: "",
-            descriptionFontSize: 16,
-            spacing: 0.8
-        )
-
-        let onboardingFeatures: [UIOnboardingFeature] = [
-            .init(
-                icon: UIImage(systemName: "arrow.down.app.fill")!,
-                iconTint: .label,
-                title: String.localized("ONBOARDING_CELL_1_TITLE"),
-                description: String.localized("ONBOARDING_CELL_1_DESCRIPTION")
-            ),
-            .init(
-                icon: UIImage(systemName: "sparkles.square.filled.on.square")!,
-                iconTint: .tintColor,
-                title: String.localized("ONBOARDING_CELL_2_TITLE"),
-                description: String.localized("ONBOARDING_CELL_2_DESCRIPTION")
-            ),
-            .init(
-                icon: UIImage(systemName: "sparkles")!,
-                iconTint: .systemYellow,
-                title: String.localized("ONBOARDING_CELL_3_TITLE"),
-                description: String.localized("ONBOARDING_CELL_3_DESCRIPTION")
-            ),
-        ]
-
-        let text = UIOnboardingTextViewConfiguration(
-            text: String.localized("ONBOARDING_FOOTER"),
-            linkTitle: String.localized("ONBOARDING_FOOTER_LINK"),
-            link: "https://github.com/khcrysalis/feather?tab=readme-ov-file#features",
-            tint: .tintColor
-        )
-
-        return .init(
-            appIcon: .init(named: "AppIcon60x60")!,
-            firstTitleLine: welcomeToLine,
-            secondTitleLine: featherLine,
-            features: onboardingFeatures,
-            featureStyle: featureStyle,
-            textViewConfiguration: text,
-            buttonConfiguration: .init(title: String.localized("ONBOARDING_CONTINUE_BUTTON"), backgroundColor: .tintColor)
-        )
     }
 }
