@@ -69,7 +69,7 @@ class LogsViewController: UIViewController {
     }
     
     private func loadInitialLogContents() {
-        let logFilePath = getDocumentsDirectory().appendingPathComponent("logs.txt")
+        let logFilePath = AppDelegate.getDocumentsDirectory().appendingPathComponent("logs.txt")
         do {
             let data = try Data(contentsOf: logFilePath)
             logTextView.text = String(data: data, encoding: .utf8) ?? String.localized("LOGS_FAILED_TO_LOAD")
@@ -81,7 +81,7 @@ class LogsViewController: UIViewController {
     }
     
     private func startObservingLogFile() {
-        let logFilePath = getDocumentsDirectory().appendingPathComponent("logs.txt").path
+        let logFilePath = AppDelegate.getDocumentsDirectory().appendingPathComponent("logs.txt").path
         let fileDescriptor = open(logFilePath, O_EVTONLY)
         
         guard fileDescriptor != -1 else {
@@ -102,7 +102,7 @@ class LogsViewController: UIViewController {
     }
     
     private func loadNewLogContents() {
-        let logFilePath = getDocumentsDirectory().appendingPathComponent("logs.txt")
+        let logFilePath = AppDelegate.getDocumentsDirectory().appendingPathComponent("logs.txt")
         guard let fileHandle = try? FileHandle(forReadingFrom: logFilePath) else {
             logTextView.text.append("\n" + String.localized("LOGS_READ_FAILED"))
             return
@@ -131,7 +131,7 @@ class LogsViewController: UIViewController {
     }
     
     private func parseLogFile() {
-        let logFilePath = getDocumentsDirectory().appendingPathComponent("logs.txt")
+        let logFilePath = AppDelegate.getDocumentsDirectory().appendingPathComponent("logs.txt")
         do {
             let logContents = try String(contentsOf: logFilePath)
             let logEntries = logContents.components(separatedBy: .newlines)
@@ -231,7 +231,7 @@ extension LogsViewController: UITableViewDataSource, UITableViewDelegate {
     }
     
     private func shareLogs() {
-        let logFilePath = getDocumentsDirectory().appendingPathComponent("logs.txt")
+        let logFilePath = AppDelegate.getDocumentsDirectory().appendingPathComponent("logs.txt")
         let activityVC = UIActivityViewController(activityItems: [logFilePath], applicationActivities: nil)
         
         if let sheet = activityVC.sheetPresentationController {
@@ -243,7 +243,7 @@ extension LogsViewController: UITableViewDataSource, UITableViewDelegate {
     }
     
     private func copyLogs() {
-        let logFilePath = getDocumentsDirectory().appendingPathComponent("logs.txt")
+        let logFilePath = AppDelegate.getDocumentsDirectory().appendingPathComponent("logs.txt")
         do {
             let logContents = try String(contentsOf: logFilePath, encoding: .utf8)
             UIPasteboard.general.string = logContents
@@ -261,7 +261,7 @@ extension LogsViewController: UITableViewDataSource, UITableViewDelegate {
 }
 
 // Placeholder for missing utilities (ensure these are defined elsewhere)
-func getDocumentsDirectory() -> URL {
+func AppDelegate.getDocumentsDirectory() -> URL {
     FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
 }
 
