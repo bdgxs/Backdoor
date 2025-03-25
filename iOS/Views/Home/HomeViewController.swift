@@ -18,7 +18,7 @@ class HomeViewController: UIViewController, UISearchResultsUpdating, UIDocumentP
         return directory
     }
     
-    enum SortOrder: String { // Added RawRepresentable conformance for rawValue
+    enum SortOrder: String {
         case name, date, size
     }
     
@@ -33,11 +33,10 @@ class HomeViewController: UIViewController, UISearchResultsUpdating, UIDocumentP
         setupActivityIndicator()
         loadFiles()
         configureTableView()
-        // Removed observeAppState() as it caused key path error
     }
     
     deinit {
-        // Removed observation invalidation as it’s no longer used
+        // No observation to invalidate
     }
     
     // MARK: - UI Setup
@@ -51,6 +50,7 @@ class HomeViewController: UIViewController, UISearchResultsUpdating, UIDocumentP
         let addButton = UIBarButtonItem(image: UIImage(systemName: "folder.badge.plus"), style: .plain, target: self, action: #selector(addDirectory))
         
         HomeViewUI.uploadButton.addTarget(self, action: #selector(importFile), for: .touchUpInside)
+        HomeViewUI.uploadButton.addGradientBackground() // Added gradient background here
         navItem.rightBarButtonItems = [menuButton, uploadButton, addButton]
         HomeViewUI.navigationBar.setItems([navItem], animated: false)
         view.addSubview(HomeViewUI.navigationBar)
@@ -219,7 +219,7 @@ class HomeViewController: UIViewController, UISearchResultsUpdating, UIDocumentP
         if let popover = alertController.popoverPresentationController {
             popover.barButtonItem = navigationItem.rightBarButtonItems?.first
         }
-        present(alertController, animated: true, completion: nil) // Added completion parameter
+        present(alertController, animated: true, completion: nil)
     }
     
     func updateSearchResults(for searchController: UISearchController) {
@@ -251,7 +251,7 @@ class HomeViewController: UIViewController, UISearchResultsUpdating, UIDocumentP
         }
         alertController.addAction(createAction)
         alertController.addAction(UIAlertAction(title: "Cancel", style: .cancel, handler: nil))
-        present(alertController, animated: true, completion: nil) // Added completion parameter
+        present(alertController, animated: true, completion: nil)
     }
     
     private func showFileOptions(for file: File) {
@@ -280,7 +280,7 @@ class HomeViewController: UIViewController, UISearchResultsUpdating, UIDocumentP
                 popover.sourceRect = cell.bounds
             }
         }
-        present(alertController, animated: true, completion: nil) // Added completion parameter
+        present(alertController, animated: true, completion: nil)
     }
     
     private func openFile(_ file: File) {
@@ -370,7 +370,7 @@ class HomeViewController: UIViewController, UISearchResultsUpdating, UIDocumentP
                     self.fileList.insert(sourceFile, at: destinationIndexPath.row)
                     tableView.moveRow(at: IndexPath(row: sourceIndex, section: 0), to: destinationIndexPath)
                     HapticFeedbackGenerator.generateNotificationFeedback(type: .success)
-                    self.loadFiles() // Refresh to ensure consistency
+                    self.loadFiles()
                 }
             } catch {
                 DispatchQueue.main.async {
