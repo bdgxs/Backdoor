@@ -2,6 +2,7 @@ import Foundation
 
 /// Service for interacting with OpenAI API
 final class OpenAIService {
+    static let shared = OpenAIService(apiKey: "sk-proj-P6BYXJlsZ0oAhG1G9TRmQaSzFSdg0CfwMMz6BEXgpmgEieQl2QBNcbKhr8C5o314orxOa_0S7vT3BlbkFJD5cQCpc5d8bK2GvswZNCPRQ8AIqtlujlLiC8Blj72r5_3d6YWlOEq23QyddeMZF[...]")
     private let apiKey: String
     private let baseURL = "https://api.openai.com/v1/chat/completions"
     private let session: URLSession
@@ -29,7 +30,12 @@ final class OpenAIService {
         }
     }
     
-    func getAIResponse(prompt: String, context: AppContext, completion: @escaping (Result<String, ServiceError>) -> Void) {
+    struct ChatMessage {
+        let role: String
+        let content: String
+    }
+    
+    func getAIResponse(messages: [ChatMessage], context: AppContext, completion: @escaping (Result<String, ServiceError>) -> Void) {
         guard let url = URL(string: baseURL) else {
             completion(.failure(.invalidURL))
             return
@@ -40,27 +46,17 @@ final class OpenAIService {
         request.addValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
         request.addValue("application/json", forHTTPHeaderField: "Content-Type")
         
-        let fullPrompt = """
-        App Context:
-        \(context.toString())
+        let systemMessage: [String: String] = [
+            "role": "system",
+            "content": "You are a helpful assistant in the Feather app. Current app context: \(context.toString()). Available commands: \(AppContextManager.shared.availableCommands().joined(separator: ", ")). When appropriate, include commands in your response using the format [command:parameter]."
+        ]
         
-        Available Commands:
-        \(AppContextManager.shared.availableCommands().joined(separator: "\n"))
-        
-        User Request:
-        \(prompt)
-        
-        Respond with either:
-        1. A command in format [command:parameter]
-        2. Helpful information based on context
-        """
+        var apiMessages = [systemMessage]
+        apiMessages.append(contentsOf: messages.map { ["role": $0.role, "content": $0.content] })
         
         let body: [String: Any] = [
             "model": "gpt-4",
-            "messages": [
-                ["role": "system", "content": "You are a highly capable app assistant"],
-                ["role": "user", "content": fullPrompt]
-            ],
+            "messages": apiMessages,
             "temperature": 0.7,
             "max_tokens": 500
         ]
@@ -96,4 +92,15 @@ final class OpenAIService {
         }
         task.resume()
     }
+}
+
+// Assuming this struct exists elsewhere in your project
+struct OpenAIResponse: Codable {
+    struct Choice: Codable {
+        let message: Message
+    }
+    struct Message: Codable {
+        let content: String
+    }
+    let choices: [Choice]
 }
