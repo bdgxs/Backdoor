@@ -1,6 +1,6 @@
 /* 
   Localizable.strings
-  feather
+  Backdoor
 
   Created by samara on 25.08.2024.
   
@@ -22,11 +22,11 @@
 // Dismiss action
 "DISMISS" = "Dismiss";
 // Dismiss 2 action
-"LAME" = "Lame";
+"LAME" = "Dismiss"; // Was "Lame"; clarified
 // Save action
 "SAVE" = "Save";
 // Set action
-"SET" = "Save";
+"SET" = "Set"; // Was "Save"; differentiated
 // OK action
 "OK" = "OK";
 // Continue action
@@ -63,8 +63,8 @@
 "SUCCESS_REQUIRES_RESTART" = "You must close the app for changes to take effect.";
 
 // MARK: - Onboarding
-// Welcome to Feather!!!!!!!!
-"ONBOARDING_WELCOMETITLE_1" = "Welcome to";
+// Welcome to Backdoor!!!!!!!!
+"ONBOARDING_WELCOMETITLE_1" = "Welcome to Backdoor"; // Updated from "Welcome to"
 // First feature inside of onboarding
 "ONBOARDING_CELL_1_TITLE" = "Sideload On Device";
 "ONBOARDING_CELL_1_DESCRIPTION" = "Sideload apps without a computer, all done from your device.";
@@ -87,8 +87,8 @@
 "TAB_LIBRARY" = "Library";
 // Settings tab
 "TAB_SETTINGS" = "Settings";
-// Home Tab
-"TAB_HOME" = "Files"
+// Home tab
+"TAB_HOME" = "Files";
 
 // MARK: - TransferPreview
 // Packaging application to get ready for install
@@ -152,8 +152,7 @@
 // Application Section
 "APPS_INFORMATION_SECTION_TITLE_NAME" = "Application";
 // Bundle Section
-"APPS_INFORMATION_SECTION_TITLE_NAME" = "Bundle";
-
+"APPS_INFORMATION_SECTION_TITLE_NAME" = "Bundle"; // Duplicate key; "Bundle" overrides "Application"
 //
 "APPS_INFORMATION_TITLE_DELETED_FILE" = "Deleted File";
 "APPS_INFORMATION_TITLE_DELETED_FILE_TITLE" = "File has been deleted.";
@@ -187,7 +186,7 @@
 "APP_SIGNING_VIEW_CONTROLLER_NO_CERTS_ALERT_DESCRIPTION" = "You do not have a certificate selected, please select or upload one in the signing section of the settings tab.";
 
 // MARK: - AppSigningViewController -> AppSigningAdvancedViewController
-"APP_SIGNING_INPUT_VIEW_CONTROLLER_SECTION_TITLE_APPEARENCE" = "Appearence";
+"APP_SIGNING_INPUT_VIEW_CONTROLLER_SECTION_TITLE_APPEARANCE" = "Appearance"; // Was "Appearence"
 "APP_SIGNING_INPUT_VIEW_CONTROLLER_SECTION_TITLE_MINIMUM_APP_VERSION" = "Minimum App Version";
 "APP_SIGNING_INPUT_VIEW_CONTROLLER_SECTION_TITLE_PROPERTIES" = "Properties";
 
@@ -195,7 +194,6 @@
 "APP_SIGNING_TWEAK_VIEW_CONTROLLER_TITLE" = "Tweaks";
 
 // MARK: - SigningsOptionsViewController
-
 "APP_SIGNING_VIEW_CONTROLLER_CELL_SIGNING_OPTIONS_PROTECTIONS" = "Enable Protection";
 "APP_SIGNING_VIEW_CONTROLLER_CELL_SIGNING_OPTIONS_PROTECTIONS_DESCRIPTION" = "Enabling protection will append a random string to each bundle identifier, this is to protect the Apple ID related to your certificate from being flagged by Apple. However, if you don't care about this you can ignore it.";
 
@@ -249,7 +247,7 @@
 "APP_SIGNING_INPUT_VIEW_CONTROLLER_FORCELOCALIZATIONS_DESCRIPTION" = "Forces localization by modifying every localizable bundle within the app when trying to change a name of the app.";
 
 "APP_SIGNING_INPUT_VIEW_CONTROLLER_REMOVE_PROVISIONING" = "Remove Provisioning File";
-"APP_SIGNING_INPUT_VIEW_CONTROLLER_REMOVE_PROVISIONING_DESCRIPTION" = "Removes .mobileprovison from appearing in your app after signing.";
+"APP_SIGNING_INPUT_VIEW_CONTROLLER_REMOVE_PROVISIONING_DESCRIPTION" = "Removes .mobileprovision from appearing in your app after signing."; // Was "provison"
 
 // MARK: - LibraryViewController
 //Search Library placeholder
@@ -286,7 +284,7 @@
 
 // Footers
 "SETTINGS_VIEW_CONTROLLER_SECTION_FOOTER_ISSUES" = "If any issues occur within Backdoor please report it via my website. When submitting an issue, be sure to submit any logs.";
-"SETTINGS_VIEW_CONTROLLER_SECTION_FOOTER_SERVER_LIMITATIONS" = "Sadly due to limitations server certificates will need to be re-renewed every year to keep Feathers local features working properly, tap this button to retrieve the most up-to-date files from our repositories.";
+"SETTINGS_VIEW_CONTROLLER_SECTION_FOOTER_SERVER_LIMITATIONS" = "Sadly due to limitations server certificates will need to be re-renewed every year to keep Backdoors local features working properly, tap this button to retrieve the most up-to-date files from our repositories."; // Updated "Feather" to "Backdoor"
 "SETTINGS_VIEW_CONTROLLER_SECTION_FOOTER_DEFAULT_SERVER" = "Default server goes to %@";
 
 "SETTINGS_VIEW_CONTROLLER_TITLE" = "Server Options";
@@ -294,8 +292,8 @@
 "SETTINGS_VIEW_CONTROLLER_TITLE_LOCAL" = "Local";
 
 // Cell Titles
-// About Feather
-"SETTINGS_VIEW_CONTROLLER_CELL_ABOUT" = "About %@";
+// About Backdoor
+"SETTINGS_VIEW_CONTROLLER_CELL_ABOUT" = "About Backdoor"; // Updated from "About %@"
 "SETTINGS_VIEW_CONTROLLER_CELL_SUBMIT_FEEDBACK" = "Submit Feedback";
 "SETTINGS_VIEW_CONTROLLER_CELL_GITHUB" = "GitHub Repository";
 "SETTINGS_VIEW_CONTROLLER_CELL_DISPLAY" = "Display";
@@ -304,14 +302,11 @@
 "SETTINGS_VIEW_CONTROLLER_CELL_CURRENT_CERTIFICATE_NOSELECTED" = "No certificates selected";
 "SETTINGS_VIEW_CONTROLLER_CELL_ADD_CERTIFICATES" = "Add Certificate";
 
-
-
 "SETTINGS_VIEW_CONTROLLER_CELL_SIGN_OPTIONS" = "Signing Options";
 "SETTINGS_VIEW_CONTROLLER_CELL_SERVER_OPTIONS" = "Server Options";
 "SETTINGS_VIEW_CONTROLLER_CELL_VIEW_LOGS" = "View Logs";
 "SETTINGS_VIEW_CONTROLLER_CELL_APPS_FOLDER" = "Open Apps Folder";
 "SETTINGS_VIEW_CONTROLLER_CELL_CERTS_FOLDER" = "Open Certificates Folder";
-
 
 "SETTINGS_VIEW_CONTROLLER_CELL_UPDATE_LOCAL_CERTIFICATE" = "Update Local Certificate";
 "SETTINGS_VIEW_CONTROLLER_CELL_UPDATE_LOCAL_CERTIFICATE_UPDATING" = "Update Local Certificate";
@@ -322,7 +317,6 @@
 "SETTINGS_VIEW_CONTROLLER_CELL_USE_CUSTOM_SERVER" = "Use Custom Server";
 
 "SETTINGS_VIEW_CONTROLLER_CELL_ONLINE_INSTALL_METHOD" = "Online Install Method";
-
 
 "SETTINGS_VIEW_CONTROLLER_CELL_EXPORT_ID" = "Export Random Identifier";
 "SETTINGS_VIEW_CONTROLLER_CELL_CHANGE_ID" = "Change Random Identifier";
@@ -341,14 +335,13 @@
 "ABOUT_VIEW_CONTROLLER_SECTION_TITLE_DEVICE" = "Device";
 "ABOUT_VIEW_CONTROLLER_SECTION_TITLE_ACKNOWLEDGEMENTS" = "Acknowledgements";
 
-
 "ABOUT_VIEW_CONTROLLER_CELL_DEVICE_VERSION" = "Device Version";
 "ABOUT_VIEW_CONTROLLER_CELL_DEVICE_ARCH" = "Architecture";
 "ABOUT_VIEW_CONTROLLER_CELL_APP_VERSION" = "App Version";
 
 // MARK: - SettingsViewController -> DisplayViewController
 "DISPLAY_VIEW_CONTROLLER_SECTION_TITLE_TINT_COLOR" = "Tint Color";
-"DISPLAY_VIEW_CONTROLLER_SECTION_TITLE_APP_APPEARENCE" = "App Appearence";
+"DISPLAY_VIEW_CONTROLLER_SECTION_TITLE_APP_APPEARENCE" = "App Appearance";
 "DISPLAY_VIEW_CONTROLLER_SECTION_TITLE_STORE" = "Store";
 
 "DISPLAY_VIEW_CONTROLLER_CELL_DEFAULT_SUBTITLE" = "Default Subtitle";
@@ -385,10 +378,9 @@
 
 // MARK: - SettingsViewController -> CertificatesViewController -> CertImportingViewController
 "CERT_IMPORTING_VIEWCONTROLLER_TITLE" = "Import";
-"CERT_IMPORTING_VIEWCONTROLLER_SECTION_PROVISIONING" = "";
+"CERT_IMPORTING_VIEWCONTROLLER_SECTION_PROVISIONING" = "Provisioning"; // Was empty
 
 // MARK: - SettingsViewController -> CertificatesViewController -> CertImportingViewController -> Password Alert
-
 "CERT_IMPORTING_VIEWCONTROLLER_PW_ALERT_TITLE" = "Bad Password";
 "CERT_IMPORTING_VIEWCONTROLLER_PW_ALERT_DESCRIPTION" = "Please check the password and try again.";
 
@@ -410,10 +402,10 @@
 "DONATION_DONATIONS" = "Donations";
 
 "DONATION_CELL_1_TITLE" = "Secret Repo";
-"DONATION_CELL_1_DESCRIPTION" = "Get access to our secret repo by donating, will provide you with beta access to Feather.";
+"DONATION_CELL_1_DESCRIPTION" = "Get access to our secret repo by donating, will provide you with beta access to Backdoor."; // Updated "Feather" to "Backdoor"
 
 "DONATION_CELL_2_TITLE" = "Show Your Support";
-"DONATION_CELL_2_DESCRIPTION" = "Show your support by donating! If you're unable to donate, spreading the word about Feather works too!";
+"DONATION_CELL_2_DESCRIPTION" = "Show your support by donating! If you're unable to donate, spreading the word about Backdoor works too!"; // Updated "Feather" to "Backdoor"
 
 // MARK: - SettingsViewController -> LogsViewController.swift
 "LOGS_VIEW_SECTION_TITLE_ERROR" = "%@ Critical Errors.";
