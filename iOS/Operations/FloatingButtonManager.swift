@@ -111,28 +111,31 @@ final class FloatingButtonManager {
         }
         
         AppContextManager.shared.registerCommand("navigate to") { screen in
-            guard let topVC = UIApplication.shared.topMostViewController() as? UIHostingController<TabbarView>,
-                  let tabBarController = topVC.rootView as? UITabBarController else {
+            guard let _ = UIApplication.shared.topMostViewController() as? UIHostingController<TabbarView> else {
                 Debug.shared.log(message: "Cannot navigate: Not on main tab bar", type: .error)
                 return
             }
             
+            var targetTab: String
             switch screen.lowercased() {
-            case "sources":
-                tabBarController.selectedIndex = 0
-            case "store", "hub":
-                tabBarController.selectedIndex = 1
-            case "library", "apps":
-                tabBarController.selectedIndex = 2
-            case "signing":
-                tabBarController.selectedIndex = 3
-            case "settings":
-                tabBarController.selectedIndex = 4
             case "home":
-                tabBarController.selectedIndex = 5
+                targetTab = "home"
+            case "sources":
+                targetTab = "sources"
+            case "library":
+                targetTab = "library"
+            case "settings":
+                targetTab = "settings"
+            case "bdg hub", "bdghub", "hub":
+                targetTab = "bdgHub"
             default:
                 Debug.shared.log(message: "Unknown screen: \(screen)", type: .warning)
+                return
             }
+            
+            // Update UserDefaults and post notification to change the tab
+            UserDefaults.standard.set(targetTab, forKey: "selectedTab")
+            NotificationCenter.default.post(name: .changeTab, object: nil, userInfo: ["tab": targetTab])
         }
     }
     
