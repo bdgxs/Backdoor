@@ -8,32 +8,22 @@
 import Foundation
 import UIKit
 
-// enum Orientation {
-//	.top
-//	.bottom
-//	.left
-//	.right
-//}
-
 struct MainSigningOptions {
     var name: String?
     var version: String?
     var bundleId: String?
     var iconURL: UIImage?
-
     var uuid: String?
     var removeInjectPaths: [String] = []
-    
     let forceMinimumVersionString = ["Automatic", "15.0", "14.0", "13.0"]
     let forceLightDarkAppearenceString = ["Automatic", "Light", "Dark"]
-    
-    var certificate: Certificate?
+    var certificate: Certificate? // Kept here as it’s not Codable
 }
 
 extension UserDefaults {
     static let signingDataKey = "defaultSigningData"
     
-    static let defaultSigningData = SigningOptions() // References the consolidated SigningOptions from Preferences.swift
+    static let defaultSigningData = SigningOptions()
     
     var signingOptions: SigningOptions {
         get {
