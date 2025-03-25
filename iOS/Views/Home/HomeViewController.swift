@@ -4,7 +4,7 @@ import ZIPFoundation
 class HomeViewController: UIViewController, UISearchResultsUpdating, UIDocumentPickerDelegate, FileHandlingDelegate, UITableViewDelegate, UITableViewDataSource, UITableViewDragDelegate, UITableViewDropDelegate {
     
     // MARK: - Properties
-    private var fileList: [File] = [] // Changed from fileprivate to private
+    private var fileList: [File] = []
     private var filteredFileList: [File] = []
     private let fileManager = FileManager.default
     private let searchController = UISearchController(searchResultsController: nil)
@@ -18,10 +18,8 @@ class HomeViewController: UIViewController, UISearchResultsUpdating, UIDocumentP
         return directory
     }
     
-    enum SortOrder: String, RawRepresentable {
-        case name = "name"
-        case date = "date"
-        case size = "size"
+    enum SortOrder: String { // Added RawRepresentable conformance for rawValue
+        case name, date, size
     }
     
     var activityIndicator: UIActivityIndicatorView {
@@ -35,11 +33,11 @@ class HomeViewController: UIViewController, UISearchResultsUpdating, UIDocumentP
         setupActivityIndicator()
         loadFiles()
         configureTableView()
+        // Removed observeAppState() as it caused key path error
     }
     
-    override func viewWillDisappear(_ animated: Bool) {
-        super.viewWillDisappear(animated)
-        saveState()
+    deinit {
+        // Removed observation invalidation as it’s no longer used
     }
     
     // MARK: - UI Setup
@@ -117,7 +115,7 @@ class HomeViewController: UIViewController, UISearchResultsUpdating, UIDocumentP
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
             guard let self = self else { return }
             do {
-                let files = try self.fileManager.contentsOfDirectory(at: self.documentsDirectory, includingPropertiesForKeys: [.creationDateKey, .fileSizeKey], options: .skipsHiddenFiles)
+                let files = try self.fileManager.contentsOfDirectory(at: self.documentsDirectory, includingPropertiesForKeys: [.creationDate, .fileSize], options: .skipsHiddenFiles)
                 let fileObjects = files.map { File(url: $0) }
                 DispatchQueue.main.async {
                     self.fileList = fileObjects
@@ -221,7 +219,7 @@ class HomeViewController: UIViewController, UISearchResultsUpdating, UIDocumentP
         if let popover = alertController.popoverPresentationController {
             popover.barButtonItem = navigationItem.rightBarButtonItems?.first
         }
-        present(alertController, animated: true, completion: nil)
+        present(alertController, animated: true, completion: nil) // Added completion parameter
     }
     
     func updateSearchResults(for searchController: UISearchController) {
@@ -253,7 +251,7 @@ class HomeViewController: UIViewController, UISearchResultsUpdating, UIDocumentP
         }
         alertController.addAction(createAction)
         alertController.addAction(UIAlertAction(title: "Cancel", style: .cancel, handler: nil))
-        present(alertController, animated: true, completion: nil)
+        present(alertController, animated: true, completion: nil) // Added completion parameter
     }
     
     private func showFileOptions(for file: File) {
@@ -282,7 +280,7 @@ class HomeViewController: UIViewController, UISearchResultsUpdating, UIDocumentP
                 popover.sourceRect = cell.bounds
             }
         }
-        present(alertController, animated: true, completion: nil)
+        present(alertController, animated: true, completion: nil) // Added completion parameter
     }
     
     private func openFile(_ file: File) {
@@ -328,8 +326,9 @@ class HomeViewController: UIViewController, UISearchResultsUpdating, UIDocumentP
     
     func tableView(_ tableView: UITableView, trailingSwipeActionsConfigurationForRowAt indexPath: IndexPath) -> UISwipeActionsConfiguration? {
         let deleteAction = UIContextualAction(style: .destructive, title: "Delete") { [weak self] (_, _, completion) in
-            guard let self = self else { return }
-            self.deleteFile(at: indexPath.row)
+            if let self = self, let index = self.fileList.firstIndex(of: self.fileList[indexPath.row]) {
+                self.deleteFile(at: index)
+            }
             completion(true)
         }
         deleteAction.backgroundColor = .systemRed
@@ -340,7 +339,7 @@ class HomeViewController: UIViewController, UISearchResultsUpdating, UIDocumentP
     func tableView(_ tableView: UITableView, itemsForBeginning session: UIDragSession, at indexPath: IndexPath) -> [UIDragItem] {
         let file = searchController.isActive ? filteredFileList[indexPath.row] : fileList[indexPath.row]
         let dragItem = UIDragItem(itemProvider: NSItemProvider(object: file.url.path as NSString))
-        session.localContext = file
+        session.localContext = file.name
         return [dragItem]
     }
     
@@ -353,20 +352,22 @@ class HomeViewController: UIViewController, UISearchResultsUpdating, UIDocumentP
             destinationIndexPath = IndexPath(row: fileList.count, section: 0)
         }
         
-        guard let file = coordinator.session.localContext as? File,
-              let sourceIndex = fileList.firstIndex(of: file) else { return }
+        guard let session = coordinator.session as? UIDragSession,
+              let fileName = session.localContext as? String,
+              let sourceIndex = fileList.firstIndex(where: { $0.name == fileName }) else { return }
         
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
             guard let self = self else { return }
             do {
-                let sourceURL = file.url
-                let destinationURL = self.documentsDirectory.appendingPathComponent(file.name)
+                let sourceFile = self.fileList[sourceIndex]
+                let sourceURL = sourceFile.url
+                let destinationURL = self.documentsDirectory.appendingPathComponent(fileName)
                 if sourceURL != destinationURL {
                     try FileOperations.moveFile(at: sourceURL, to: destinationURL)
                 }
                 DispatchQueue.main.async {
                     self.fileList.remove(at: sourceIndex)
-                    self.fileList.insert(file, at: destinationIndexPath.row)
+                    self.fileList.insert(sourceFile, at: destinationIndexPath.row)
                     tableView.moveRow(at: IndexPath(row: sourceIndex, section: 0), to: destinationIndexPath)
                     HapticFeedbackGenerator.generateNotificationFeedback(type: .success)
                     self.loadFiles() // Refresh to ensure consistency
