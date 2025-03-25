@@ -4,13 +4,14 @@ import ZIPFoundation
 class HomeViewController: UIViewController, UISearchResultsUpdating, UIDocumentPickerDelegate, FileHandlingDelegate, UITableViewDelegate, UITableViewDataSource, UITableViewDragDelegate, UITableViewDropDelegate {
     
     // MARK: - Properties
-    var fileList: [File] = [] // Internal access level for accessibility
+    var fileList: [File] = []
     private var filteredFileList: [File] = []
     private let fileManager = FileManager.default
     private let searchController = UISearchController(searchResultsController: nil)
     private var sortOrder: SortOrder = .name
     private let fileHandlers = HomeViewFileHandlers()
     private let utilities = HomeViewUtilities()
+    private let tableHandlers = HomeViewTableHandlers() // New handler instance
     
     var documentsDirectory: URL {
         let directory = fileManager.urls(for: .documentDirectory, in: .userDomainMask).first!.appendingPathComponent("files")
@@ -347,39 +348,7 @@ class HomeViewController: UIViewController, UISearchResultsUpdating, UIDocumentP
     
     // MARK: - UITableViewDropDelegate
     func tableView(_ tableView: UITableView, performDropWith coordinator: UITableViewDropCoordinator) {
-        let destinationIndexPath: IndexPath
-        if let indexPath = coordinator.destinationIndexPath {
-            destinationIndexPath = indexPath
-        } else {
-            destinationIndexPath = IndexPath(row: fileList.count, section: 0)
-        }
-        
-        guard let session = coordinator.session as? UIDragSession,
-              let fileName = session.localContext as? String,
-              let sourceIndex = fileList.firstIndex(where: { $0.name == fileName }) else { return }
-        
-        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
-            guard let self = self else { return }
-            do {
-                let sourceFile = self.fileList[sourceIndex]
-                let sourceURL = sourceFile.url
-                let destinationURL = self.documentsDirectory.appendingPathComponent(fileName)
-                if sourceURL != destinationURL {
-                    try FileOperations.moveFile(at: sourceURL, to: destinationURL)
-                }
-                DispatchQueue.main.async {
-                    self.fileList.remove(at: sourceIndex)
-                    self.fileList.insert(sourceFile, at: destinationIndexPath.row)
-                    tableView.moveRow(at: IndexPath(row: sourceIndex, section: 0), to: destinationIndexPath)
-                    HapticFeedbackGenerator.generateNotificationFeedback(type: .success)
-                    self.loadFiles()
-                }
-            } catch {
-                DispatchQueue.main.async {
-                    self.utilities.handleError(in: self, error: error, withTitle: "File Move Error")
-                }
-            }
-        }
+        tableHandlers.tableView(tableView, performDropWith: coordinator, fileList: &fileList)
     }
     
     // MARK: - FileHandlingDelegate
