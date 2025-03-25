@@ -1,7 +1,6 @@
 import Foundation
 import UIKit
 
-// Unambiguous struct for signing options
 struct SigningOptions: Codable, CustomStringConvertible {
     var ppqCheckProtection: Bool = false
     var dynamicProtection: Bool = false
@@ -21,8 +20,8 @@ struct SigningOptions: Codable, CustomStringConvertible {
     var bundleIdConfig: [String: String] = [:]
     var displayNameConfig: [String: String] = [:]
 
-    var descrição: String {
-        return """
+    var description: String { // Fixed to use correct property name
+        """
         PPQ Check: \(ppqCheckProtection), Dynamic: \(dynamicProtection), Install After Signed: \(installAfterSigned),
         Immediately Install: \(immediatelyInstallFromSource), Remove Plugins: \(removePlugins),
         Force File Sharing: \(forceFileSharing), Remove Supported Devices: \(removeSupportedDevices),
@@ -38,7 +37,6 @@ enum Preferences {
     static var installPathChangedCallback: ((String?) -> Void)?
     static let defaultInstallPath: String = "https://api.palera.in"
 
-    // Using UserDefaultsStorage from Storage.swift
     @UserDefaultsStorage(key: "Feather.UserSpecifiedOnlinePath", defaultValue: defaultInstallPath)
     static var onlinePath: String? { didSet { installPathChangedCallback?(onlinePath) } }
 
@@ -94,7 +92,6 @@ enum Preferences {
     static var currentSortOptionAscending: Bool
 }
 
-// MARK: - Callbacks
 fileprivate extension Preferences {
     static func preferredLangChangedCallback(newValue: String?) {
         Bundle.preferredLocalizationBundle = .makeLocalizationBundle(preferredLanguageCode: newValue)
@@ -104,9 +101,7 @@ fileprivate extension Preferences {
 struct CodableColor: Codable {
     let uiColor: UIColor
 
-    init(_ color: UIColor) {
-        self.uiColor = color
-    }
+    init(_ color: UIColor) { self.uiColor = color }
 
     enum CodingKeys: String, CodingKey {
         case red, green, blue, alpha
@@ -132,8 +127,9 @@ struct CodableColor: Codable {
     }
 }
 
-// Define SortOption explicitly to avoid ambiguity
+// Moved SortOption here temporarily; ideally in SourceAppViewController.swift
 enum SortOption: String, Codable {
     case `default`
-    // Add other cases as needed based on your application's requirements
+    case name
+    case date
 }
