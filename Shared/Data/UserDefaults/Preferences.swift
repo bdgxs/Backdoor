@@ -129,3 +129,9 @@ struct CodableColor: Codable {
         try container.encode(a, forKey: .alpha)
     }
 }
+
+enum SortOption: String, Codable {
+    case `default`
+    case name
+    case date
+}
