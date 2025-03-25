@@ -4,7 +4,7 @@ import ZIPFoundation
 class HomeViewController: UIViewController, UISearchResultsUpdating, UIDocumentPickerDelegate, FileHandlingDelegate, UITableViewDelegate, UITableViewDataSource, UITableViewDragDelegate, UITableViewDropDelegate {
     
     // MARK: - Properties
-    private var fileList: [File] = []
+    var fileList: [File] = [] // Changed from private to internal for accessibility within the class
     private var filteredFileList: [File] = []
     private let fileManager = FileManager.default
     private let searchController = UISearchController(searchResultsController: nil)
@@ -50,7 +50,7 @@ class HomeViewController: UIViewController, UISearchResultsUpdating, UIDocumentP
         let addButton = UIBarButtonItem(image: UIImage(systemName: "folder.badge.plus"), style: .plain, target: self, action: #selector(addDirectory))
         
         HomeViewUI.uploadButton.addTarget(self, action: #selector(importFile), for: .touchUpInside)
-        HomeViewUI.uploadButton.addGradientBackground() // Added gradient background here
+        HomeViewUI.uploadButton.addGradientBackground()
         navItem.rightBarButtonItems = [menuButton, uploadButton, addButton]
         HomeViewUI.navigationBar.setItems([navItem], animated: false)
         view.addSubview(HomeViewUI.navigationBar)
@@ -115,7 +115,8 @@ class HomeViewController: UIViewController, UISearchResultsUpdating, UIDocumentP
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
             guard let self = self else { return }
             do {
-                let files = try self.fileManager.contentsOfDirectory(at: self.documentsDirectory, includingPropertiesForKeys: [.creationDate, .fileSize], options: .skipsHiddenFiles)
+                // Fixed URLResourceKey usage with .creationDateKey and .fileSizeKey
+                let files = try self.fileManager.contentsOfDirectory(at: self.documentsDirectory, includingPropertiesForKeys: [.creationDateKey, .fileSizeKey], options: .skipsHiddenFiles)
                 let fileObjects = files.map { File(url: $0) }
                 DispatchQueue.main.async {
                     self.fileList = fileObjects
@@ -326,7 +327,9 @@ class HomeViewController: UIViewController, UISearchResultsUpdating, UIDocumentP
     
     func tableView(_ tableView: UITableView, trailingSwipeActionsConfigurationForRowAt indexPath: IndexPath) -> UISwipeActionsConfiguration? {
         let deleteAction = UIContextualAction(style: .destructive, title: "Delete") { [weak self] (_, _, completion) in
-            if let self = self, let index = self.fileList.firstIndex(of: self.fileList[indexPath.row]) {
+            guard let self = self else { return }
+            let file = self.searchController.isActive ? self.filteredFileList[indexPath.row] : self.fileList[indexPath.row]
+            if let index = self.fileList.firstIndex(of: file) {
                 self.deleteFile(at: index)
             }
             completion(true)
