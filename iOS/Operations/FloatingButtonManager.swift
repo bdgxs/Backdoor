@@ -9,7 +9,7 @@ final class FloatingButtonManager {
     private var window: UIWindow?
     
     private init() {
-        aiService = OpenAIService(apiKey: "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")
+        aiService = OpenAIService(apiKey: "sk-proj-P6BYXJlsZ0oAhG1G9TRmQaSzFSdg0CfwMMz6BEXgpmgEieQl2QBNcbKhr8C5o314orxOa_0S7vT3BlbkFJD5cQCpc5d8bK2GvswZNCPRQ8AIqtlujlLiC8Blj72r5_3d6YWlOEq23QyddeMZF[...]")
         floatingButton = FloatingAIButton()
         setupWindow()
         setupAIInteraction()
@@ -58,7 +58,7 @@ final class FloatingButtonManager {
         
         // Register Feather-specific commands
         AppContextManager.shared.registerCommand("add source") { sourceURL in
-            if let url = URL(string: sourceURL) {
+            if URL(string: sourceURL) != nil {
                 CoreDataManager.shared.saveSource(name: "Custom Source", id: UUID().uuidString, iconURL: nil, url: sourceURL) { error in
                     if let error = error {
                         Debug.shared.log(message: "Failed to add source: \(error)", type: .error)
