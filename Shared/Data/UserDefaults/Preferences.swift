@@ -1,6 +1,14 @@
 import Foundation
 import UIKit
 
+// Assuming Certificate is a custom type; adjust if it’s Codable elsewhere
+struct Certificate {
+    // Placeholder; define properties as needed
+    var name: String
+    var expirationDate: Date
+    // Add other properties...
+}
+
 struct SigningOptions: Codable, CustomStringConvertible {
     var ppqCheckProtection: Bool = false
     var dynamicProtection: Bool = false
@@ -19,11 +27,12 @@ struct SigningOptions: Codable, CustomStringConvertible {
     var removeWatchPlaceHolder: Bool = false
     var bundleIdConfig: [String: String] = [:]
     var displayNameConfig: [String: String] = [:]
-    var forceMinimumVersion: String = "Automatic" // Added from SigningOptions.swift
-    var forceLightDarkAppearence: String = "Automatic" // Added from SigningOptions.swift
-    var certificate: Certificate? // Added from SigningOptions.swift
+    var toInject: [String] = [] // Added back from original SigningOptions.swift
+    var forceMinimumVersion: String = "Automatic"
+    var forceLightDarkAppearence: String = "Automatic"
+    var certificate: Certificate? // Custom handling for non-Codable type
 
-    var description: String { // Keep existing description
+    var description: String {
         """
         PPQ Check: \(ppqCheckProtection), Dynamic: \(dynamicProtection), Install After Signed: \(installAfterSigned),
         Immediately Install: \(immediatelyInstallFromSource), Remove Plugins: \(removePlugins),
@@ -33,6 +42,66 @@ struct SigningOptions: Codable, CustomStringConvertible {
         Force iTunes Sharing: \(forceiTunesFileSharing), Force Localize: \(forceTryToLocalize),
         Remove Provisioning: \(removeProvisioningFile), Remove Watch Placeholder: \(removeWatchPlaceHolder)
         """
+    }
+
+    // Custom Codable conformance to exclude Certificate
+    enum CodingKeys: String, CodingKey {
+        case ppqCheckProtection, dynamicProtection, installAfterSigned, immediatelyInstallFromSource
+        case removePlugins, forceFileSharing, removeSupportedDevices, removeURLScheme
+        case forceProMotion, forceGameMode, forceForceFullScreen, forceiTunesFileSharing
+        case forceTryToLocalize, removeProvisioningFile, removeWatchPlaceHolder
+        case bundleIdConfig, displayNameConfig, toInject, forceMinimumVersion, forceLightDarkAppearence
+        // Omit certificate
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        ppqCheckProtection = try container.decode(Bool.self, forKey: .ppqCheckProtection)
+        dynamicProtection = try container.decode(Bool.self, forKey: .dynamicProtection)
+        installAfterSigned = try container.decode(Bool.self, forKey: .installAfterSigned)
+        immediatelyInstallFromSource = try container.decode(Bool.self, forKey: .immediatelyInstallFromSource)
+        removePlugins = try container.decode(Bool.self, forKey: .removePlugins)
+        forceFileSharing = try container.decode(Bool.self, forKey: .forceFileSharing)
+        removeSupportedDevices = try container.decode(Bool.self, forKey: .removeSupportedDevices)
+        removeURLScheme = try container.decode(Bool.self, forKey: .removeURLScheme)
+        forceProMotion = try container.decode(Bool.self, forKey: .forceProMotion)
+        forceGameMode = try container.decode(Bool.self, forKey: .forceGameMode)
+        forceForceFullScreen = try container.decode(Bool.self, forKey: .forceForceFullScreen)
+        forceiTunesFileSharing = try container.decode(Bool.self, forKey: .forceiTunesFileSharing)
+        forceTryToLocalize = try container.decode(Bool.self, forKey: .forceTryToLocalize)
+        removeProvisioningFile = try container.decode(Bool.self, forKey: .removeProvisioningFile)
+        removeWatchPlaceHolder = try container.decode(Bool.self, forKey: .removeWatchPlaceHolder)
+        bundleIdConfig = try container.decode([String: String].self, forKey: .bundleIdConfig)
+        displayNameConfig = try container.decode([String: String].self, forKey: .displayNameConfig)
+        toInject = try container.decode([String].self, forKey: .toInject)
+        forceMinimumVersion = try container.decode(String.self, forKey: .forceMinimumVersion)
+        forceLightDarkAppearence = try container.decode(String.self, forKey: .forceLightDarkAppearence)
+        certificate = nil // Not decoded; handle separately if needed
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(ppqCheckProtection, forKey: .ppqCheckProtection)
+        try container.encode(dynamicProtection, forKey: .dynamicProtection)
+        try container.encode(installAfterSigned, forKey: .installAfterSigned)
+        try container.encode(immediatelyInstallFromSource, forKey: .immediatelyInstallFromSource)
+        try container.encode(removePlugins, forKey: .removePlugins)
+        try container.encode(forceFileSharing, forKey: .forceFileSharing)
+        try container.encode(removeSupportedDevices, forKey: .removeSupportedDevices)
+        try container.encode(removeURLScheme, forKey: .removeURLScheme)
+        try container.encode(forceProMotion, forKey: .forceProMotion)
+        try container.encode(forceGameMode, forKey: .forceGameMode)
+        try container.encode(forceForceFullScreen, forKey: .forceForceFullScreen)
+        try container.encode(forceiTunesFileSharing, forKey: .forceiTunesFileSharing)
+        try container.encode(forceTryToLocalize, forKey: .forceTryToLocalize)
+        try container.encode(removeProvisioningFile, forKey: .removeProvisioningFile)
+        try container.encode(removeWatchPlaceHolder, forKey: .removeWatchPlaceHolder)
+        try container.encode(bundleIdConfig, forKey: .bundleIdConfig)
+        try container.encode(displayNameConfig, forKey: .displayNameConfig)
+        try container.encode(toInject, forKey: .toInject)
+        try container.encode(forceMinimumVersion, forKey: .forceMinimumVersion)
+        try container.encode(forceLightDarkAppearence, forKey: .forceLightDarkAppearence)
+        // certificate is not encoded
     }
 }
 
