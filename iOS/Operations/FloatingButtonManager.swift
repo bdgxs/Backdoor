@@ -8,7 +8,7 @@ final class FloatingButtonManager {
     private var window: UIWindow?
     
     private init() {
-        aiService = OpenAIService(apiKey: "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")
+        aiService = OpenAIService(apiKey: "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")
         floatingButton = FloatingAIButton()
         setupWindow()
         setupAIInteraction()
