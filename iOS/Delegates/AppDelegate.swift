@@ -40,8 +40,8 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UIOnboardingViewControlle
         if Preferences.isOnboardingActive {
             let config = UIOnboardingViewConfiguration(
                 appIcon: UIImage(named: "feather_glyph") ?? UIImage(),
-                firstTitleLine: "Welcome to Feather",
-                secondTitleLine: "Your App Signing Companion",
+                firstTitleLine: NSMutableAttributedString(string: "Welcome to Feather"),
+                secondTitleLine: NSMutableAttributedString(string: "Your App Signing Companion"),
                 features: [
                     UIOnboardingFeature(
                         icon: UIImage(systemName: "app.badge")!,
@@ -57,7 +57,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UIOnboardingViewControlle
                 textViewConfiguration: UIOnboardingTextViewConfiguration(
                     text: "By continuing, you agree to our Terms of Service.",
                     linkTitle: "Terms of Service",
-                    link: URL(string: "https://example.com/terms")!
+                    link: "https://example.com/terms"
                 ),
                 buttonConfiguration: UIOnboardingButtonConfiguration(
                     title: "Get Started",
