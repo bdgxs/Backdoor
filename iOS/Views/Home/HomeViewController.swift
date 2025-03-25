@@ -4,7 +4,7 @@ import ZIPFoundation
 class HomeViewController: UIViewController, UISearchResultsUpdating, UIDocumentPickerDelegate, FileHandlingDelegate, UITableViewDelegate, UITableViewDataSource, UITableViewDragDelegate, UITableViewDropDelegate {
     
     // MARK: - Properties
-    var fileList: [File] = [] // Changed from private to internal for accessibility within the class
+    var fileList: [File] = [] // Internal access level for accessibility
     private var filteredFileList: [File] = []
     private let fileManager = FileManager.default
     private let searchController = UISearchController(searchResultsController: nil)
@@ -115,7 +115,6 @@ class HomeViewController: UIViewController, UISearchResultsUpdating, UIDocumentP
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
             guard let self = self else { return }
             do {
-                // Fixed URLResourceKey usage with .creationDateKey and .fileSizeKey
                 let files = try self.fileManager.contentsOfDirectory(at: self.documentsDirectory, includingPropertiesForKeys: [.creationDateKey, .fileSizeKey], options: .skipsHiddenFiles)
                 let fileObjects = files.map { File(url: $0) }
                 DispatchQueue.main.async {
