@@ -7,7 +7,11 @@ class HomeViewTableHandlers {
         self.utilities = utilities
     }
     
-    func tableView(_ tableView: UITableView, performDropWith coordinator: UITableViewDropCoordinator, fileList: inout [File]) {
+    func tableView(_ tableView: UITableView, 
+                  performDropWith coordinator: UITableViewDropCoordinator, 
+                  fileList: inout [File],
+                  documentsDirectory: URL,
+                  loadFiles: @escaping () -> Void) {
         let destinationIndexPath: IndexPath
         if let indexPath = coordinator.destinationIndexPath {
             destinationIndexPath = indexPath
@@ -30,6 +34,7 @@ class HomeViewTableHandlers {
                 fileList.insert(sourceFile, at: destinationIndexPath.row) // Insert File, not String
                 tableView.moveRow(at: IndexPath(row: sourceIndex, section: 0), to: destinationIndexPath)
                 HapticFeedbackGenerator.generateNotificationFeedback(type: .success)
+                loadFiles() // Call loadFiles to refresh the file system if needed
             }
         }
     }
