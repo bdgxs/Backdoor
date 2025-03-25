@@ -1,5 +1,6 @@
 import UIKit
 import CoreData
+import SwiftUI
 
 /// Manages app context and command execution for Feather
 final class AppContextManager {
@@ -13,23 +14,69 @@ final class AppContextManager {
     func updateContext(_ viewController: UIViewController) {
         var additionalData: [String: Any] = [:]
         
-        // Add Feather-specific context
+        // Fetch data from CoreDataManager
+        let sources = CoreDataManager.shared.getAZSources()
+        let downloadedApps = CoreDataManager.shared.getDatedDownloadedApps()
+        let signedApps = CoreDataManager.shared.getDatedSignedApps()
+        let certificates = CoreDataManager.shared.getDatedCertificate()
+        let currentCertificate = CoreDataManager.shared.getCurrentCertificate()
+        
+        // Base context available on all screens
+        additionalData["sources"] = sources.map { $0.name ?? "Unnamed" }
+        additionalData["downloadedApps"] = downloadedApps.map { "\($0.name ?? "Unnamed") (\($0.version ?? "Unknown"))" }
+        additionalData["signedApps"] = signedApps.map { "\($0.name ?? "Unnamed") (\($0.bundleidentifier ?? "Unknown")) - Team: \($0.teamName ?? "N/A")" }
+        additionalData["certificates"] = certificates.map { $0.certData?.name ?? "Unnamed" }
+        additionalData["currentCertificate"] = currentCertificate?.certData?.name ?? "None"
+        additionalData["signingOptions"] = Preferences.signingOptions?.description ?? "Default"
+        
+        // Add screen-specific context
         switch viewController {
         case let vc as UIHostingController<TabbarView>:
-            additionalData["currentTab"] = "MainTabBar"
-            additionalData["sources"] = CoreDataManager.shared.fetchSources().map { $0.name ?? "Unnamed" }
-            additionalData["signingOptions"] = Preferences.signingOptions?.description ?? "Default"
-            additionalData["installedApps"] = fetchInstalledApps() // Assuming a method to list installed apps
-            additionalData["certificates"] = listCertificates()
+            // Determine the current tab from UserDefaults
+            let selectedTab = UserDefaults.standard.string(forKey: "selectedTab") ?? "home"
+            additionalData["currentTab"] = selectedTab
             
-        // Add cases for other view controllers in Feather if they exist
+            // Add tab-specific context
+            switch selectedTab {
+            case "home":
+                additionalData["currentScreen"] = "Home"
+                // Add more specific context if needed (e.g., featured apps)
+            case "sources":
+                additionalData["currentScreen"] = "Sources"
+                // Add more specific context if needed (e.g., selected source)
+            case "library":
+                additionalData["currentScreen"] = "Library"
+                // Add more specific context if needed (e.g., selected app)
+            case "settings":
+                additionalData["currentScreen"] = "Settings"
+                // Add more specific context if needed (e.g., current settings)
+            case "bdgHub":
+                additionalData["currentScreen"] = "BDG Hub"
+                // Add more specific context if needed (e.g., current URL in WebView)
+            default:
+                additionalData["currentScreen"] = "Unknown"
+            }
+            
+        // Handle other view controllers (e.g., if a modal or pushed view is presented)
         default:
-            additionalData["sources"] = CoreDataManager.shared.fetchSources().map { $0.name ?? "Unnamed" }
-            additionalData["signingOptions"] = Preferences.signingOptions?.description ?? "Default"
+            let screenName = String(describing: type(of: viewController))
+            if screenName.contains("Home") {
+                additionalData["currentScreen"] = "Home"
+            } else if screenName.contains("Sources") {
+                additionalData["currentScreen"] = "Sources"
+            } else if screenName.contains("Library") {
+                additionalData["currentScreen"] = "Library"
+            } else if screenName.contains("Settings") {
+                additionalData["currentScreen"] = "Settings"
+            } else if screenName.contains("WebView") || screenName.contains("BDGHub") {
+                additionalData["currentScreen"] = "BDG Hub"
+            } else {
+                additionalData["currentScreen"] = "Unknown"
+            }
         }
         
-        currentState = AppContext(currentScreen: String(describing: type(of: viewController)),
-                                additionalData: additionalData)
+        currentState = AppContext(currentScreen: additionalData["currentScreen"] as? String ?? "Unknown",
+                                  additionalData: additionalData)
     }
     
     /// Returns the current app context
@@ -55,29 +102,5 @@ final class AppContextManager {
     /// Returns all available commands
     func availableCommands() -> [String] {
         return Array(commandHandlers.keys)
-    }
-    
-    // MARK: - Private Helper Methods
-    
-    /// Fetches a list of installed apps (placeholder - implement based on your app's logic)
-    private func fetchInstalledApps() -> [String] {
-        // This is a placeholder - Feather doesn't explicitly track installed apps
-        // You might need to implement this based on how Feather manages installations
-        let documentsURL = getDocumentsDirectory().appendingPathComponent("Apps")
-        let fileManager = FileManager.default
-        if let appFiles = try? fileManager.contentsOfDirectory(atPath: documentsURL.path) {
-            return appFiles.filter { $0.hasSuffix(".ipa") }.map { String($0.dropLast(4)) }
-        }
-        return []
-    }
-    
-    /// Lists available certificates
-    private func listCertificates() -> [String] {
-        let documentsURL = getDocumentsDirectory().appendingPathComponent("Certificates")
-        let fileManager = FileManager.default
-        if let certFiles = try? fileManager.contentsOfDirectory(atPath: documentsURL.path) {
-            return certFiles
-        }
-        return []
     }
 }
