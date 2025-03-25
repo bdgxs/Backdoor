@@ -14,10 +14,10 @@ struct TabbarView: View {
     // Initialize with notification observer for tab changes
     init() {
         // Register for tab change notifications from the AI assistant
-        NotificationCenter.default.addObserver(forName: .changeTab, object: nil, queue: .main) { notification in
+        NotificationCenter.default.addObserver(forName: .changeTab, object: nil, queue: .main) { [weak self] notification in // Updated line
             if let newTab = notification.userInfo?["tab"] as? String,
                let tab = Tab(rawValue: newTab) {
-                self.selectedTab = tab
+                self?.selectedTab = tab // Updated line
             }
         }
     }
