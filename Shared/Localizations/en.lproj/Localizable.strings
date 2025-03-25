@@ -87,6 +87,8 @@
 "TAB_LIBRARY" = "Library";
 // Settings tab
 "TAB_SETTINGS" = "Settings";
+// Home Tab
+"TAB_HOME" = "Files"
 
 // MARK: - TransferPreview
 // Packaging application to get ready for install
