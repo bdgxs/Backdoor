@@ -57,6 +57,11 @@ class SourcesViewController: UITableViewController {
         self.navigationItem.largeTitleDisplayMode = .always
         self.title = String.localized("TAB_SOURCES")
     }
+
+    // Explicitly override supportedInterfaceOrientations to fix accessibility error
+    public override var supportedInterfaceOrientations: UIInterfaceOrientationMask {
+        return .portrait // Adjust as needed for your app's requirements
+    }
 }
 
 // MARK: - TableView
