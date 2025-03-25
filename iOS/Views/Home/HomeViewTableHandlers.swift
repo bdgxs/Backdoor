@@ -1,6 +1,12 @@
 import UIKit
 
 class HomeViewTableHandlers {
+    private let utilities: HomeViewUtilities
+    
+    init(utilities: HomeViewUtilities) {
+        self.utilities = utilities
+    }
+    
     func tableView(_ tableView: UITableView, performDropWith coordinator: UITableViewDropCoordinator, fileList: inout [File]) {
         let destinationIndexPath: IndexPath
         if let indexPath = coordinator.destinationIndexPath {
@@ -10,11 +16,11 @@ class HomeViewTableHandlers {
             let row = tableView.numberOfRows(inSection: section)
             destinationIndexPath = IndexPath(row: row, section: section)
         }
-
+        
         guard let session = coordinator.session as? UIDragSession,
               let fileName = session.localContext as? String,
               let sourceIndex = fileList.firstIndex(where: { $0.name == fileName }) else { return }
-
+        
         DispatchQueue.global(qos: .userInitiated).async {
             let sourceFile = fileList[sourceIndex] // Get the File object
             
