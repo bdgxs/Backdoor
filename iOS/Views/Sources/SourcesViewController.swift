@@ -7,7 +7,7 @@ class SourcesViewController: UITableViewController {
     var sources: [Source] = []
     public var searchController: UISearchController!
     let searchResultsTableViewController = SearchResultsTableViewController()
-    public lazy var refreshControl: UIRefreshControl = { // Changed to public
+    public lazy var customRefreshControl: UIRefreshControl = { // Changed to customRefreshControl
         let control = UIRefreshControl()
         control.addTarget(self, action: #selector(fetch), for: .valueChanged)
         return control
@@ -36,7 +36,7 @@ class SourcesViewController: UITableViewController {
         self.tableView.dataSource = self
         self.tableView.delegate = self
         self.tableView.register(UITableViewCell.self, forCellReuseIdentifier: "Cell")
-        self.tableView.refreshControl = refreshControl
+        self.tableView.refreshControl = customRefreshControl // Updated to use customRefreshControl
         NotificationCenter.default.addObserver(self, selector: #selector(fetch), name: Notification.Name("sfetch"), object: nil)
     }
     
@@ -198,7 +198,7 @@ extension SourcesViewController {
 extension SourcesViewController {
     @objc func fetch() {
         fetchSources()
-        refreshControl.endRefreshing()
+        customRefreshControl.endRefreshing() // Updated to use customRefreshControl
     }
     
     func fetchSources() {
