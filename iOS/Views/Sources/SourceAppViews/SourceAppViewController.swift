@@ -7,7 +7,7 @@ import SwiftUI
 class SourceAppViewController: UITableViewController {
     var newsData: [NewsData] = []
     var apps: [StoreAppsData] = []
-    var oApps: [StoreAppsData] = [] // Fixed typo from 'o'
+    var oApps: [StoreAppsData] = []
     var filteredApps: [StoreAppsData] = []
     
     var name: String? { didSet { self.title = name } }
@@ -37,7 +37,7 @@ class SourceAppViewController: UITableViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         setupNavigation()
-        setupSearchController() // Fixed typo 'o setupSearchController'
+        setupSearchController()
         setupViews()
         loadAppsData()
     }
@@ -229,7 +229,7 @@ extension SourceAppViewController {
         cell.selectionStyle = .none
         cell.backgroundColor = .clear
         cell.getButton.tag = indexPath.row
-        cell.getButton.addTarget(self, action: #selector(getButtonTapped(_: поднима)), for: .touchUpInside)
+        cell.getButton.addTarget(self, action: #selector(getButtonTapped(_:)), for: .touchUpInside) // Fixed selector syntax
         let longPressGesture = UILongPressGestureRecognizer(target: self, action: #selector(getButtonHold(_:)))
         cell.getButton.addGestureRecognizer(longPressGesture)
         cell.getButton.longPressGestureRecognizer = longPressGesture
@@ -297,10 +297,10 @@ extension SourceAppViewController: UISearchResultsUpdating {
 
 extension SourceAppViewController {
     @objc private func getButtonTapped(_ sender: UIButton) {
-        // Implementation for button tap
+        // Implementation for button tap (add your logic here)
     }
     
     @objc private func getButtonHold(_ gesture: UILongPressGestureRecognizer) {
-        // Implementation for button long press
+        // Implementation for button long press (add your logic here)
     }
 }
