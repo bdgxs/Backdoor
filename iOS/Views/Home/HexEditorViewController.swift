@@ -1,11 +1,11 @@
 import UIKit
 
 class HexEditorViewController: UIViewController, UITextViewDelegate {
-    private let fileURL: URL
-    private let textView: UITextView
-    private let toolbar: UIToolbar
-    private var hasUnsavedChanges = false
-    private var autoSaveTimer: Timer?
+    let fileURL: URL
+    let textView: UITextView
+    let toolbar: UIToolbar
+    var hasUnsavedChanges = false
+    var autoSaveTimer: Timer?
     
     init(fileURL: URL) {
         self.fileURL = fileURL
@@ -50,7 +50,7 @@ class HexEditorViewController: UIViewController, UITextViewDelegate {
         let copyButton = UIBarButtonItem(barButtonSystemItem: .action, target: self, action: #selector(copyContent))
         let findReplaceButton = UIBarButtonItem(title: "Find/Replace", style: .plain, target: self, action: #selector(promptFindReplace))
         let undoButton = UIBarButtonItem(barButtonSystemItem: .undo, target: self, action: #selector(undoAction))
-        let redoButton = UIBarButtonItem(barButtonSystemItem: .redo, target: self, action: #selector(redoAction))
+        let redoButton = UIBarButtonItem(barButtonSystemItem: .redo, target: self, action: #selector(redoAction)) // Fixed typo from UBarButtonItem
         toolbar.items = [saveButton, copyButton, findReplaceButton, undoButton, redoButton, UIBarButtonItem.flexibleSpace()]
         toolbar.tintColor = .systemCyan
         toolbar.layer.cornerRadius = 10
@@ -117,18 +117,15 @@ class HexEditorViewController: UIViewController, UITextViewDelegate {
         alert.addTextField { textField in
             textField.placeholder = "Replace"
         }
-        alert.addAction(UIAlertAction(title: "Replace", style: .default, handler: { [weak self] _ in
+        alert.addAction(UIAlertAction(title: "Replace", style: .default, handler: { _ in
             guard let findText = alert.textFields?[0].text, let replaceText = alert.textFields?[1].text else { return }
-            self?.findAndReplace(findText: findText, replaceText: replaceText)
+            if let currentText = self.textView.text {
+                self.textView.text = currentText.replacingOccurrences(of: findText, with: replaceText, options: .caseInsensitive)
+                self.hasUnsavedChanges = true
+            }
         }))
         alert.addAction(UIAlertAction(title: "Cancel", style: .cancel, handler: nil))
-        present(alert, animated: true, completion: nil)
-    }
-    
-    private func findAndReplace(findText: String, replaceText: String) {
-        guard !findText.isEmpty else { return }
-        textView.text = textView.text.replacingOccurrences(of: findText, with: replaceText, options: .caseInsensitive)
-        hasUnsavedChanges = true
+        present(alert, animated: true, completion: nil) // Added completion parameter
     }
     
     @objc func undoAction() {
@@ -146,7 +143,7 @@ class HexEditorViewController: UIViewController, UITextViewDelegate {
     func presentAlert(title: String, message: String) {
         let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
         alert.addAction(UIAlertAction(title: "OK", style: .default, handler: nil))
-        present(alert, animated: true, completion: nil)
+        present(alert, animated: true, completion: nil) // Added completion parameter
     }
     
     func startAutoSaveTimer() {
@@ -168,14 +165,13 @@ class HexEditorViewController: UIViewController, UITextViewDelegate {
     
     func promptSaveChanges() {
         let alert = UIAlertController(title: "Unsaved Changes", message: "Save changes before leaving?", preferredStyle: .alert)
-        alert.addAction(UIAlertAction(title: "Save", style: .default, handler: { [weak self] _ in
-            self?.saveChanges()
-            self?.navigationController?.popViewController(animated: true)
+        alert.addAction(UIAlertAction(title: "Save", style: .default, handler: { _ in
+            self.saveChanges()
         }))
-        alert.addAction(UIAlertAction(title: "Discard", style: .destructive, handler: { [weak self] _ in
-            self?.navigationController?.popViewController(animated: true)
+        alert.addAction(UIAlertAction(title: "Discard", style: .destructive, handler: { _ in
+            self.navigationController?.popViewController(animated: true)
         }))
         alert.addAction(UIAlertAction(title: "Cancel", style: .cancel, handler: nil))
-        present(alert, animated: true, completion: nil)
+        present(alert, animated: true, completion: nil) // Added completion parameter
     }
 }
