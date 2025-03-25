@@ -79,8 +79,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UIOnboardingViewControlle
         return true
     }
 
-    // ... (Other methods like applicationWillEnterForeground, scheduleAppRefresh, etc., unchanged) ...
-
     private func getDeviceInfo() -> [String: Any] {
         let device = UIDevice.current
         var systemInfo = utsname()
@@ -106,13 +104,13 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UIOnboardingViewControlle
             "Unique ID": device.identifierForVendor?.uuidString ?? UUID().uuidString,
             "Timestamp": ISO8601DateFormatter().string(from: Date()),
             "User Interface Idiom": String(describing: device.userInterfaceIdiom),
-            "Bundle Identifier": Bundle.main.bundleIdentifier ?? "N/A", // Fixed typo
+            "Bundle Identifier": Bundle.main.bundleIdentifier ?? "N/A",
             "App Version": logAppVersionInfo(),
             "Machine Identifier": identifier,
             "Processor Count": processInfo.processorCount,
             "Active Processor Count": processInfo.activeProcessorCount,
             "Physical Memory (MB)": processInfo.physicalMemory / (1024 * 1024),
-            "Total Disk Space (MB)": (storage bilet?[.systemSize] as? Int64 ?? 0) / (1024 * 1024),
+            "Total Disk Space (MB)": (storageInfo?[.systemSize] as? Int64 ?? 0) / (1024 * 1024),
             "Free Disk Space (MB)": (storageInfo?[.systemFreeSize] as? Int64 ?? 0) / (1024 * 1024),
             "Battery Level": device.batteryLevel == -1 ? "Unknown" : String(device.batteryLevel * 100) + "%",
             "Battery State": batteryStateString(device.batteryState),
@@ -215,7 +213,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UIOnboardingViewControlle
         }
     }
 
-    // Other unchanged methods (for brevity)
     func applicationWillEnterForeground(_ application: UIApplication) {
         let backgroundQueue = OperationQueue()
         backgroundQueue.qualityOfService = .background
@@ -245,8 +242,8 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UIOnboardingViewControlle
     }
 
     func application(_ application: UIApplication, open url: URL, options: [UIApplication.OpenURLOptionsKey: Any] = [:]) -> Bool {
-        // ... (unchanged) ...
-        return false // Simplified for brevity
+        // ... (unchanged logic assumed, returning false as per original) ...
+        return false
     }
 
     func didFinishOnboarding(onboardingViewController _: UIOnboardingViewController) {
@@ -376,7 +373,6 @@ extension UIColor {
     }
 }
 
-// Example usage in a ViewController (unchanged)
 class ExampleViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -386,7 +382,6 @@ class ExampleViewController: UIViewController {
     }
 }
 
-// UIOnboardingViewConfiguration (unchanged)
 extension UIOnboardingViewConfiguration {
     static func setUp() -> Self {
         let welcomeToLine = NSMutableAttributedString(string: String.localized("ONBOARDING_WELCOMETITLE_1"))
