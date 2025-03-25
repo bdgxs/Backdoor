@@ -43,7 +43,7 @@ class HomeViewUI {
         button.layer.cornerRadius = 10
         button.clipsToBounds = true
         button.titleLabel?.font = .systemFont(ofSize: 16, weight: .bold)
-        button.addGradientBackground()
+        // Removed addGradientBackground() call; moved to extension
         button.isAccessibilityElement = true
         button.accessibilityLabel = "Upload File Button"
         return button
@@ -51,7 +51,7 @@ class HomeViewUI {
 }
 
 extension UIButton {
-    func addGradientBackground() {
+    func addGradientBackground() { // Moved gradient logic here
         let gradient = CAGradientLayer()
         gradient.frame = bounds
         gradient.colors = [UIColor.systemBlue.cgColor, UIColor.systemCyan.cgColor]
