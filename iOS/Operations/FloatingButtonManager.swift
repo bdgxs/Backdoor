@@ -1,4 +1,5 @@
 import UIKit
+import SwiftUI
 
 /// Manages the floating AI button across the app
 final class FloatingButtonManager {
@@ -133,7 +134,6 @@ final class FloatingButtonManager {
                 return
             }
             
-            // Update UserDefaults and post notification to change the tab
             UserDefaults.standard.set(targetTab, forKey: "selectedTab")
             NotificationCenter.default.post(name: .changeTab, object: nil, userInfo: ["tab": targetTab])
         }
