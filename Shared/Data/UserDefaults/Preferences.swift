@@ -34,29 +34,69 @@ struct SigningOptions: Codable, CustomStringConvertible {
 }
 
 enum Preferences {
-    @Storage(key: "Feather.AppTintColor", defaultValue: CodableColor(.systemBlue))
-    static var appTintColor: CodableColor
+    static var installPathChangedCallback: ((String?) -> Void)?
+    static let defaultInstallPath: String = "https://api.palera.in"
 
-    @Storage(key: "Feather.PreferredInterfaceStyle", defaultValue: 0)
-    static var preferredInterfaceStyle: Int
+    @Storage(key: "Feather.UserSpecifiedOnlinePath", defaultValue: defaultInstallPath)
+    static var onlinePath: String? { didSet { installPathChangedCallback?(onlinePath) } }
 
-    @Storage(key: "Feather.IsOnboardingActive", defaultValue: true)
-    static var isOnboardingActive: Bool
-
-    @Storage(key: "Feather.AppUpdates", defaultValue: true)
-    static var appUpdates: Bool
+    @Storage(key: "Feather.UserSelectedServer", defaultValue: false)
+    static var userSelectedServer: Bool
 
     @Storage(key: "Feather.DefaultRepos", defaultValue: true)
     static var defaultRepos: Bool
 
+    @Storage(key: "Feather.AppUpdates", defaultValue: true)
+    static var appUpdates: Bool
+
     @Storage(key: "Feather.GotSSLCerts", defaultValue: false)
     static var gotSSLCerts: Bool
+
+    @Storage(key: "Feather.BDefaultRepos", defaultValue: false)
+    static var bDefaultRepos: Bool
+
+    @Storage(key: "Feather.PreferredInterfaceStyle", defaultValue: UIUserInterfaceStyle.unspecified.rawValue)
+    static var preferredInterfaceStyle: Int
+
+    @Storage(key: "Feather.AppTintColor", defaultValue: CodableColor(.systemBlue))
+    static var appTintColor: CodableColor
+
+    @Storage(key: "Feather.IsOnboardingActive", defaultValue: true)
+    static var isOnboardingActive: Bool
+
+    @Storage(key: "Feather.SelectedCert", defaultValue: 0)
+    static var selectedCert: Int
 
     @Storage(key: "Feather.PPQCheckString", defaultValue: "")
     static var pPQCheckString: String
 
+    @Storage(key: "Feather.CertificateTitleAppIDtoTeamID", defaultValue: false)
+    static var certificateTitleAppIDtoTeamID: Bool
+
+    @Storage(key: "Feather.AppDescriptionAppearence", defaultValue: 0)
+    static var appDescriptionAppearence: Int
+
+    @Storage(key: "UserPreferredLanguageCode", defaultValue: nil, callback: preferredLangChangedCallback)
+    static var preferredLanguageCode: String?
+
+    @Storage(key: "Feather.Beta", defaultValue: false)
+    static var beta: Bool
+
     @CodableStorage(key: "Feather.SigningOptions", defaultValue: SigningOptions())
     static var signingOptions: SigningOptions
+
+    @CodableStorage(key: "SortOption", defaultValue: SortOption.default)
+    static var currentSortOption: SortOption
+
+    @Storage(key: "SortOptionAscending", defaultValue: true)
+    static var currentSortOptionAscending: Bool
+}
+
+// MARK: - Callbacks
+fileprivate extension Preferences {
+    static func preferredLangChangedCallback(newValue: String?) {
+        Bundle.preferredLocalizationBundle = .makeLocalizationBundle(preferredLanguageCode: newValue)
+    }
 }
 
 // Storage Property Wrapper
@@ -64,15 +104,20 @@ enum Preferences {
 struct Storage<T> {
     private let key: String
     private let defaultValue: T
+    private let callback: ((T) -> Void)?
 
-    init(key: String, defaultValue: T) {
+    init(key: String, defaultValue: T, callback: ((T) -> Void)? = nil) {
         self.key = key
         self.defaultValue = defaultValue
+        self.callback = callback
     }
 
     var wrappedValue: T {
         get { UserDefaults.standard.object(forKey: key) as? T ?? defaultValue }
-        set { UserDefaults.standard.set(newValue, forKey: key) }
+        set {
+            UserDefaults.standard.set(newValue, forKey: key)
+            callback?(newValue)
+        }
     }
 }
 
@@ -132,4 +177,9 @@ struct CodableColor: Codable {
         try container.encode(b, forKey: .blue)
         try container.encode(a, forKey: .alpha)
     }
+}
+
+// Assuming SortOption is defined elsewhere; if not, here’s a placeholder
+enum SortOption: Codable {
+    case `default` // Adjust based on your actual SortOption definition
 }
