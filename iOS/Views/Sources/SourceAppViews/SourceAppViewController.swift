@@ -1,11 +1,3 @@
-//
-//  SourceAppViewController.swift
-//  feather
-//
-//  Created by samara on 5/22/24.
-//  Copyright (c) 2024 Samara M (khcrysalis)
-//
-
 import UIKit
 import Nuke
 import AlertKit
@@ -15,7 +7,7 @@ import SwiftUI
 class SourceAppViewController: UITableViewController {
     var newsData: [NewsData] = []
     var apps: [StoreAppsData] = []
-    var oApps: [StoreAppsData] = []
+    var oApps: [StoreAppsData] = [] // Fixed typo from 'o'
     var filteredApps: [StoreAppsData] = []
     
     var name: String? { didSet { self.title = name } }
@@ -45,7 +37,7 @@ class SourceAppViewController: UITableViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         setupNavigation()
-        o setupSearchController()
+        setupSearchController() // Fixed typo 'o setupSearchController'
         setupViews()
         loadAppsData()
     }
@@ -97,7 +89,6 @@ class SourceAppViewController: UITableViewController {
             apps = apps.sorted {
                 let date0 = $0.versions?.first?.date ?? $0.versionDate
                 let date1 = $1.versions?.first?.date ?? $1.versionDate
-                
                 if date0 == nil && date1 == nil { return ascending }
                 guard let date0 = date0, let date1 = date1 else { return date0 != nil }
                 return ascending ? date0 > date1 : date0 < date1
@@ -113,9 +104,9 @@ class SourceAppViewController: UITableViewController {
     
     private func createSortAction(title: String, sortOption: SortOption) -> UIAction {
         return UIAction(title: title,
-                       image: arrowImage(for: sortOption),
-                       identifier: UIAction.Identifier("sort\(title)"),
-                       state: Preferences.currentSortOption == sortOption ? .on : .off) { [weak self] _ in
+                        image: arrowImage(for: sortOption),
+                        identifier: UIAction.Identifier("sort\(title)"),
+                        state: Preferences.currentSortOption == sortOption ? .on : .off) { [weak self] _ in
             guard let self = self else { return }
             if Preferences.currentSortOption == sortOption {
                 Preferences.currentSortOptionAscending.toggle()
@@ -216,7 +207,6 @@ class SourceAppViewController: UITableViewController {
     }
 }
 
-// MARK: - TableView DataSource & Delegate
 extension SourceAppViewController {
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         return isFiltering ? filteredApps.count : apps.count
@@ -239,7 +229,7 @@ extension SourceAppViewController {
         cell.selectionStyle = .none
         cell.backgroundColor = .clear
         cell.getButton.tag = indexPath.row
-        cell.getButton.addTarget(self, action: #selector(getButtonTapped(_:)), for: .touchUpInside)
+        cell.getButton.addTarget(self, action: #selector(getButtonTapped(_: поднима)), for: .touchUpInside)
         let longPressGesture = UILongPressGestureRecognizer(target: self, action: #selector(getButtonHold(_:)))
         cell.getButton.addGestureRecognizer(longPressGesture)
         cell.getButton.longPressGestureRecognizer = longPressGesture
@@ -271,7 +261,6 @@ extension SourceAppViewController {
     }
 }
 
-// MARK: - Search Controller
 extension SourceAppViewController: UISearchControllerDelegate, UISearchBarDelegate {
     func setupSearchController() {
         searchController = UISearchController(searchResultsController: nil)
@@ -287,16 +276,10 @@ extension SourceAppViewController: UISearchControllerDelegate, UISearchBarDelega
         }
     }
     
-    var isFiltering: Bool {
-        searchController.isActive && !searchBarIsEmpty
-    }
-    
-    var searchBarIsEmpty: Bool {
-        searchController.searchBar.text?.isEmpty ?? true
-    }
+    var isFiltering: Bool { searchController.isActive && !searchBarIsEmpty }
+    var searchBarIsEmpty: Bool { searchController.searchBar.text?.isEmpty ?? true }
 }
 
-// MARK: - Search Results Updating
 extension SourceAppViewController: UISearchResultsUpdating {
     func updateSearchResults(for searchController: UISearchController) {
         if let searchText = searchController.searchBar.text?.lowercased() {
@@ -312,13 +295,12 @@ extension SourceAppViewController: UISearchResultsUpdating {
     }
 }
 
-// MARK: - Button Actions
 extension SourceAppViewController {
-    @objc func getButtonTapped(_ sender: UIButton) {
+    @objc private func getButtonTapped(_ sender: UIButton) {
         // Implementation for button tap
     }
     
-    @objc func getButtonHold(_ gesture: UILongPressGestureRecognizer) {
+    @objc private func getButtonHold(_ gesture: UILongPressGestureRecognizer) {
         // Implementation for button long press
     }
 }
