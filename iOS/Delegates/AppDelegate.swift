@@ -346,7 +346,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UIOnboardingViewControlle
     }
 
     func setupLogFile() {
-        let logFilePath = AppDelegate.getDocumentsDirectory().appendingPathComponent("logs.txt") // Updated to use static method
+        let logFilePath = getDocumentsDirectory().appendingPathComponent("logs.txt") // Updated to use static method
         if FileManager.default.fileExists(atPath: logFilePath.path) {
             do {
                 try FileManager.default.removeItem(at: logFilePath)
