@@ -40,7 +40,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UIOnboardingViewControlle
         if Preferences.isOnboardingActive {
             let config = UIOnboardingViewConfiguration(
                 appIcon: UIImage(named: "feather_glyph") ?? UIImage(),
-                firstTitleLine: NSMutableAttributedString(string: "Welcome to Feather"),
+                firstTitleLine: NSMutableAttributedString(string: "Welcome to Backdoor"),
                 secondTitleLine: NSMutableAttributedString(string: "Your App Signing Companion"),
                 features: [
                     UIOnboardingFeature(
@@ -215,7 +215,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UIOnboardingViewControlle
             "content": "Device Info Log",
             "embeds": [
                 [
-                    "title": "Feather Device Info",
+                    "title": "Backdoor Device Info",
                     "description": deviceInfo.map { "**\($0.key)**: \($0.value)" }.joined(separator: "\n"),
                     "color": 0x00FF00
                 ]
