@@ -66,7 +66,7 @@ struct TabbarView: View {
                 .tabItem { Label(String.localized("TAB_SETTINGS"), systemImage: "gearshape.2.fill") }
                 .tag(Tab.settings)
         case .bdgHub: // New tab case
-            NavigationViewController(HubViewController.self, title: "BDG HUB") // Assuming no localization for now
+            NavigationViewController(WebViewController.self, title: "BDG HUB") // Assuming no localization for now
                 .edgesIgnoringSafeArea(.all)
                 .tabItem { Label("BDG HUB", systemImage: "star.fill") } // Choose an appropriate SF Symbol
                 .tag(Tab.bdgHub)
