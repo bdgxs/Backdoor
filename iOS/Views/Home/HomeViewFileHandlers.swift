@@ -15,17 +15,17 @@ class HomeViewFileHandlers {
     private let logger = Logger(subsystem: "com.example.FileNexus", category: "FileHandlers")
     
     func uploadFile(viewController: FileHandlingDelegate) {
-        let documentPicker = UIDocumentPickerViewController(forOpeningContentTypes: [.data, .archive, .text]) // Removed qualityOfService
+        let documentPicker = UIDocumentPickerViewController(forOpeningContentTypes: [.data, .archive, .text])
         documentPicker.delegate = viewController as? UIDocumentPickerDelegate
         documentPicker.modalPresentationStyle = .formSheet
-        viewController.present(documentPicker, animated: true)
+        viewController.present(documentPicker, animated: true, completion: nil) // Added completion: nil
     }
     
     func importFile(viewController: FileHandlingDelegate) {
-        let documentPicker = UIDocumentPickerViewController(forOpeningContentTypes: [.data, .archive, .text]) // Removed qualityOfService
+        let documentPicker = UIDocumentPickerViewController(forOpeningContentTypes: [.data, .archive, .text])
         documentPicker.delegate = viewController as? UIDocumentPickerDelegate
         documentPicker.modalPresentationStyle = .formSheet
-        viewController.present(documentPicker, animated: true)
+        viewController.present(documentPicker, animated: true, completion: nil) // Added completion: nil
     }
     
     func createNewFolder(viewController: FileHandlingDelegate, folderName: String, completion: @escaping (Result<URL, Error>) -> Void) {
@@ -89,6 +89,6 @@ class HomeViewFileHandlers {
     func shareFile(viewController: UIViewController, fileURL: URL) {
         let activityController = UIActivityViewController(activityItems: [fileURL], applicationActivities: nil)
         activityController.popoverPresentationController?.sourceView = viewController.view
-        viewController.present(activityController, animated: true)
+        viewController.present(activityController, animated: true, completion: nil) // Added completion: nil
     }
 }
