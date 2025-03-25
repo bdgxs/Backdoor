@@ -55,9 +55,84 @@ final class FloatingButtonManager {
                                              name: .showAIAssistant,
                                              object: nil)
         
-        // TODO: Register your app-specific commands here
-        AppContextManager.shared.registerCommand("create note") { parameter in
-            // Implementation needed from your app
+        // Register Feather-specific commands
+        AppContextManager.shared.registerCommand("add source") { sourceURL in
+            if let url = URL(string: sourceURL) {
+                CoreDataManager.shared.saveSource(name: "Custom Source", id: UUID().uuidString, iconURL: nil, url: sourceURL) { error in
+                    if let error = error {
+                        Debug.shared.log(message: "Failed to add source: \(error)", type: .error)
+                    } else {
+                        Debug.shared.log(message: "Added source: \(sourceURL)", type: .success)
+                    }
+                }
+            } else {
+                Debug.shared.log(message: "Invalid source URL: \(sourceURL)", type: .error)
+            }
+        }
+        
+        AppContextManager.shared.registerCommand("list sources") { _ in
+            let sources = CoreDataManager.shared.getAZSources()
+            let sourceNames = sources.map { $0.name ?? "Unnamed" }.joined(separator: "\n")
+            if let topVC = UIApplication.shared.topMostViewController() {
+                let alert = UIAlertController(title: "Sources", message: sourceNames.isEmpty ? "No sources available" : sourceNames, preferredStyle: .alert)
+                alert.addAction(UIAlertAction(title: "OK", style: .default))
+                topVC.present(alert, animated: true)
+            }
+        }
+        
+        AppContextManager.shared.registerCommand("list downloaded apps") { _ in
+            let apps = CoreDataManager.shared.getDatedDownloadedApps()
+            let appNames = apps.map { "\($0.name ?? "Unnamed") (\($0.version ?? "Unknown"))" }.joined(separator: "\n")
+            if let topVC = UIApplication.shared.topMostViewController() {
+                let alert = UIAlertController(title: "Downloaded Apps", message: appNames.isEmpty ? "No downloaded apps" : appNames, preferredStyle: .alert)
+                alert.addAction(UIAlertAction(title: "OK", style: .default))
+                topVC.present(alert, animated: true)
+            }
+        }
+        
+        AppContextManager.shared.registerCommand("list signed apps") { _ in
+            let apps = CoreDataManager.shared.getDatedSignedApps()
+            let appNames = apps.map { "\($0.name ?? "Unnamed") (\($0.bundleidentifier ?? "Unknown"))" }.joined(separator: "\n")
+            if let topVC = UIApplication.shared.topMostViewController() {
+                let alert = UIAlertController(title: "Signed Apps", message: appNames.isEmpty ? "No signed apps" : appNames, preferredStyle: .alert)
+                alert.addAction(UIAlertAction(title: "OK", style: .default))
+                topVC.present(alert, animated: true)
+            }
+        }
+        
+        AppContextManager.shared.registerCommand("list certificates") { _ in
+            let certificates = CoreDataManager.shared.getDatedCertificate()
+            let certNames = certificates.map { $0.certData?.name ?? "Unnamed" }.joined(separator: "\n")
+            if let topVC = UIApplication.shared.topMostViewController() {
+                let alert = UIAlertController(title: "Certificates", message: certNames.isEmpty ? "No certificates" : certNames, preferredStyle: .alert)
+                alert.addAction(UIAlertAction(title: "OK", style: .default))
+                topVC.present(alert, animated: true)
+            }
+        }
+        
+        AppContextManager.shared.registerCommand("navigate to") { screen in
+            guard let topVC = UIApplication.shared.topMostViewController() as? UIHostingController<TabbarView>,
+                  let tabBarController = topVC.rootView as? UITabBarController else {
+                Debug.shared.log(message: "Cannot navigate: Not on main tab bar", type: .error)
+                return
+            }
+            
+            switch screen.lowercased() {
+            case "sources":
+                tabBarController.selectedIndex = 0
+            case "store", "hub":
+                tabBarController.selectedIndex = 1
+            case "library", "apps":
+                tabBarController.selectedIndex = 2
+            case "signing":
+                tabBarController.selectedIndex = 3
+            case "settings":
+                tabBarController.selectedIndex = 4
+            case "home":
+                tabBarController.selectedIndex = 5
+            default:
+                Debug.shared.log(message: "Unknown screen: \(screen)", type: .warning)
+            }
         }
     }
     
