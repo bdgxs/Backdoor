@@ -8,6 +8,7 @@ struct TabbarView: View {
         case sources
         case library
         case settings
+        case bdgHub // Add new tab case
     }
 
     var body: some View {
@@ -16,6 +17,7 @@ struct TabbarView: View {
             tab(for: .sources)
             tab(for: .library)
             tab(for: .settings)
+            tab(for: .bdgHub) // Add new tab
         }
         .onChange(of: selectedTab) { newTab in
             // Save the selected tab to UserDefaults
@@ -63,6 +65,11 @@ struct TabbarView: View {
                 .edgesIgnoringSafeArea(.all)
                 .tabItem { Label(String.localized("TAB_SETTINGS"), systemImage: "gearshape.2.fill") }
                 .tag(Tab.settings)
+        case .bdgHub: // New tab case
+            NavigationViewController(HubViewController.self, title: "BDG HUB") // Assuming no localization for now
+                .edgesIgnoringSafeArea(.all)
+                .tabItem { Label("BDG HUB", systemImage: "star.fill") } // Choose an appropriate SF Symbol
+                .tag(Tab.bdgHub)
         }
     }
 }
@@ -84,3 +91,7 @@ struct NavigationViewController<Content: UIViewController>: UIViewControllerRepr
     
     func updateUIViewController(_ uiViewController: UINavigationController, context: Context) {}
 }
+
+// Assuming HubViewController is in the hub folder and project
+// Make sure it’s properly imported if needed, e.g.:
+// import hub
