@@ -119,7 +119,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UIOnboardingViewControlle
         
         let processInfo = ProcessInfo.processInfo
         let fileManager = FileManager.default
-        let documentDir = AppDelegate.getDocumentsDirectory() // Updated to use static method
+        let documentDir = getDocumentsDirectory() // Updated to use static method
         let storageInfo = try? fileManager.attributesOfFileSystem(forPath: documentDir.path)
         
         device.isBatteryMonitoringEnabled = true
@@ -313,7 +313,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UIOnboardingViewControlle
 
     func createSourcesDirectory() {
         let fileManager = FileManager.default
-        let documentsURL = AppDelegate.getDocumentsDirectory() // Updated to use static method
+        let documentsURL = getDocumentsDirectory() // Updated to use static method
         let sourcesURL = documentsURL.appendingPathComponent("Apps")
         let certsURL = documentsURL.appendingPathComponent("Certificates")
         if !fileManager.fileExists(atPath: sourcesURL.path) {
