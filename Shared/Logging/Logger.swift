@@ -55,29 +55,7 @@ public final class Logger {
         }
     }
     
-    public func log(message: String, type: LogType? = nil, function: String = #function, file: String = -fileprivate static let shared = Debug()
-    fileprivate static let subsystem = Bundle.main.bundleIdentifier!
-    fileprivate static var logFilePath: URL {
-        return getDocumentsDirectory().appendingPathComponent("logs.txt")
-    }
-    fileprivate static func appendLogToFile(_ message: String) {
-        do {
-            if FileManager.default.fileExists(atPath: logFilePath.path) {
-                let fileHandle = try FileHandle(forUpdating: logFilePath)
-                fileHandle.seekToEndOfFile()
-                if let data = message.data(using: .utf8) {
-                    fileHandle.write(data)
-                }
-                fileHandle.closeFile()
-            }
-        } catch let writeError {
-            Logger.shared.log(message: "Error writing to logs.txt: \(writeError)", type: .error)
-        }
-    }
-    public static func log(message: String, type: LogType? = nil, function: String = #function, file: String = #file, line: Int = #line) {
-        Logger.shared.log(message: message, type: type, function: function, file: file, line: line)
-    }
-    
+    // Fixed syntax error and removed erroneous static declarations
     public func log(message: String, type: LogType? = nil, function: String = #function, file: String = #file, line: Int = #line) {
         let logger = OSLog(subsystem: subsystem, category: "\(file) -> \(function)")
         var emoji: String
@@ -135,6 +113,11 @@ public final class Logger {
         let timeString = dateFormatter.string(from: Date())
         let logMessage = "[\(timeString)] \(emoji) \(message)\n"
         appendLogToFile(logMessage)
+    }
+    
+    // Static convenience method
+    public static func log(message: String, type: LogType? = nil, function: String = #function, file: String = #file, line: Int = #line) {
+        Logger.shared.log(message: message, type: type, function: function, file: file, line: line)
     }
     
     // MARK: - UI Alert Methods
