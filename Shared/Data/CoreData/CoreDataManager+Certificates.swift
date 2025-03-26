@@ -1,11 +1,3 @@
-//
-//  CoreDataManager+Certificates.swift
-//  feather
-//
-//  Created by samara on 8/3/24.
-//  Copyright (c) 2024 Samara M (khcrysalis)
-//
-
 import Foundation
 import CoreData
 
@@ -14,7 +6,11 @@ extension CoreDataManager {
 	func clearCertificate(
 		context: NSManagedObjectContext? = nil) {
 			let context = context ?? self.context
-			clear(request: Certificate.fetchRequest(), context: context)
+			do {
+				try clear(request: Certificate.fetchRequest(), context: context)
+			} catch {
+				Debug.shared.log(message: "Error clearing certificates: \(error)", type: .error)
+			}
 	}
 	
 	func getDatedCertificate(
