@@ -1,4 +1,5 @@
 import Foundation
+import Logger
 
 func getCertificates() {
     let sourceGET = SourceGET()
