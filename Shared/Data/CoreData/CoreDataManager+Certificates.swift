@@ -1,4 +1,3 @@
-import Foundation
 import CoreData
 
 extension CoreDataManager {
@@ -8,7 +7,7 @@ extension CoreDataManager {
         do {
             try clear(request: Certificate.fetchRequest(), context: context)
         } catch let error {
-            Debug.shared.log(message: "Error clearing certificates: \(error)", type: .error)
+            Logger.shared.log(message: "Error clearing certificates: \(error)", type: .error)
         }
     }
 
@@ -33,7 +32,7 @@ extension CoreDataManager {
         let context = context ?? self.context
 
         guard let provisionPath = files[.provision] as? URL else {
-            Debug.shared.log(message: "Provisioning file URL is missing")
+            Logger.shared.log(message: "Provisioning file URL is missing")
             return
         }
 
@@ -49,7 +48,7 @@ extension CoreDataManager {
             try context.save()
             NotificationCenter.default.post(name: Notification.Name("cfetch"), object: nil)
         } catch let error {
-            Debug.shared.log(message: "Error: \(error)", type: .error)
+            Logger.shared.log(message: "Error: \(error)", type: .error)
         }
     }
 
@@ -104,7 +103,7 @@ extension CoreDataManager {
             try FileManager.default.removeItem(at: getCertifcatePath(source: app))
             try context.save()
         } catch let error {
-            Debug.shared.log(message: "CoreDataManager.deleteAllSignedAppContent: \(error)", type: .error)
+            Logger.shared.log(message: "CoreDataManager.deleteAllSignedAppContent: \(error)", type: .error)
         }
     }
 }
