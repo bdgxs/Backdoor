@@ -6,7 +6,7 @@ final class CertData {
             let fileData = try Data(contentsOf: path)
             
             guard let xmlRange = fileData.range(of: Data("<?xml".utf8)) else {
-                Debug.shared.log(message: "XML start not found in file.", type: .error)
+                Logger.shared.log(message: "XML start not found in file.", type: .error)
                 return nil
             }
             
@@ -15,7 +15,7 @@ final class CertData {
             let plist = try PropertyListSerialization.propertyList(from: xmlData, options: [], format: nil)
             
             guard let plistDict = plist as? [String: Any] else {
-                Debug.shared.log(message: "File does not contain a valid plist dictionary.", type: .error)
+                Logger.shared.log(message: "File does not contain a valid plist dictionary.", type: .error)
                 return nil
             }
             
@@ -45,7 +45,7 @@ final class CertData {
                 Version: version
             )
         } catch {
-            Debug.shared.log(message: "CertData.parseMobileProvisioningFile: \(error)", type: .error)
+            Logger.shared.log(message: "CertData.parseMobileProvisioningFile: \(error)", type: .error)
             return nil
         }
     }
