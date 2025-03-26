@@ -23,7 +23,7 @@ class TweakHandler {
     
     public func getInputFiles() throws {
         guard !urls.isEmpty else {
-            Debug.shared.log(message: "No dylibs to inject, skipping!")
+            Logger.shared.log(message: "No dylibs to inject, skipping!")
             return
         }
         
@@ -32,7 +32,7 @@ class TweakHandler {
             if let ellekitURL = Bundle.main.url(forResource: "ellekit", withExtension: "deb") {
                 self.urls.insert(ellekitURL.absoluteString, at: 0)
             } else {
-                Debug.shared.log(message: "Error: ellekit.deb not found in the app bundle \u{2049}\u{fe0f}", type: .error)
+                Logger.shared.log(message: "Error: ellekit.deb not found in the app bundle ❗️", type: .error)
                 return
             }
         }
@@ -54,7 +54,7 @@ class TweakHandler {
                 case "deb":
                     try handleDeb(at: urlf!, baseTmpDir: baseTmpDir)
                 default:
-                    Debug.shared.log(message: "Unsupported file type: \(urlf!.lastPathComponent), skipping.")
+                    Logger.shared.log(message: "Unsupported file type: \(urlf!.lastPathComponent), skipping.")
                 }
             }
             
@@ -85,7 +85,7 @@ class TweakHandler {
                 let destinationURL = app.appendingPathComponent(url.lastPathComponent)
                 try TweakHandler.moveFile(from: url, to: destinationURL)
             default:
-                Debug.shared.log(message: "Unsupported file type: \(url.lastPathComponent), skipping.")
+                Logger.shared.log(message: "Unsupported file type: \(url.lastPathComponent), skipping.")
             }
         }
     }
@@ -157,7 +157,7 @@ class TweakHandler {
                 }
             }
         } catch {
-            Debug.shared.log(message: "Error handling file \(url): \(error)")
+            Logger.shared.log(message: "Error handling file \(url): \(error)")
             throw error
         }
     }
@@ -177,7 +177,7 @@ class TweakHandler {
                 let directoryURL = baseURL.appendingPathComponent(directory)
                 
                 guard fileManager.fileExists(atPath: directoryURL.path) else {
-                    Debug.shared.log(message: "Directory does not exist: \(directoryURL.path). Skipping.")
+                    Logger.shared.log(message: "Directory does not exist: \(directoryURL.path). Skipping.")
                     continue
                 }
                 
@@ -198,7 +198,7 @@ class TweakHandler {
                     try searchForBundles(in: directoryURL)
                     
                 default:
-                    Debug.shared.log(message: "Unexpected directory path: \(directoryURL.path)")
+                    Logger.shared.log(message: "Unexpected directory path: \(directoryURL.path)")
                 }
             }
         }
@@ -278,7 +278,7 @@ extension TweakHandler {
             let executableURL = frameworkURL.appendingPathComponent(executableName)
             return executableURL
         } else {
-            Debug.shared.log(message: "CFBundleExecutable not found in Info.plist")
+            Logger.shared.log(message: "CFBundleExecutable not found in Info.plist")
             return nil
         }
     }
@@ -286,7 +286,7 @@ extension TweakHandler {
     private static func moveFile(from sourceURL: URL, to destinationURL: URL) throws {
         let fileManager = FileManager.default
         if fileManager.fileExists(atPath: destinationURL.path) {
-            Debug.shared.log(message: "File already exists at destination: \(destinationURL)")
+            Logger.shared.log(message: "File already exists at destination: \(destinationURL)")
         } else {
             try fileManager.moveItem(at: sourceURL, to: destinationURL)
         }
