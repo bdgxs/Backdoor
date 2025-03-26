@@ -14,7 +14,7 @@ final class AppContextManager {
     
     // Private properties
     private var currentState: AppContext?  // Refers to AppContext from AppContext.swift
-    private var commandHandlers: [String: (String) -> Void] = [:]
+    private var commandHandlers: [String: (String, @escaping (String) -> Void) -> Void] = [:]
     private let commandQueue = DispatchQueue(label: "com.app.commandQueue")
     
     private init() {}
@@ -92,23 +92,24 @@ final class AppContextManager {
         return currentState ?? AppContext(currentScreen: "Unknown", additionalData: [:])
     }
     
-    /// Registers a command with its handler.
-    func registerCommand(_ command: String, handler: @escaping (String) -> Void) {
+    /// Registers a command with its handler, including a completion callback.
+    func registerCommand(_ command: String, handler: @escaping (String, @escaping (String) -> Void) -> Void) {
         commandQueue.sync {
             commandHandlers[command.lowercased()] = handler
         }
     }
     
-    /// Executes a command with the given parameter and returns the result.
-    func executeCommand(_ command: String, parameter: String) -> CommandResult {
+    /// Executes a command with the given parameter and returns the result via completion.
+    func executeCommand(_ command: String, parameter: String, completion: @escaping (CommandResult) -> Void) {
         commandQueue.sync {
             let commandKey = command.lowercased()
             if let handler = commandHandlers[commandKey] {
-                handler(parameter)
-                return .success
+                handler(parameter) { result in
+                    completion(.successWithResult(result))
+                }
             } else {
                 Debug.shared.log(message: "Unknown command: \(command)", type: .warning)
-                return .unknownCommand(command)
+                completion(.unknownCommand(command))
             }
         }
     }
@@ -122,7 +123,7 @@ final class AppContextManager {
     
     /// Sets additional context data dynamically.
     func setAdditionalContextData(_ data: [String: Any]) {
-        // Since AppContext is now immutable, create a new instance
+        // Since AppContext is immutable, create a new instance
         if var current = currentState {
             currentState = AppContext(
                 currentScreen: current.currentScreen,
@@ -134,7 +135,7 @@ final class AppContextManager {
 
 /// Result type for command execution.
 enum CommandResult {
-    case success
+    case successWithResult(String)
     case unknownCommand(String)
 }
 
