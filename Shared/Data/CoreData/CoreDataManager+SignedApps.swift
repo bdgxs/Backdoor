@@ -1,3 +1,5 @@
+import CoreData
+
 extension CoreDataManager {
 
     /// Clear all signedapps from Core Data and delete files
