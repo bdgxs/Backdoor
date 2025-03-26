@@ -10,6 +10,7 @@ import Foundation
 import ZIPFoundation
 import UIKit
 import CoreData
+import Logger
 
 class AppDownload: NSObject {
 	let progress = Progress(totalUnitCount: 100)
