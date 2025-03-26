@@ -15,7 +15,7 @@ public enum LogType {
 
 public final class Logger {
     public static let shared = Logger()
-    private let subsystem = Bundle.main.bundleIdentifier!
+    private let subsystem = Bundle.main.bundleIdentifier ?? "com.default.subsystem" // Fallback for safety
     
     private var logFilePath: URL {
         return getDocumentsDirectory().appendingPathComponent("logs.txt")
@@ -30,6 +30,9 @@ public final class Logger {
                     fileHandle.write(data)
                 }
                 fileHandle.closeFile()
+            } else {
+                // Create the file if it doesn’t exist
+                try message.write(to: logFilePath, atomically: true, encoding: .utf8)
             }
         } catch let writeError {
             log(message: "Error writing to logs.txt: \(writeError.localizedDescription)", type: .error)
@@ -37,7 +40,7 @@ public final class Logger {
     }
     
     public func log(message: String, type: LogType? = nil, function: String = #function, file: String = #file, line: Int = #line) {
-        let logger = OSLog(subsystem: subsystem, category: file + "->" + function)
+        let logger = OSLog(subsystem: subsystem, category: "\(file) -> \(function)")
         
         var emoji: String
         switch type {
@@ -62,7 +65,13 @@ public final class Logger {
         case .critical:
             emoji = "🔥"
             os_log("%{public}@", log: logger, type: .fault, message)
-        default:
+        case .fault:
+            emoji = "💥"
+            os_log("%{public}@", log: logger, type: .fault, message)
+        case .notice:
+            emoji = "📢"
+            os_log("%{public}@", log: logger, type: .default, message)
+        case nil:
             emoji = "📝"
             os_log("%{public}@", log: logger, type: .default, message)
         }
@@ -76,6 +85,7 @@ public final class Logger {
     }
 }
 
+// MARK: - Helper Function
 private func getDocumentsDirectory() -> URL {
     let paths = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)
     return paths[0]
