@@ -1,10 +1,3 @@
-//
-//  ESignParser.swift
-//  feather
-//
-//  Created by samara on 20.01.2025.
-//
-
 import Foundation
 
 class EsignDecryptor {
