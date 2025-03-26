@@ -1,5 +1,4 @@
 import UIKit
-import os.log
 
 enum FileAppError: Error {
     case fileNotFound(String)
@@ -34,11 +33,6 @@ struct AlertActionConfig {
 }
 
 class HomeViewUtilities {
-    let logger: Logger
-    
-    init(logger: Logger = Logger(subsystem: "com.example.FileNexus", category: "Utilities")) {
-        self.logger = logger
-    }
     
     func handleError(in viewController: UIViewController, error: Error, withTitle title: String) {
         var message: String
@@ -47,10 +41,10 @@ class HomeViewUtilities {
             message = formatFileAppError(fileError)
         case let nsError as NSError:
             message = nsError.localizedDescription
-            logger.error("NSError: \(nsError.localizedDescription)")
+            Debug.shared.log(message: "NSError: \(nsError.localizedDescription)", type: .error)
         default:
             message = error.localizedDescription
-            logger.error("Unknown error: \(error.localizedDescription)")
+            Debug.shared.log(message: "Unknown error: \(error.localizedDescription)", type: .error)
         }
         
         DispatchQueue.main.async {
@@ -63,13 +57,13 @@ class HomeViewUtilities {
     private func formatFileAppError(_ error: FileAppError) -> String {
         switch error {
         case .fileNotFound(let fileName):
-            logger.info("File not found: \(fileName)")
+            Debug.shared.log(message: "File not found: \(fileName)", type: .info)
             return "File not found: \(fileName). Please check the file name."
         case .fileAlreadyExists(let fileName):
-            logger.info("File already exists: \(fileName)")
+            Debug.shared.log(message: "File already exists: \(fileName)", type: .info)
             return "A file named \(fileName) already exists. Choose a different name."
         case .unknown(let underlyingError):
-            logger.error("Unknown error: \(underlyingError.localizedDescription)")
+            Debug.shared.log(message: "Unknown error: \(underlyingError.localizedDescription)", type: .error)
             return "An unknown error occurred: \(underlyingError.localizedDescription)"
         default:
             return error.localizedDescription
@@ -107,13 +101,6 @@ class HapticFeedbackGenerator {
     
     static func generateNotificationFeedback(type: UINotificationFeedbackGenerator.FeedbackType) {
         let generator = UINotificationFeedbackGenerator()
-        generator.prepare()
         generator.notificationOccurred(type)
-    }
-    
-    static func generateSelectionFeedback() {
-        let generator = UISelectionFeedbackGenerator()
-        generator.prepare()
-        generator.selectionChanged()
     }
 }
