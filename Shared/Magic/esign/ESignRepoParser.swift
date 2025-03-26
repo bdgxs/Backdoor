@@ -1,4 +1,5 @@
 import Foundation
+import Logger
 
 class EsignDecryptor {
 	private let input: String
