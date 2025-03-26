@@ -1,5 +1,4 @@
 import CoreData
-import Logger
 
 extension CoreDataManager {
     /// Clear all dl from Core Data and delete files
