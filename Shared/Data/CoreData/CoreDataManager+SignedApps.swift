@@ -1,7 +1,6 @@
 import CoreData
 
 extension CoreDataManager {
-
     /// Clear all signedapps from Core Data and delete files
     func clearSignedApps(context: NSManagedObjectContext? = nil) {
         let context = context ?? self.context
