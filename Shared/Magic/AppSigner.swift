@@ -10,7 +10,7 @@ func signInitialApp(bundle: BundleOptions, mainOptions: SigningMainDataWrapper, 
         let tmpDir = fileManager.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         let tmpDirApp = tmpDir.appendingPathComponent(appPath.lastPathComponent)
         var iconURL = ""
-
+        
         do {
             Logger.shared.log(message: "============================================")
             Logger.shared.log(message: "\(mainOptions.mainOptions)")
@@ -19,10 +19,10 @@ func signInitialApp(bundle: BundleOptions, mainOptions: SigningMainDataWrapper, 
             Logger.shared.log(message: "============================================")
             try fileManager.createDirectory(at: tmpDir, withIntermediateDirectories: true)
             try fileManager.copyItem(at: appPath, to: tmpDirApp)
-
+            
             if let info = NSDictionary(contentsOf: tmpDirApp.appendingPathComponent("Info.plist"))!.mutableCopy() as? NSMutableDictionary {
                 try updateInfoPlist(infoDict: info, main: mainOptions, options: signingOptions, icon: mainOptions.mainOptions.iconURL, app: tmpDirApp)
-
+                
                 if let iconsDict = info["CFBundleIcons"] as? [String: Any],
                    let primaryIconsDict = iconsDict["CFBundlePrimaryIcon"] as? [String: Any],
                    let iconFiles = primaryIconsDict["CFBundleIconFiles"] as? [String],
@@ -33,32 +33,32 @@ func signInitialApp(bundle: BundleOptions, mainOptions: SigningMainDataWrapper, 
             
             let handler = TweakHandler(urls: signingOptions.signingOptions.toInject, app: tmpDirApp)
             try handler.getInputFiles()
-
+            
             if !mainOptions.mainOptions.removeInjectPaths.isEmpty {
                 if let appexe = try? TweakHandler.findExecutable(at: tmpDirApp) {
                     _ = uninstallDylibs(filePath: appexe.path, dylibPaths: mainOptions.mainOptions.removeInjectPaths)
                 }
             }
-
+            
             try updatePlugIns(options: signingOptions, app: tmpDirApp)
             try removeDumbAssPlaceHolderExtension(options: signingOptions, app: tmpDirApp)
             try updateMobileProvision(app: tmpDirApp)
-
+            
             let certPath = try CoreDataManager.shared.getCertifcatePath(source: mainOptions.mainOptions.certificate)
             let provisionPath = certPath.appendingPathComponent("\(mainOptions.mainOptions.certificate?.provisionPath ?? "")").path
             let p12Path = certPath.appendingPathComponent("\(mainOptions.mainOptions.certificate?.p12Path ?? "")").path
-
+            
             Logger.shared.log(message: "🐛 Start Signing 🐛")
-
+            
             try signAppWithZSign(tmpDirApp: tmpDirApp, certPaths: (provisionPath, p12Path), password: mainOptions.mainOptions.certificate?.password ?? "", main: mainOptions, options: signingOptions)
-
+            
             Logger.shared.log(message: "🐛 End Signing 🐛")
-
+            
             let signedUUID = UUID().uuidString
             try fileManager.createDirectory(at: getDocumentsDirectory().appendingPathComponent("Apps/Signed"), withIntermediateDirectories: true)
             let signedPath = getDocumentsDirectory().appendingPathComponent("Apps/Signed").appendingPathComponent(signedUUID)
             try fileManager.moveItem(at: tmpDir, to: signedPath)
-
+            
             DispatchQueue.main.async {
                 var signedAppObject: NSManagedObject? = nil
                 
@@ -166,9 +166,9 @@ func updateMobileProvision(app: URL) throws {
 
 func listDylibs(filePath: String) -> [String]? {
     let dylibPathsArray = NSMutableArray()
-
+    
     let success = ListDylibs(filePath, dylibPathsArray)
-
+    
     if success {
         let dylibPaths = dylibPathsArray as! [String]
         return dylibPaths
@@ -310,4 +310,7 @@ func updateLocalizedInfoPlist(in appDirectory: URL, newDisplayName: String) {
     }
 }
 
-// Removed duplicate getDocumentsDirectory() - use the one from Logger.swift
+func getDocumentsDirectory() -> URL {
+    let paths = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)
+    return paths[0]
+}
