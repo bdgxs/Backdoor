@@ -55,7 +55,7 @@ extension CoreDataManager {
 
     /// Get application file path
     func getFilesForDownloadedApps(for app: DownloadedApps, getuuidonly: Bool = false) -> URL {
-        guard let uuid = app.uuid, let appPath = app.appPath, let dir = app.directory else { return URL(string: "")! }
+        guard let uuid = app.uuid, let appPath = app.appPath, let dir = app.directory else { return URL(string: "")!}
 
         let documentsDirectory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
         var path = documentsDirectory
