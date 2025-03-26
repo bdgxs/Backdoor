@@ -1,3 +1,5 @@
+import CoreData
+
 extension CoreDataManager {
 
     /// Clear all sources from Core Data
