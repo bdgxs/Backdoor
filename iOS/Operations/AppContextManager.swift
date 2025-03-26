@@ -7,19 +7,13 @@ protocol ScreenIdentifiable {
     var screenName: String { get }
 }
 
-/// Represents the current state of the app's context.
-struct AppContext {
-    var currentScreen: String
-    var additionalData: [String: Any]
-}
-
 /// Manages the app's context and command execution for the AI assistant.
 final class AppContextManager {
     // Singleton instance
     static let shared = AppContextManager()
     
     // Private properties
-    private var currentState: AppContext?
+    private var currentState: AppContext?  // Refers to AppContext from AppContext.swift
     private var commandHandlers: [String: (String) -> Void] = [:]
     private let commandQueue = DispatchQueue(label: "com.app.commandQueue")
     
@@ -128,7 +122,13 @@ final class AppContextManager {
     
     /// Sets additional context data dynamically.
     func setAdditionalContextData(_ data: [String: Any]) {
-        currentState?.additionalData.merge(data) { _, new in new }
+        // Since AppContext is now immutable, create a new instance
+        if var current = currentState {
+            currentState = AppContext(
+                currentScreen: current.currentScreen,
+                additionalData: current.additionalData.merging(data) { _, new in new }
+            )
+        }
     }
 }
 
