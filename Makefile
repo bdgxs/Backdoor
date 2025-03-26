@@ -42,9 +42,9 @@ package: clean-spm
 	@mkdir -p packages
 
 ifeq ($(TIPA),1)
-	@zip -r9 packages/$(NAME)-ts.tipa Payload
+	@zip -r9 packages/Backdoor.tipa Payload
 else
-	@zip -r9 packages/$(NAME).ipa Payload
+	@zip -r9 packages/Backdoor.ipa Payload
 endif
 
 clean-spm:
