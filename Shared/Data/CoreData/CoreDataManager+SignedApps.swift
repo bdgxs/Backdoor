@@ -7,7 +7,7 @@ extension CoreDataManager {
         do {
             try clear(request: SignedApps.fetchRequest(), context: context)
         } catch {
-            Debug.shared.log(message: "Error clearing signed apps: \(error)", type: .error)
+            Logger.shared.log(message: "Error clearing signed apps: \(error)", type: .error)
         }
     }
 
@@ -52,7 +52,7 @@ extension CoreDataManager {
             NotificationCenter.default.post(name: Notification.Name("lfetch"), object: nil)
             completion(.success(newApp))
         } catch {
-            Debug.shared.log(message: "Error saving data: \(error)", type: .error)
+            Logger.shared.log(message: "Error saving data: \(error)", type: .error)
             completion(.failure(error))
         }
     }
@@ -79,7 +79,7 @@ extension CoreDataManager {
             try FileManager.default.removeItem(at: getFilesForSignedApps(for: app, getuuidonly: true))
             try context.save()
         } catch {
-            Debug.shared.log(message: "CoreDataManager.deleteAllSignedAppContent: \(error)", type: .error)
+            Logger.shared.log(message: "CoreDataManager.deleteAllSignedAppContent: \(error)", type: .error)
         }
     }
 
@@ -98,7 +98,7 @@ extension CoreDataManager {
             try context.save()
             completion(nil)
         } catch {
-            Debug.shared.log(message: "Error updating SignedApps: \(error)", type: .error)
+            Logger.shared.log(message: "Error updating SignedApps: \(error)", type: .error)
             completion(error)
         }
     }
