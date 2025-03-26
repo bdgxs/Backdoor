@@ -1,6 +1,5 @@
 import Foundation
 import SWCompression
-import Logger
 
 enum FileProcessingError: Error {
     case unsupportedFileExtension(String)
