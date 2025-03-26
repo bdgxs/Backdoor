@@ -23,8 +23,8 @@ public enum LogType {
     case success
 }
 
-final class Debug {
-    static let shared = Debug()
+public final class Debug {
+    public static let shared = Debug()
     private let subsystem = Bundle.main.bundleIdentifier!
     
     private var logFilePath: URL {
@@ -46,7 +46,7 @@ final class Debug {
         }
     }
     
-    func log(message: String, type: LogType? = nil, function: String = #function, file: String = #file, line: Int = #line) {
+    public func log(message: String, type: LogType? = nil, function: String = #function, file: String = #file, line: Int = #line) {
         let logger = Logger(subsystem: subsystem, category: file + "->" + function)
         
         // Prepare the emoji based on the log type
@@ -91,7 +91,7 @@ final class Debug {
         appendLogToFile(logMessage)
     }
     
-    func showSuccessAlert(with title: String, subtitle: String) {
+    public func showSuccessAlert(with title: String, subtitle: String) {
         DispatchQueue.main.async {
             let alertView = AlertAppleMusic17View(title: title, subtitle: subtitle, icon: .done)
             let keyWindow = UIApplication.shared.connectedScenes.compactMap { ($0 as? UIWindowScene)?.keyWindow }.last
@@ -105,7 +105,7 @@ final class Debug {
         }
     }
     
-    func showErrorAlert(with title: String, subtitle: String) {
+    public func showErrorAlert(with title: String, subtitle: String) {
         DispatchQueue.main.async {
             let alertView = AlertAppleMusic17View(title: title, subtitle: subtitle, icon: .error)
             let keyWindow = UIApplication.shared.connectedScenes.compactMap { ($0 as? UIWindowScene)?.keyWindow }.last
@@ -119,7 +119,7 @@ final class Debug {
         }
     }
     
-    func showErrorUIAlert(with title: String, subtitle: String) {
+    public func showErrorUIAlert(with title: String, subtitle: String) {
         DispatchQueue.main.async {
             let keyWindow = UIApplication.shared.connectedScenes.compactMap { ($0 as? UIWindowScene)?.keyWindow }.last
             if let rootViewController = keyWindow?.rootViewController {
@@ -136,7 +136,7 @@ final class Debug {
 }
 
 extension UIAlertController {
-    static func error(title: String, message: String, actions: [UIAlertAction]) -> UIAlertController {
+    public static func error(title: String, message: String, actions: [UIAlertAction]) -> UIAlertController {
         let alertController = UIAlertController(title: title, message: message, preferredStyle: .alert)
         
         alertController.addAction(UIAlertAction(title: String.localized("OK"), style: .cancel) { _ in
@@ -153,7 +153,7 @@ extension UIAlertController {
         return alertController
     }
     
-    static func coolAlert(title: String, message: String, actions: [UIAlertAction]) -> UIAlertController {
+    public static func coolAlert(title: String, message: String, actions: [UIAlertAction]) -> UIAlertController {
         let alertController = UIAlertController(title: title, message: message, preferredStyle: .alert)
 
         for action in actions {
