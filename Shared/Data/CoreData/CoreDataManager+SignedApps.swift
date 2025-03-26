@@ -107,12 +107,12 @@ extension CoreDataManager {
     func setUpdateAvailable(for app: SignedApps, newVersion: String) {
         app.hasUpdate = true
         app.updateVersion = newVersion
-        saveContext()
+        try? saveContext()
     }
 
     func clearUpdateState(for app: SignedApps) {
         app.hasUpdate = false
         app.updateVersion = nil
-        saveContext()
+        try? saveContext()
     }
 }
