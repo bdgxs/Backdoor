@@ -8,7 +8,7 @@ extension CoreDataManager {
         do {
             try clear(request: DownloadedApps.fetchRequest(), context: context)
         } catch {
-            Debug.shared.log(message: "Error clearing downloaded apps: \(error)", type: .error)
+            Logger.shared.log(message: "Error clearing downloaded apps: \(error)", type: .error)
         }
     }
 
@@ -49,13 +49,13 @@ extension CoreDataManager {
             try context.save()
             NotificationCenter.default.post(name: Notification.Name("lfetch"), object: nil)
         } catch {
-            Debug.shared.log(message: "Error saving data: \(error)", type: .error)
+            Logger.shared.log(message: "Error saving data: \(error)", type: .error)
         }
     }
 
     /// Get application file path
     func getFilesForDownloadedApps(for app: DownloadedApps, getuuidonly: Bool = false) -> URL {
-        guard let uuid = app.uuid, let appPath = app.appPath, let dir = app.directory else { return URL(string: "")!}
+        guard let uuid = app.uuid, let appPath = app.appPath, let dir = app.directory else { return URL(string: "")! }
 
         let documentsDirectory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
         var path = documentsDirectory
@@ -74,7 +74,7 @@ extension CoreDataManager {
             try FileManager.default.removeItem(at: getFilesForDownloadedApps(for: app, getuuidonly: true))
             try context.save()
         } catch {
-            Debug.shared.log(message: "CoreDataManager.deleteAllSignedAppContent: \(error)", type: .error)
+            Logger.shared.log(message: "CoreDataManager.deleteAllSignedAppContent: \(error)", type: .error)
         }
     }
 }
