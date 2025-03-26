@@ -58,19 +58,19 @@ final class FloatingButtonManager {
         
         // Register Feather-specific commands with completion handlers
         AppContextManager.shared.registerCommand("add source") { sourceURL, completion in
-            if URL(string: sourceURL) != nil {
-                CoreDataManager.shared.saveSource(name: "Custom Source", id: UUID().uuidString, iconURL: nil, url: sourceURL) { error in
-                    if let error = error {
-                        Debug.shared.log(message: "Failed to add source: \(error)", type: .error)
-                        completion("Failed to add source: \(error.localizedDescription)")
-                    } else {
-                        Debug.shared.log(message: "Added source: \(sourceURL)", type: .success)
-                        completion("Source added successfully")
-                    }
-                }
-            } else {
+            guard let url = URL(string: sourceURL) else {
                 Debug.shared.log(message: "Invalid source URL: \(sourceURL)", type: .error)
                 completion("Invalid source URL")
+                return
+            }
+            CoreDataManager.shared.saveSource(name: "Custom Source", id: UUID().uuidString, iconURL: nil, url: sourceURL) { error in
+                if let error = error {
+                    Debug.shared.log(message: "Failed to add source: \(error)", type: .error)
+                    completion("Failed to add source: \(error.localizedDescription)")
+                } else {
+                    Debug.shared.log(message: "Added source: \(sourceURL)", type: .success)
+                    completion("Source added successfully")
+                }
             }
         }
         
