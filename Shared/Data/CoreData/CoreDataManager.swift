@@ -1,5 +1,6 @@
 import CoreData
 import UIKit
+import Logger
 
 final class CoreDataManager {
     static let shared = CoreDataManager()
