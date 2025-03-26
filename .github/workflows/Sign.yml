@@ -29,9 +29,21 @@ jobs:
     - name: Create certificates directory
       run: mkdir -p certificates
 
-    - name: Download latest release asset
+    - name: Fetch latest release info
+      id: fetch_release
       run: |
-        curl -L -o certificates/app.ipa https://github.com/bdgxs/Backdoor/releases/download/v0.0.8/Backdoor.ipa
+        latest_release=$(curl -s https://api.github.com/repos/bdgxs/Backdoor/releases/latest)
+        version=$(echo "$latest_release" | jq -r '.tag_name')
+        download_url=$(echo "$latest_release" | jq -r '.assets[]? | select(.name | endswith(".ipa")) | .browser_download_url')
+
+        echo "Latest version: $version"
+        echo "Download URL: $download_url"
+
+        echo "::set-output name=version::$version"
+        echo "::set-output name=download_url::$download_url"
+
+    - name: Download latest release asset
+      run: curl -L -o certificates/app.ipa ${{ steps.fetch_release.outputs.download_url }}
 
     - name: Run sign script
       env:
