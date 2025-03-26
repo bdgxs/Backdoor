@@ -26,13 +26,13 @@ func getCertificates() {
                     try writeToFile(content: serverPack.cert, filename: "server.crt")
                     try writeToFile(content: serverPack.info.domains.commonName, filename: "commonName.txt")
                 } catch {
-                    Debug.shared.log(message: "Error writing files: \(error.localizedDescription)", type: .error)
+                    Logger.shared.log(message: "Error writing files: \(error.localizedDescription)", type: .error)
                 }
             case .failure(let error):
-                Debug.shared.log(message: "Error parsing certificate: \(error.localizedDescription)", type: .error)
+                Logger.shared.log(message: "Error parsing certificate: \(error.localizedDescription)", type: .error)
             }
         case .failure(let error):
-            Debug.shared.log(message: "Error fetching data from \(uri): \(error.localizedDescription)", type: .error)
+            Logger.shared.log(message: "Error fetching data from \(uri): \(error.localizedDescription)", type: .error)
         }
     }
 }
