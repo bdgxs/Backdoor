@@ -207,18 +207,25 @@ class ChatViewController: UIViewController, UITableViewDataSource, UITableViewDe
                             // Execute commands
                             let commands = self?.extractCommands(from: response) ?? []
                             for (command, parameter) in commands {
-                                let commandResult = AppContextManager.shared.executeCommand(command, parameter: parameter)
-                                let systemMessageContent: String
-                                switch commandResult {
-                                case .success:
-                                    systemMessageContent = "Command '\(command)' executed successfully"
-                                case .unknownCommand(let cmd):
-                                    systemMessageContent = "Unknown command: \(cmd)"
+                                AppContextManager.shared.executeCommand(command, parameter: parameter) { commandResult in
+                                    DispatchQueue.main.async {
+                                        let systemMessageContent: String
+                                        switch commandResult {
+                                        case .successWithResult(let message):
+                                            systemMessageContent = message
+                                        case .unknownCommand(let cmd):
+                                            systemMessageContent = "Unknown command: \(cmd)"
+                                        }
+                                        do {
+                                            let systemMessage = try CoreDataManager.shared.addMessage(to: self!.currentSession, sender: "system", content: systemMessageContent)
+                                            self?.messages.append(systemMessage)
+                                            self?.tableView.reloadData()
+                                            self?.scrollToBottom()
+                                        } catch {
+                                            Logger.shared.log(message: "Failed to add system message: \(error)", type: .error)
+                                        }
+                                    }
                                 }
-                                let systemMessage = try CoreDataManager.shared.addMessage(to: self!.currentSession, sender: "system", content: systemMessageContent)
-                                self?.messages.append(systemMessage)
-                                self?.tableView.reloadData()
-                                self?.scrollToBottom()
                             }
                         } catch {
                             Logger.shared.log(message: "Failed to add AI message: \(error)", type: .error)
