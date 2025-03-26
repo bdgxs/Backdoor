@@ -8,7 +8,7 @@ extension CoreDataManager {
         do {
             try clear(request: Source.fetchRequest(), context: context)
         } catch {
-            Debug.shared.log(message: "Error clearing sources: \(error)", type: .error)
+            Logger.shared.log(message: "Error clearing sources: \(error)", type: .error)
         }
     }
 
@@ -32,7 +32,7 @@ extension CoreDataManager {
     /// Fetch and save source data from a given URL
     func getSourceData(urlString: String, completion: @escaping (Error?) -> Void) {
         guard let url = URL(string: urlString) else {
-            Debug.shared.log(message: "Invalid URL")
+            Logger.shared.log(message: "Invalid URL")
             completion(nil)
             return
         }
@@ -44,11 +44,11 @@ extension CoreDataManager {
                 case .success(let source):
                     self.saveSource(source, url: urlString, completion: completion)
                 case .failure(let error):
-                    Debug.shared.log(message: "Error parsing data: \(error)")
+                    Logger.shared.log(message: "Error parsing data: \(error)")
                     completion(error)
                 }
             case .failure(let error):
-                Debug.shared.log(message: "Error downloading data: \(error)")
+                Logger.shared.log(message: "Error downloading data: \(error)")
                 completion(error)
             }
         }
@@ -61,7 +61,7 @@ extension CoreDataManager {
         do {
             return try context.count(for: request) > 0
         } catch {
-            Debug.shared.log(message: "Error checking for existing source: \(error)")
+            Logger.shared.log(message: "Error checking for existing source: \(error)")
             return false
         }
     }
@@ -107,7 +107,7 @@ extension CoreDataManager {
                 try context.save()
                 completion(nil)
             } catch {
-                Debug.shared.log(message: "Error saving data: \(error)")
+                Logger.shared.log(message: "Error saving data: \(error)")
                 completion(error)
             }
         }
@@ -126,7 +126,7 @@ extension CoreDataManager {
                 try context.save()
                 completion(nil)
             } catch {
-                Debug.shared.log(message: "Error saving data: \(error)")
+                Logger.shared.log(message: "Error saving data: \(error)")
                 completion(error)
             }
         }
