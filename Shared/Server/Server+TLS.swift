@@ -60,9 +60,7 @@ extension Installer {
                 .map { NIOSSLCertificateSource.certificate($0) },
             privateKey: .privateKey(try NIOSSLPrivateKey(file: keyURL.path, format: .pem)))
     }
-}
-
-extension Installer {
+    
     static func readCommonName() -> String? {
         do {
             return try String(contentsOf: commonName, encoding: .utf8).trimmingCharacters(in: .whitespacesAndNewlines)
@@ -71,4 +69,9 @@ extension Installer {
             return nil
         }
     }
+}
+
+func getDocumentsDirectory() -> URL {
+    let paths = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)
+    return paths[0]
 }
