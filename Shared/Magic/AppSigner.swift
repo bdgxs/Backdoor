@@ -3,26 +3,26 @@ import UIKit
 import AlertKit
 import CoreData
 
-func signInitialApp(bundle: BundleOptions, mainOptions: SigningMainDataWrapper, signingOptions: SigningDataWrapper, appPath: URL, completion: @escaping (Result<(URL, NSManagedObject), Error>) -> Void) {
+func signInitialApp(bundle: BundleOptions, mainOptions: SigningMainDataWrapper, signingOptions: SigningDataWrapper, appPath: URL, completion: @escaping (Result<(URL, NSManagedObject), Error>) -> Vo) {
     UIApplication.shared.isIdleTimerDisabled = true
     DispatchQueue(label: "Signing").async {
         let fileManager = FileManager.default
         let tmpDir = fileManager.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         let tmpDirApp = tmpDir.appendingPathComponent(appPath.lastPathComponent)
         var iconURL = ""
-        
+
         do {
-            Debug.shared.log(message: "============================================")
-            Debug.shared.log(message: "\(mainOptions.mainOptions)")
-            Debug.shared.log(message: "============================================")
-            Debug.shared.log(message: "\(signingOptions.signingOptions)")
-            Debug.shared.log(message: "============================================")
+            Logger.shared.log(message: "============================================")
+            Logger.shared.log(message: "\(mainOptions.mainOptions)")
+            Logger.shared.log(message: "============================================")
+            Logger.shared.log(message: "\(signingOptions.signingOptions)")
+            Logger.shared.log(message: "============================================")
             try fileManager.createDirectory(at: tmpDir, withIntermediateDirectories: true)
             try fileManager.copyItem(at: appPath, to: tmpDirApp)
-            
+
             if let info = NSDictionary(contentsOf: tmpDirApp.appendingPathComponent("Info.plist"))!.mutableCopy() as? NSMutableDictionary {
                 try updateInfoPlist(infoDict: info, main: mainOptions, options: signingOptions, icon: mainOptions.mainOptions.iconURL, app: tmpDirApp)
-                
+
                 if let iconsDict = info["CFBundleIcons"] as? [String: Any],
                    let primaryIconsDict = iconsDict["CFBundlePrimaryIcon"] as? [String: Any],
                    let iconFiles = primaryIconsDict["CFBundleIconFiles"] as? [String],
@@ -30,7 +30,7 @@ func signInitialApp(bundle: BundleOptions, mainOptions: SigningMainDataWrapper, 
                     iconURL = iconFileName
                 }
             }
-
+            
             let handler = TweakHandler(urls: signingOptions.signingOptions.toInject, app: tmpDirApp)
             try handler.getInputFiles()
 
@@ -48,11 +48,11 @@ func signInitialApp(bundle: BundleOptions, mainOptions: SigningMainDataWrapper, 
             let provisionPath = certPath.appendingPathComponent("\(mainOptions.mainOptions.certificate?.provisionPath ?? "")").path
             let p12Path = certPath.appendingPathComponent("\(mainOptions.mainOptions.certificate?.p12Path ?? "")").path
 
-            Debug.shared.log(message: "🦋 Start Signing 🦋")
+            Logger.shared.log(message: "🐛 Start Signing 🐛")
 
-            try signAppWithZSign(tmpDirApp: tmpDirApp, certPaths: (provisionPath, p12Path), password: mainOptions.mainOptions.certificate?.password ?? "", main: mainOptions, options: signingOptions)
+            try signAppWithZSign(tmpDirApp: tmpDirApp, certPaths: (provisionPath, p12Path), password: mainOptions.mainOptions.certificate?.password ?? "", main: mainOptions, options: signingOption)
 
-            Debug.shared.log(message: "🦋 End Signing 🦋")
+            Logger.shared.log(message: "🐛 End Signing 🐛")
 
             let signedUUID = UUID().uuidString
             try fileManager.createDirectory(at: getDocumentsDirectory().appendingPathComponent("Apps/Signed"), withIntermediateDirectories: true)
@@ -77,13 +77,13 @@ func signInitialApp(bundle: BundleOptions, mainOptions: SigningMainDataWrapper, 
                     case .success(let signedApp):
                         signedAppObject = signedApp
                     case .failure(let error):
-                        Debug.shared.log(message: "signApp: \(error)", type: .error)
+                        Logger.shared.log(message: "signApp: \(error)", type: .error)
                         completion(.failure(error))
                     }
                 }
                 
-                Debug.shared.log(message: String.localized("SUCCESS_SIGNED", arguments: "\((mainOptions.mainOptions.name ?? bundle.name) ?? String.localized("UNKNOWN"))"), type: .success)
-                Debug.shared.log(message: "============================================")
+                Logger.shared.log(message: String.localized("SUCCESS_SIGNED", arguments: "\((mainOptions.mainOptions.name ?? bundle.name) ?? String.localized("UNKNOWN"))"), type: .success)
+                Logger.shared.log(message: "============================================")
                 
                 UIApplication.shared.isIdleTimerDisabled = false
                 completion(.success((signedPath, signedAppObject!)))
@@ -91,7 +91,7 @@ func signInitialApp(bundle: BundleOptions, mainOptions: SigningMainDataWrapper, 
         } catch {
             DispatchQueue.main.async {
                 UIApplication.shared.isIdleTimerDisabled = false
-                Debug.shared.log(message: "signApp: \(error)", type: .critical)
+                Logger.shared.log(message: "signApp: \(error)", type: .critical)
                 completion(.failure(error))
             }
         }
@@ -106,20 +106,20 @@ func resignApp(certificate: Certificate, appPath: URL, completion: @escaping (Bo
             let provisionPath = certPath.appendingPathComponent("\(certificate.provisionPath ?? "")").path
             let p12Path = certPath.appendingPathComponent("\(certificate.p12Path ?? "")").path
             
-            Debug.shared.log(message: "============================================")
-            Debug.shared.log(message: "🦋 Start Resigning 🦋")
+            Logger.shared.log(message: "============================================")
+            Logger.shared.log(message: "🐛 Start Resigning 🐛")
             
             try signAppWithZSign(tmpDirApp: appPath, certPaths: (provisionPath, p12Path), password: certificate.password ?? "")
             
-            Debug.shared.log(message: "🦋 End Resigning 🦋")
+            Logger.shared.log(message: "🐛 End Resigning 🐛")
             DispatchQueue.main.async {
                 UIApplication.shared.isIdleTimerDisabled = false
-                Debug.shared.log(message: String.localized("SUCCESS_RESIGN"), type: .success)
+                Logger.shared.log(message: String.localized("SUCCESS_RESIGN"), type: .success)
             }
-            Debug.shared.log(message: "============================================")
+            Logger.shared.log(message: "============================================")
             completion(true)
         } catch {
-            Debug.shared.log(message: "\(error)", type: .warning)
+            Logger.shared.log(message: "\(error)", type: .warning)
             completion(false)
         }
     }
@@ -155,12 +155,12 @@ func updateMobileProvision(app: URL) throws {
     if FileManager.default.fileExists(atPath: provisioningFilePath.path) {
         do {
             try FileManager.default.removeItem(at: provisioningFilePath)
-            Debug.shared.log(message: "Embedded.mobileprovision file removed successfully!")
+            Logger.shared.log(message: "Embedded.mobileprovision file removed successfully!")
         } catch {
             throw error
         }
     } else {
-        Debug.shared.log(message: "Could not find any mobileprovision to remove. ")
+        Logger.shared.log(message: "Could not find any mobileprovision to remove. ")
     }
 }
 
@@ -173,7 +173,7 @@ func listDylibs(filePath: String) -> [String]? {
         let dylibPaths = dylibPathsArray as! [String]
         return dylibPaths
     } else {
-        Debug.shared.log(message: "Failed to list dylibs.")
+        Logger.shared.log(message: "Failed to list dylibs.")
         return nil
     }
 }
@@ -189,12 +189,12 @@ func updatePlugIns(options: SigningDataWrapper, app: URL) throws {
         if filemanager.fileExists(atPath: path.path) {
             do {
                 try filemanager.removeItem(at: path)
-                Debug.shared.log(message: "Removed PlugIns!")
+                Logger.shared.log(message: "Removed PlugIns!")
             } catch {
                 throw error
             }
         } else {
-            Debug.shared.log(message: "Could not find any PlugIns to remove.")
+            Logger.shared.log(message: "Could not find any PlugIns to remove.")
         }
     }
 }
@@ -206,12 +206,12 @@ func removeDumbAssPlaceHolderExtension(options: SigningDataWrapper, app: URL) th
         if filemanager.fileExists(atPath: path.path) {
             do {
                 try filemanager.removeItem(at: path)
-                Debug.shared.log(message: "Removed placeholder watch app!")
+                Logger.shared.log(message: "Removed placeholder watch app!")
             } catch {
                 throw error
             }
         } else {
-            Debug.shared.log(message: "Placeholder watch app not found.")
+            Logger.shared.log(message: "Placeholder watch app not found.")
         }
     }
 }
@@ -230,9 +230,9 @@ func updateInfoPlist(infoDict: NSMutableDictionary, main: SigningMainDataWrapper
             
             do {
                 try imageData?.write(to: fileURL)
-                Debug.shared.log(message: "Saved image to: \(fileURL)")
+                Logger.shared.log(message: "Saved image to: \(fileURL)")
             } catch {
-                Debug.shared.log(message: "Failed to save image: \(imageSize.name), error: \(error)")
+                Logger.shared.log(message: "Failed to save image: \(imageSize.name), error: \(error)")
                 throw error
             }
         }
@@ -255,7 +255,7 @@ func updateInfoPlist(infoDict: NSMutableDictionary, main: SigningMainDataWrapper
         infoDict["CFBundleIcons~ipad"] = cfBundleIconsIpad
         
     } else {
-        Debug.shared.log(message: "updateInfoPlist.updateicon: Does not include an icon, skipping!")
+        Logger.shared.log(message: "updateInfoPlist.updateicon: Does not include an icon, skipping!")
     }
     
     if options.signingOptions.forceTryToLocalize && (main.mainOptions.name != nil) {
@@ -264,7 +264,7 @@ func updateInfoPlist(infoDict: NSMutableDictionary, main: SigningMainDataWrapper
                 updateLocalizedInfoPlist(in: app, newDisplayName: main.mainOptions.name!)
             }
         } else {
-            Debug.shared.log(message: "updateInfoPlist.displayName: CFBundleDisplayName not found, skipping!")
+            Logger.shared.log(message: "updateInfoPlist.displayName: CFBundleDisplayName not found, skipping!")
         }
     }
 
@@ -287,7 +287,7 @@ func updateLocalizedInfoPlist(in appDirectory: URL, newDisplayName: String) {
         let localizationBundles = contents.filter { $0.pathExtension == "lproj" }
         
         guard !localizationBundles.isEmpty else {
-            Debug.shared.log(message: "No .lproj directories found in \(appDirectory.path), skipping!")
+            Logger.shared.log(message: "No .lproj directories found in \(appDirectory.path), skipping!")
             return
         }
         
@@ -301,12 +301,12 @@ func updateLocalizedInfoPlist(in appDirectory: URL, newDisplayName: String) {
                 if localizedDict["CFBundleDisplayName"] != newDisplayName {
                     localizedStrings = localizedStrings.replacingOccurrences(of: localizedDict["CFBundleDisplayName"] ?? "", with: newDisplayName)
                     try localizedStrings.write(to: infoPlistStringsURL, atomically: true, encoding: .utf8)
-                    Debug.shared.log(message: "Updated CFBundleDisplayName in \(infoPlistStringsURL.path)")
+                    Logger.shared.log(message: "Updated CFBundleDisplayName in \(infoPlistStringsURL.path)")
                 }
             }
         }
     } catch {
-        Debug.shared.log(message: "Unable to localize, skipping!", type: .debug)
+        Logger.shared.log(message: "Unable to localize, skipping!", type: .debug)
     }
 }
 
