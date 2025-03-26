@@ -7,7 +7,7 @@ class ChatViewController: UIViewController, UITableViewDataSource, UITableViewDe
     private let sendButton = UIButton(type: .system)
     private let activityIndicator = UIActivityIndicatorView(style: .medium)
     
-    private var currentSession: ChatSession
+    public var currentSession: ChatSession  // Changed from private to public
     private var messages: [ChatMessage] = []
     
     init(session: ChatSession? = nil) {
@@ -15,7 +15,12 @@ class ChatViewController: UIViewController, UITableViewDataSource, UITableViewDe
             self.currentSession = session
         } else {
             let title = "Chat on \(DateFormatter.localizedString(from: Date(), dateStyle: .medium, timeStyle: .short))"
-            self.currentSession = CoreDataManager.shared.createChatSession(title: title)
+            do {
+                self.currentSession = try CoreDataManager.shared.createChatSession(title: title)
+            } catch {
+                Logger.shared.log(message: "Failed to create chat session: \(error)", type: .error)
+                self.currentSession = ChatSession() // Fallback; assumes ChatSession has a default init
+            }
         }
         super.init(nibName: nil, bundle: nil)
     }
@@ -155,10 +160,14 @@ class ChatViewController: UIViewController, UITableViewDataSource, UITableViewDe
     
     @objc private func newChat() {
         let title = "Chat on \(DateFormatter.localizedString(from: Date(), dateStyle: .medium, timeStyle: .short))"
-        currentSession = CoreDataManager.shared.createChatSession(title: title)
-        messages = []
-        tableView.reloadData()
-        navigationItem.title = currentSession.title
+        do {
+            currentSession = try CoreDataManager.shared.createChatSession(title: title)
+            messages = []
+            tableView.reloadData()
+            navigationItem.title = currentSession.title
+        } catch {
+            Logger.shared.log(message: "Failed to create new chat session: \(error)", type: .error)
+        }
     }
     
     func loadSession(_ session: ChatSession) {
@@ -171,62 +180,82 @@ class ChatViewController: UIViewController, UITableViewDataSource, UITableViewDe
         guard let text = textField.text, !text.isEmpty else { return }
         textField.text = ""
         
-        let userMessage = CoreDataManager.shared.addMessage(to: currentSession, sender: "user", content: text)
-        messages.append(userMessage)
-        tableView.reloadData()
-        scrollToBottom()
-        
-        activityIndicator.startAnimating()
-        sendButton.isEnabled = false
-        
-        let context = AppContextManager.shared.currentContext()
-        let apiMessages = messages.map { OpenAIService.ChatMessage(role: $0.sender == "user" ? "user" : "assistant", content: $0.content ?? "") }
-        
-        OpenAIService.shared.getAIResponse(messages: apiMessages, context: context) { [weak self] result in
-            DispatchQueue.main.async {
-                self?.activityIndicator.stopAnimating()
-                self?.sendButton.isEnabled = true
-                switch result {
-                case .success(let response):
-                    let aiMessage = CoreDataManager.shared.addMessage(to: self!.currentSession, sender: "ai", content: response)
-                    self?.messages.append(aiMessage)
-                    self?.tableView.reloadData()
-                    self?.scrollToBottom()
-                    
-                    // Execute commands
-                    let commands = self?.extractCommands(from: response) ?? []
-                    for (command, parameter) in commands {
-                        AppContextManager.shared.executeCommand(command, parameter: parameter) { result in
-                            DispatchQueue.main.async {
-                                let systemMessageContent = result ?? "Command executed"
-                                let systemMessage = CoreDataManager.shared.addMessage(to: self!.currentSession, sender: "system", content: systemMessageContent)
+        do {
+            let userMessage = try CoreDataManager.shared.addMessage(to: currentSession, sender: "user", content: text)
+            messages.append(userMessage)
+            tableView.reloadData()
+            scrollToBottom()
+            
+            activityIndicator.startAnimating()
+            sendButton.isEnabled = false
+            
+            let context = AppContextManager.shared.currentContext()
+            let apiMessages = messages.map { OpenAIService.ChatMessage(role: $0.sender == "user" ? "user" : "assistant", content: $0.content ?? "") }
+            
+            OpenAIService.shared.getAIResponse(messages: apiMessages, context: context) { [weak self] result in
+                DispatchQueue.main.async {
+                    self?.activityIndicator.stopAnimating()
+                    self?.sendButton.isEnabled = true
+                    switch result {
+                    case .success(let response):
+                        do {
+                            let aiMessage = try CoreDataManager.shared.addMessage(to: self!.currentSession, sender: "ai", content: response)
+                            self?.messages.append(aiMessage)
+                            self?.tableView.reloadData()
+                            self?.scrollToBottom()
+                            
+                            // Execute commands
+                            let commands = self?.extractCommands(from: response) ?? []
+                            for (command, parameter) in commands {
+                                let commandResult = AppContextManager.shared.executeCommand(command, parameter: parameter)
+                                let systemMessageContent: String
+                                switch commandResult {
+                                case .success:
+                                    systemMessageContent = "Command '\(command)' executed successfully"
+                                case .unknownCommand(let cmd):
+                                    systemMessageContent = "Unknown command: \(cmd)"
+                                }
+                                let systemMessage = try CoreDataManager.shared.addMessage(to: self!.currentSession, sender: "system", content: systemMessageContent)
                                 self?.messages.append(systemMessage)
                                 self?.tableView.reloadData()
                                 self?.scrollToBottom()
                             }
+                        } catch {
+                            Logger.shared.log(message: "Failed to add AI message: \(error)", type: .error)
+                        }
+                    case .failure(let error):
+                        do {
+                            let errorMessage = try CoreDataManager.shared.addMessage(to: self!.currentSession, sender: "system", content: "Error: \(error.localizedDescription)")
+                            self?.messages.append(errorMessage)
+                            self?.tableView.reloadData()
+                            self?.scrollToBottom()
+                        } catch {
+                            Logger.shared.log(message: "Failed to add error message: \(error)", type: .error)
                         }
                     }
-                case .failure(let error):
-                    let errorMessage = CoreDataManager.shared.addMessage(to: self!.currentSession, sender: "system", content: "Error: \(error.localizedDescription)")
-                    self?.messages.append(errorMessage)
-                    self?.tableView.reloadData()
-                    self?.scrollToBottom()
                 }
             }
+        } catch {
+            Logger.shared.log(message: "Failed to add user message: \(error)", type: .error)
         }
     }
     
     private func extractCommands(from text: String) -> [(command: String, parameter: String)] {
         let pattern = "\\[([^:]+):([^\\]]+)\\]"
-        let regex = try? NSRegularExpression(pattern: pattern)
-        let matches = regex?.matches(in: text, range: NSRange(text.startIndex..., in: text))
-        return matches?.compactMap { match in
-            if let commandRange = Range(match.range(at: 1), in: text),
-               let paramRange = Range(match.range(at: 2), in: text) {
-                return (String(text[commandRange]), String(text[paramRange]))
+        do {
+            let regex = try NSRegularExpression(pattern: pattern)
+            let matches = regex.matches(in: text, range: NSRange(text.startIndex..., in: text))
+            return matches.compactMap { match in
+                if let commandRange = Range(match.range(at: 1), in: text),
+                   let paramRange = Range(match.range(at: 2), in: text) {
+                    return (String(text[commandRange]), String(text[paramRange]))
+                }
+                return nil
             }
-            return nil
-        } ?? []
+        } catch {
+            Logger.shared.log(message: "Failed to create regex for command extraction: \(error)", type: .error)
+            return []
+        }
     }
     
     // UITableViewDataSource
