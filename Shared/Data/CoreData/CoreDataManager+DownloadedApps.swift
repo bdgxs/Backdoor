@@ -1,11 +1,3 @@
-//
-//  CoreDataManager+DownloadedApps.swift
-//  feather
-//
-//  Created by samara on 8/2/24.
-//  Copyright (c) 2024 Samara M (khcrysalis)
-//
-
 import CoreData
 
 extension CoreDataManager {
@@ -14,7 +6,11 @@ extension CoreDataManager {
 	func clearDownloadedApps(
 		context: NSManagedObjectContext? = nil) {
 			let context = context ?? self.context
-			clear(request: DownloadedApps.fetchRequest(), context: context)
+			do {
+				try clear(request: DownloadedApps.fetchRequest(), context: context)
+			} catch {
+				Debug.shared.log(message: "Error clearing downloaded apps: \(error)", type: .error)
+			}
 	}
 	
 	/// Fetch all sources sorted alphabetically by name
