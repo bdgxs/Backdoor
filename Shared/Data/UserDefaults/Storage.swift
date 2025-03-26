@@ -51,7 +51,7 @@ public struct CodableUserDefaultsStorage<Value: Codable> {
             do {
                 return try decoder.decode(Value.self, from: data)
             } catch {
-                Logger.shared.log(message: "Decoding \(Value.self) failed. \(error)", type: .error)
+                Logger.shared.log(message: "Decoding \(Value.self) failed. \(error)")
                 return defaultValue
             }
         }
@@ -62,7 +62,7 @@ public struct CodableUserDefaultsStorage<Value: Codable> {
                 UserDefaults.standard.set(newData, forKey: key)
                 handler?(key, newValue)
             } catch {
-                Logger.shared.log(message: "Encoding failed: \(error)", type: .error)
+                Logger.shared.log(message: "Encoding failed: \(error)")
             }
         }
     }
