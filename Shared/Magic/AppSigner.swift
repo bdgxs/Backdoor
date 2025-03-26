@@ -3,7 +3,7 @@ import UIKit
 import AlertKit
 import CoreData
 
-func signInitialApp(bundle: BundleOptions, mainOptions: SigningMainDataWrapper, signingOptions: SigningDataWrapper, appPath: URL, completion: @escaping (Result<(URL, NSManagedObject), Error>) -> Vo) {
+func signInitialApp(bundle: BundleOptions, mainOptions: SigningMainDataWrapper, signingOptions: SigningDataWrapper, appPath: URL, completion: @escaping (Result<(URL, NSManagedObject), Error>) -> Void) {
     UIApplication.shared.isIdleTimerDisabled = true
     DispatchQueue(label: "Signing").async {
         let fileManager = FileManager.default
@@ -50,7 +50,7 @@ func signInitialApp(bundle: BundleOptions, mainOptions: SigningMainDataWrapper, 
 
             Logger.shared.log(message: "🐛 Start Signing 🐛")
 
-            try signAppWithZSign(tmpDirApp: tmpDirApp, certPaths: (provisionPath, p12Path), password: mainOptions.mainOptions.certificate?.password ?? "", main: mainOptions, options: signingOption)
+            try signAppWithZSign(tmpDirApp: tmpDirApp, certPaths: (provisionPath, p12Path), password: mainOptions.mainOptions.certificate?.password ?? "", main: mainOptions, options: signingOptions)
 
             Logger.shared.log(message: "🐛 End Signing 🐛")
 
@@ -310,7 +310,4 @@ func updateLocalizedInfoPlist(in appDirectory: URL, newDisplayName: String) {
     }
 }
 
-func getDocumentsDirectory() -> URL {
-    let paths = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)
-    return paths[0]
-}
+// Removed duplicate getDocumentsDirectory() - use the one from Logger.swift
