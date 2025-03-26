@@ -55,7 +55,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UIOnboardingViewControlle
                     )
                 ],
                 textViewConfiguration: UIOnboardingTextViewConfiguration(
-                    text: "By continuing, you agree to our Code of Conduct. This is Developed by BDG",
+                    text: "By continuing, you agree to our Terms of Service. This is Developed by BDG",
                     linkTitle: "Code of Conduct",
                     link: "https://raw.githubusercontent.com/bdgxs/Backdoor/refs/heads/main/Code%20of%20Conduct"  // Replace with your actual Terms of Service URL
                 ),
