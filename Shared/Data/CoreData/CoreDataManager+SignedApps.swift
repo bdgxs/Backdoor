@@ -68,8 +68,9 @@ extension CoreDataManager {
             .appendingPathComponent(dir)
             .appendingPathComponent(uuid)
 
-        if !getuuidonly { path = path.appendingPathComponent(appPath) }
-
+        if (!getuuidonly) {
+            path = path.appendingPathComponent(appPath)
+        }
         return path
     }
 
