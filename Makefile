@@ -27,7 +27,7 @@ package: clean-spm
 		-derivedDataPath $(APP_TMP) \
 		CODE_SIGNING_ALLOWED=NO \
 		DSTROOT=$(APP_TMP)/install \
-		ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES=YES
+		ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES=NO
 		
 	@rm -rf Payload
 	@rm -rf $(STAGE_DIR)/
