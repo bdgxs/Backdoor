@@ -19,10 +19,10 @@ class EsignDecryptor {
             if let decodedData = Data(base64Encoded: base64String) {
                 return decodedData
             } else {
-                Debug.shared.log(message: "Failed to decode base64 string.", type: .error)
+                Logger.shared.log(message: "Failed to decode base64 string.", type: .error)
             }
         } else {
-            Debug.shared.log(message: "Base64 string not found.", type: .error)
+            Logger.shared.log(message: "Base64 string not found.", type: .error)
         }
         
         return nil
@@ -30,7 +30,7 @@ class EsignDecryptor {
 
     func decrypt(key: [UInt8], keyLength: Int) -> [String]? {
         guard let data = extractBase64() else {
-            Debug.shared.log(message: "EsignDecryptor.decrypt: Not valid data?", type: .error)
+            Logger.shared.log(message: "EsignDecryptor.decrypt: Not valid data?", type: .error)
             return nil
         }
         
