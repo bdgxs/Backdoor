@@ -7,6 +7,7 @@
 //
 
 import Foundation
+import Logger
 
 final class CertData {
 	static func parseMobileProvisioningFile(atPath path: URL) -> Cert? {
