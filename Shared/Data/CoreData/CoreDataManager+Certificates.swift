@@ -1,6 +1,5 @@
 import Foundation
 import CoreData
-import Logger
 
 extension CoreDataManager {
     /// clear certificates data
