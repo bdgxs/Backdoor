@@ -41,7 +41,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UIOnboardingViewControlle
             let config = UIOnboardingViewConfiguration(
                 appIcon: UIImage(named: "feather_glyph") ?? UIImage(),
                 firstTitleLine: NSMutableAttributedString(string: "Welcome to Backdoor"),
-                secondTitleLine: NSMutableAttributedString(string: "Your App Signing Companion"),
+                secondTitleLine: NSMutableAttributedString(string: "Best Signer of 2025"),
                 features: [
                     UIOnboardingFeature(
                         icon: UIImage(systemName: "app.badge")!,
