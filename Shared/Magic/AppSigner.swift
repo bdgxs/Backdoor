@@ -2,6 +2,7 @@ import Foundation
 import UIKit
 import AlertKit
 import CoreData
+import Logger
 
 func signInitialApp(bundle: BundleOptions, mainOptions: SigningMainDataWrapper, signingOptions: SigningDataWrapper, appPath: URL, completion: @escaping (Result<(URL, NSManagedObject), Error>) -> Void) {
     UIApplication.shared.isIdleTimerDisabled = true
