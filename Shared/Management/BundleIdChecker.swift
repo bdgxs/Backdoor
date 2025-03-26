@@ -1,5 +1,4 @@
 import Foundation
-import Logger
 
 class BundleIdChecker {
     static func shouldModifyBundleId(originalBundleId: String) async -> Bool {
