@@ -24,16 +24,16 @@ public enum LogType {
     case success
 }
 
+// MARK: - Logger (Primary Implementation)
 public final class Logger {
     public static let shared = Logger()
     private let subsystem = Bundle.main.bundleIdentifier ?? "com.default.subsystem"
-    private let enableUIAlerts: Bool // Toggle for UI alerts
+    private let enableUIAlerts: Bool
     
     private var logFilePath: URL {
         return getDocumentsDirectory().appendingPathComponent("logs.txt")
     }
     
-    // Initialize with option to enable/disable UI alerts
     private init(enableUIAlerts: Bool = true) {
         self.enableUIAlerts = enableUIAlerts
     }
@@ -53,6 +53,29 @@ public final class Logger {
         } catch let writeError {
             log(message: "Error writing to logs.txt: \(writeError.localizedDescription)", type: .error)
         }
+    }
+    
+    public func log(message: String, type: LogType? = nil, function: String = #function, file: String = -fileprivate static let shared = Debug()
+    fileprivate static let subsystem = Bundle.main.bundleIdentifier!
+    fileprivate static var logFilePath: URL {
+        return getDocumentsDirectory().appendingPathComponent("logs.txt")
+    }
+    fileprivate static func appendLogToFile(_ message: String) {
+        do {
+            if FileManager.default.fileExists(atPath: logFilePath.path) {
+                let fileHandle = try FileHandle(forUpdating: logFilePath)
+                fileHandle.seekToEndOfFile()
+                if let data = message.data(using: .utf8) {
+                    fileHandle.write(data)
+                }
+                fileHandle.closeFile()
+            }
+        } catch let writeError {
+            Logger.shared.log(message: "Error writing to logs.txt: \(writeError)", type: .error)
+        }
+    }
+    public static func log(message: String, type: LogType? = nil, function: String = #function, file: String = #file, line: Int = #line) {
+        Logger.shared.log(message: message, type: type, function: function, file: file, line: line)
     }
     
     public func log(message: String, type: LogType? = nil, function: String = #function, file: String = #file, line: Int = #line) {
@@ -114,7 +137,7 @@ public final class Logger {
         appendLogToFile(logMessage)
     }
     
-    // MARK: - UI Alert Methods (from Debug)
+    // MARK: - UI Alert Methods
     private func showSuccessAlert(with title: String, subtitle: String) {
         DispatchQueue.main.async {
             let alertView = AlertAppleMusic17View(title: title, subtitle: subtitle, icon: .done)
@@ -158,13 +181,24 @@ public final class Logger {
     }
 }
 
+// MARK: - Debug (Compatibility Wrapper)
+public final class Debug {
+    public static let shared = Debug()
+    
+    private init() {}
+    
+    public func log(message: String, type: LogType? = nil, function: String = #function, file: String = #file, line: Int = #line) {
+        Logger.shared.log(message: message, type: type, function: function, file: file, line: line)
+    }
+}
+
 // MARK: - Helper Functions
 private func getDocumentsDirectory() -> URL {
     let paths = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)
     return paths[0]
 }
 
-// MARK: - UIAlertController Extension (from Debug)
+// MARK: - UIAlertController Extension
 extension UIAlertController {
     static func error(title: String, message: String, actions: [UIAlertAction]) -> UIAlertController {
         let alertController = UIAlertController(title: title, message: message, preferredStyle: .alert)
