@@ -1,11 +1,3 @@
-//
-//  CDManager.swift
-//  feather
-//
-//  Created by samara on 7/29/24.
-//  Copyright (c) 2024 Samara M (khcrysalis)
-//
-
 import CoreData
 import UIKit
 
@@ -22,7 +14,6 @@ final class CoreDataManager {
                 fatalError("Unresolved error \(error), \(error.userInfo)")
             }
         })
-
         return container
     }()
 
@@ -59,10 +50,7 @@ final class CoreDataManager {
     // MARK: - Chat Session Management
 
     func createChatSession(title: String) throws -> ChatSession {
-        guard let entity = NSEntityDescription.entity(forEntityName: "ChatSession", in: context) else {
-            throw NSError(domain: "CoreDataManager", code: 1, userInfo: [NSLocalizedDescriptionKey: "Entity not found"])
-        }
-        let session = ChatSession(entity: entity, insertInto: context)
+        let session = ChatSession(context: context)
         session.sessionID = UUID().uuidString
         session.title = title
         session.creationDate = Date()
@@ -71,10 +59,7 @@ final class CoreDataManager {
     }
 
     func addMessage(to session: ChatSession, sender: String, content: String) throws -> ChatMessage {
-        guard let entity = NSEntityDescription.entity(forEntityName: "ChatMessage", in: context) else {
-            throw NSError(domain: "CoreDataManager", code: 1, userInfo: [NSLocalizedDescriptionKey: "Entity not found"])
-        }
-        let message = ChatMessage(entity: entity, insertInto: context)
+        let message = ChatMessage(context: context)
         message.messageID = UUID().uuidString
         message.sender = sender
         message.content = content
@@ -116,18 +101,5 @@ extension NSPersistentContainer {
                 continuation.resume(returning: result)
             }
         })
-    }
-}
-
-// Placeholder for a debug logging utility (replace with your actual implementation).
-class Debug {
-    static let shared = Debug()
-
-    enum LogType {
-        case error, critical, debug
-    }
-
-    func log(message: String, type: LogType) {
-        print("[\(type)] \(message)")
     }
 }
