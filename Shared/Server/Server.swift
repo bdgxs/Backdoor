@@ -15,7 +15,7 @@ class Installer: Identifiable, ObservableObject {
     var package: URL
     let port = Int.random(in: 4000 ... 8000)
     let metadata: AppData
-    
+
     enum Status {
         case ready
         case sendingManifest
@@ -23,20 +23,19 @@ class Installer: Identifiable, ObservableObject {
         case completed(Result<Void, Error>)
         case broken(Error)
     }
-    
+
     @Published var status: Status = .ready
 
     var needsShutdown = false
-    
+
     init(path packagePath: URL?, metadata: AppData) throws {
-        let id: UUID = .init()
-        self.id = id
+        self.id = UUID()
         self.metadata = metadata
         self.package = packagePath ?? URL(fileURLWithPath: "")
-        app = try Self.setupApp(port: port)
+        self.app = try Self.setupApp(port: port)
 
         app.get("*") { [weak self] req in
-            guard let self else { return Response(status: .badGateway) }
+            guard let self = self else { return Response(status: .badGateway) }
 
             switch req.url.path {
             case "/ping":
@@ -71,21 +70,17 @@ class Installer: Identifiable, ObservableObject {
                 return Response(status: .notFound)
             }
         }
-        
-        app.get("i") { req -> Response in
 
+        app.get("i") { req -> Response in
             let testurl = "itms-services://?action=download-manifest&url=" + ("\(Preferences.onlinePath ?? Preferences.defaultInstallPath)/genPlist?bundleid=\(metadata.id)&name=\(metadata.name)&version=\(metadata.version)")
 
-            var html = ""
-            
-            html = """
+            let html = """
             <script type="text/javascript">window.location="\(testurl)"</script>
             """
-            
-            
+
             var headers = HTTPHeaders()
             headers.add(name: .contentType, value: "text/html")
-            
+
             return Response(status: .ok, headers: headers, body: .init(string: html))
         }
 
@@ -93,7 +88,7 @@ class Installer: Identifiable, ObservableObject {
         needsShutdown = true
         Logger.shared.log(message: "Server started: Port \(port) for \(Self.sni)")
     }
-    
+
     deinit {
         shutdownServer()
     }
@@ -106,7 +101,6 @@ class Installer: Identifiable, ObservableObject {
             app.shutdown()
         }
     }
-    
 }
 
 extension Installer {
@@ -120,12 +114,12 @@ extension Installer {
         let app = Application(env)
 
         app.threadPool = .init(numberOfThreads: 1)
-        
+
         if !Preferences.userSelectedServer {
             app.http.server.configuration.tlsConfiguration = try Self.setupTLS()
         }
         app.http.server.configuration.hostname = Self.sni
-        Logger.shared.log(message: self.sni)
+        Logger.shared.log(message: Self.sni)
         app.http.server.configuration.tcpNoDelay = true
 
         app.http.server.configuration.address = .hostname("0.0.0.0", port: port)
